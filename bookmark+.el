@@ -7,8 +7,6 @@
 ;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
 ;; Created: Fri Sep 15 07:58:41 2000
 ;; Version: 21.0
-;; Last-Updated: Mon May 25 12:37:46 2009 (-0700)
-;;           By: dradams
 ;;     Update #: 167
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki/bookmark+.el
 ;; Keywords: bookmarks, placeholders, annotations, search
