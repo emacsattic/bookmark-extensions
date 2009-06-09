@@ -462,9 +462,19 @@ Must be at the correct position in the buffer in which the bookmark is
 being set.
 If POINT-ONLY is non-nil, then only return the subset of the
 record that pertains to the location within the buffer."
-  (let ((beg (mark))
-        (end (point)))
-    `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
+  (let ((beg (region-beginning))
+        (end (region-end)))
+    `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
+                                                 (bookmark-buffer-file-name))
+                                                ((string= (buffer-name) "*info*")
+                                                 (concat "("
+                                                         (file-name-nondirectory Info-current-file)
+                                                         ")"
+                                                         Info-current-node))
+                                                (t
+                                                 `(,nil))))))
+        (buffer-name
+         . ,(buffer-name))
         (front-context-string
          . ,(buffer-substring-no-properties
                  beg
