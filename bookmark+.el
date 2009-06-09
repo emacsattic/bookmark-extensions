@@ -456,6 +456,28 @@ record that pertains to the location within the buffer."
           nil))
     (position . ,(point))))
 
+(defun bookmark-make-record-region (&optional point-only)
+  "Return the record describing the location of a new bookmark.
+Must be at the correct position in the buffer in which the bookmark is
+being set.
+If POINT-ONLY is non-nil, then only return the subset of the
+record that pertains to the location within the buffer."
+  (let ((beg (mark))
+        (end (point)))
+    `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
+        (front-context-string
+         . ,(buffer-substring-no-properties
+                 beg
+                 (+ beg (min bookmark-search-size (- end beg)))))
+        (rear-context-string
+         . ,(buffer-substring-no-properties
+                 end
+                 (- end (min bookmark-search-size
+                             (- end beg)))))
+        (start-position . ,beg)
+        (end-position . ,end))))
+
+
 ;; When C-x r l
 ;; If fboundp ==> icicle-region
 ;;            ==> (region-active-p)
