@@ -400,7 +400,10 @@ record that pertains to the location within the buffer."
       (raise-frame)
       (goto-char beg-pos)
       ;; TODO check also if end-str have changed
-      (if (string= start-str (buffer-substring-no-properties (point) (+ (point) (length start-str))))
+      (if (and (string= start-str (buffer-substring-no-properties (point) (+ (point) (length start-str))))
+               (save-excursion
+                 (goto-char end-pos)
+                 (string= end-str (buffer-substring-no-properties (point) (- (point) (length start-str))))))
           (push-mark end-pos 'nomsg 'activate) ;; position didn't change
           ;; position have changed: relocate region.
           (goto-char (point-max)) 
