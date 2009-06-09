@@ -333,52 +333,52 @@ candidate."
                (bookmark-show-annotation bookmark))))))
 
 
-(defun bookmark-set (&optional name parg)
-  "Set a bookmark named NAME inside a file.
-If name is nil, then the user will be prompted.
-With prefix arg, will not overwrite a bookmark that has the same name
-as NAME if such a bookmark already exists, but instead will \"push\"
-the new bookmark onto the bookmark alist.  Thus the most recently set
-bookmark with name NAME would be the one in effect at any given time,
-but the others are still there, should you decide to delete the most
-recent one.
+;; (defun bookmark-set (&optional name parg)
+;;   "Set a bookmark named NAME inside a file.
+;; If name is nil, then the user will be prompted.
+;; With prefix arg, will not overwrite a bookmark that has the same name
+;; as NAME if such a bookmark already exists, but instead will \"push\"
+;; the new bookmark onto the bookmark alist.  Thus the most recently set
+;; bookmark with name NAME would be the one in effect at any given time,
+;; but the others are still there, should you decide to delete the most
+;; recent one.
 
-To yank words from the text of the buffer and use them as part of the
-bookmark name, type C-w while setting a bookmark.  Successive C-w's
-yank successive words.
+;; To yank words from the text of the buffer and use them as part of the
+;; bookmark name, type C-w while setting a bookmark.  Successive C-w's
+;; yank successive words.
 
-Typing C-u inserts the name of the last bookmark used in the buffer
-\(as an aid in using a single bookmark name to track your progress
-through a large file\).  If no bookmark was used, then C-u inserts the
-name of the file being visited.
+;; Typing C-u inserts the name of the last bookmark used in the buffer
+;; \(as an aid in using a single bookmark name to track your progress
+;; through a large file\).  If no bookmark was used, then C-u inserts the
+;; name of the file being visited.
 
-Use \\[bookmark-delete] to remove bookmarks \(you give it a name,
-and it removes only the first instance of a bookmark with that name from
-the list of bookmarks.\)"
-  (interactive (list nil current-prefix-arg))
-  (let* ((record (bookmark-make-record))
-         (default (car record)))
+;; Use \\[bookmark-delete] to remove bookmarks \(you give it a name,
+;; and it removes only the first instance of a bookmark with that name from
+;; the list of bookmarks.\)"
+;;   (interactive (list nil current-prefix-arg))
+;;   (let* ((record (bookmark-make-record))
+;;          (default (car record)))
 
-    (bookmark-maybe-load-default-file)
+;;     (bookmark-maybe-load-default-file)
 
-    (setq bookmark-current-point (point))
-    (setq bookmark-yank-point (point))
-    (setq bookmark-current-buffer (current-buffer))
+;;     (setq bookmark-current-point (point))
+;;     (setq bookmark-yank-point (point))
+;;     (setq bookmark-current-buffer (current-buffer))
 
-    (let ((str
-           (or name
-               (read-from-minibuffer
-                (format "Set bookmark (%s): " default)
-                nil
-                bookmark-minibuffer-read-name-map
-                nil nil default))))
-      (and (string-equal str "") (setq str default))
-      (bookmark-store str (cdr record) parg)
+;;     (let ((str
+;;            (or name
+;;                (read-from-minibuffer
+;;                 (format "Set bookmark (%s): " default)
+;;                 nil
+;;                 bookmark-minibuffer-read-name-map
+;;                 nil nil default))))
+;;       (and (string-equal str "") (setq str default))
+;;       (bookmark-store str (cdr record) parg)
 
-      ;; Ask for an annotation buffer for this bookmark
-      (if bookmark-use-annotations
-          (bookmark-edit-annotation str)
-        (goto-char bookmark-current-point)))))
+;;       ;; Ask for an annotation buffer for this bookmark
+;;       (if bookmark-use-annotations
+;;           (bookmark-edit-annotation str)
+;;         (goto-char bookmark-current-point)))))
 
 ;;; File format stuff
 
@@ -435,26 +435,26 @@ the list of bookmarks.\)"
 ;;  (rear-context-string . "record-function)")
 ;;  (position . 17799))
 
-(defun bookmark-make-record-default (&optional point-only)
-  "Return the record describing the location of a new bookmark.
-Must be at the correct position in the buffer in which the bookmark is
-being set.
-If POINT-ONLY is non-nil, then only return the subset of the
-record that pertains to the location within the buffer."
-  `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
-    (front-context-string
-     . ,(if (>= (- (point-max) (point)) bookmark-search-size)
-            (buffer-substring-no-properties
-             (point)
-             (+ (point) bookmark-search-size))
-          nil))
-    (rear-context-string
-     . ,(if (>= (- (point) (point-min)) bookmark-search-size)
-            (buffer-substring-no-properties
-             (point)
-             (- (point) bookmark-search-size))
-          nil))
-    (position . ,(point))))
+;; (defun bookmark-make-record-default (&optional point-only)
+;;   "Return the record describing the location of a new bookmark.
+;; Must be at the correct position in the buffer in which the bookmark is
+;; being set.
+;; If POINT-ONLY is non-nil, then only return the subset of the
+;; record that pertains to the location within the buffer."
+;;   `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
+;;     (front-context-string
+;;      . ,(if (>= (- (point-max) (point)) bookmark-search-size)
+;;             (buffer-substring-no-properties
+;;              (point)
+;;              (+ (point) bookmark-search-size))
+;;           nil))
+;;     (rear-context-string
+;;      . ,(if (>= (- (point) (point-min)) bookmark-search-size)
+;;             (buffer-substring-no-properties
+;;              (point)
+;;              (- (point) bookmark-search-size))
+;;           nil))
+;;     (position . ,(point))))
 
 (defun bookmark-make-record-region (&optional point-only)
   "Return the record describing the location of a new bookmark.
@@ -504,7 +504,10 @@ record that pertains to the location within the buffer."
 
 (defun bookmark-make-record ()
   "Return a new bookmark record (NAME . ALIST) for the current location."
-  (let ((record (funcall bookmark-make-record-function)))
+  (let* ((bookmark-make-record-function (if (region-active-p)
+                                            'bookmark-make-record-region
+                                            'bookmark-make-record-default))
+         (record (funcall bookmark-make-record-function)))
     ;; Set up default name.
     (if (stringp (car record))
         ;; The function already provided a default name.
