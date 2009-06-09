@@ -350,7 +350,7 @@ record that pertains to the location within the buffer."
                                                          ")"
                                                          Info-current-node))
                                                 (t
-                                                 `(,nil))))))
+                                                 nil)))))
         (buffer-name
          . ,(buffer-name))
         (front-context-string
@@ -381,8 +381,27 @@ record that pertains to the location within the buffer."
       (setcar record (or bookmark-current-bookmark (bookmark-buffer-name)))
       record)))
 
-;(defun bookmark-region-handler (bmk)
-  
+(defun bookmark-region-handler (bmk)
+  (let* ((cur-book (car bmk))
+         (buf (cdr (assoc 'buffer-name (assoc cur-book bookmark-alist))))
+         (fname (cdr (assoc 'filename (assoc cur-book bookmark-alist))))
+         (start-str (cdr (assoc 'front-context-string (assoc cur-book bookmark-alist))))
+         (end-str (cdr (assoc 'rear-context-string (assoc cur-book bookmark-alist))))
+         (beg-pos (cdr (assoc 'start-position (assoc cur-book bookmark-alist))))
+         (end-pos (cdr (assoc 'end-position (assoc cur-book bookmark-alist)))))
+    (cond ((string= buf "*info*")
+           (info fname)
+           (goto-char beg-pos)
+           (push-mark end-pos 'nomsg 'activate))
+          (fname
+           (find-file fname)
+           (goto-char beg-pos)
+           (push-mark end-pos 'nomsg 'activate))
+          (t
+           (pop-to-buffer buf)
+           (goto-char beg-pos)
+           (push-mark end-pos 'nomsg 'activate)))))
+        
 ;; Not needed for Emacs 22+.
 (unless (> emacs-major-version 21)
   (defun bookmark-menu-jump-other-window (event)
