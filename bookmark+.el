@@ -403,6 +403,7 @@ record that pertains to the location within the buffer."
       (goto-char beg-pos)
       ;; Check if start of region have moved
       (if (and (string= start-str (buffer-substring-no-properties (point) (+ (point) (length start-str))))
+               (not (eq beg-pos end-pos))
                (save-excursion
                  ;; check also if end of region have changed
                  (goto-char end-pos)
