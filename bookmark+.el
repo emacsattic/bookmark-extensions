@@ -331,7 +331,8 @@ candidate."
                (bookmark-show-annotation bookmark))))))
 
 
-
+;; set this to higher value to be more accurate 
+(setq bookmark-search-size 40)
 (defun bookmark-make-record-region (&optional point-only)
   "Return the record describing the location of a new bookmark.
 Must be at the correct position in the buffer in which the bookmark is
@@ -380,6 +381,7 @@ record that pertains to the location within the buffer."
       record)))
 
 (defun bookmark-region-handler (bmk)
+  "Special handler to reach bookmarks that have region saved."
   (let* ((cur-book (car bmk))
          (buf (cdr (assoc 'buffer-name (assoc cur-book bookmark-alist))))
          (fname (cdr (assoc 'filename (assoc cur-book bookmark-alist))))
@@ -387,25 +389,27 @@ record that pertains to the location within the buffer."
          (end-str (cdr (assoc 'rear-context-string (assoc cur-book bookmark-alist))))
          (beg-pos (cdr (assoc 'start-position (assoc cur-book bookmark-alist))))
          (end-pos (cdr (assoc 'end-position (assoc cur-book bookmark-alist)))))
-    (cond ((string= buf "*info*")
+    (cond ((string= buf "*info*") ; info buffer?
            (info fname))
-          (fname
+          (fname ; file?
            (when (file-readable-p fname)
              (find-file-noselect fname)))
-          (t
+          (t ; no chance
            (if (not (get-buffer buf))
                (message "No such file: `%s'" fname))))
     (when (get-buffer buf)
       (pop-to-buffer buf)
       (raise-frame)
       (goto-char beg-pos)
-      ;; TODO check also if end-str have changed
+      ;; Check if start of region have moved
       (if (and (string= start-str (buffer-substring-no-properties (point) (+ (point) (length start-str))))
                (save-excursion
+                 ;; check also if end of region have changed
                  (goto-char end-pos)
                  (string= end-str (buffer-substring-no-properties (point) (- (point) (length start-str))))))
-          (push-mark end-pos 'nomsg 'activate) ;; position didn't change
-          ;; position have changed: relocate region.
+          ;; Ok position didn't change
+          (push-mark end-pos 'nomsg 'activate) 
+          ;; Position have changed: relocate region.
           (goto-char (point-max)) 
           (when (re-search-backward start-str nil t)
             (let ((beg (point))
@@ -415,11 +419,9 @@ record that pertains to the location within the buffer."
                 (setq end (point)))
               ;; Go to the new location
               (push-mark end 'nomsg 'activate)
-              ;; save new location
+              ;; Save new location to `bookmark-alist'.
               (setf (cdr (assoc 'start-position (assoc cur-book bookmark-alist))) beg)
-              (setf (cdr (assoc 'end-position (assoc cur-book bookmark-alist))) end)
-              (bookmark-save)
-              (message "New location of region at %s %s saved" beg end)))))))
+              (setf (cdr (assoc 'end-position (assoc cur-book bookmark-alist))) end)))))))
 
 ;; Not needed for Emacs 22+.
 (unless (> emacs-major-version 21)
