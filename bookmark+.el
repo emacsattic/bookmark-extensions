@@ -7,7 +7,7 @@
 ;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
 ;; Created: Fri Sep 15 07:58:41 2000
 ;; Version: 21.0
-;;     Update #: 167
+
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki/bookmark+.el
 ;; Keywords: bookmarks, placeholders, annotations, search
 ;; Compatibility: GNU Emacs 20.x, GNU Emacs 21.x, GNU Emacs 22.x
