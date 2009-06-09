@@ -401,8 +401,25 @@ record that pertains to the location within the buffer."
       (pop-to-buffer buf)
       (raise-frame)
       (goto-char beg-pos)
-      (push-mark end-pos 'nomsg 'activate))))
-        
+      ;; TODO check also if end-str have changed
+      (if (string= start-str (buffer-substring-no-properties (point) (+ (point) (length start-str))))
+          (push-mark end-pos 'nomsg 'activate) ;; position didn't change
+          ;; position have changed: relocate region.
+          (goto-char (point-max)) 
+          (when (re-search-backward start-str nil t)
+            (let ((beg (point))
+                  end)
+              (save-excursion
+                (re-search-forward end-str nil t)
+                (setq end (point)))
+              ;; Go to the new location
+              (push-mark end 'nomsg 'activate)
+              ;; save new location
+              (setf (cdr (assoc 'start-position (assoc cur-book bookmark-alist))) beg)
+              (setf (cdr (assoc 'end-position (assoc cur-book bookmark-alist))) end)
+              (bookmark-save)
+              (message "New location of region at %s %s saved" beg end)))))))
+
 ;; Not needed for Emacs 22+.
 (unless (> emacs-major-version 21)
   (defun bookmark-menu-jump-other-window (event)
