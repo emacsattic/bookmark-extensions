@@ -333,128 +333,6 @@ candidate."
                (bookmark-show-annotation bookmark))))))
 
 
-;; (defun bookmark-set (&optional name parg)
-;;   "Set a bookmark named NAME inside a file.
-;; If name is nil, then the user will be prompted.
-;; With prefix arg, will not overwrite a bookmark that has the same name
-;; as NAME if such a bookmark already exists, but instead will \"push\"
-;; the new bookmark onto the bookmark alist.  Thus the most recently set
-;; bookmark with name NAME would be the one in effect at any given time,
-;; but the others are still there, should you decide to delete the most
-;; recent one.
-
-;; To yank words from the text of the buffer and use them as part of the
-;; bookmark name, type C-w while setting a bookmark.  Successive C-w's
-;; yank successive words.
-
-;; Typing C-u inserts the name of the last bookmark used in the buffer
-;; \(as an aid in using a single bookmark name to track your progress
-;; through a large file\).  If no bookmark was used, then C-u inserts the
-;; name of the file being visited.
-
-;; Use \\[bookmark-delete] to remove bookmarks \(you give it a name,
-;; and it removes only the first instance of a bookmark with that name from
-;; the list of bookmarks.\)"
-;;   (interactive (list nil current-prefix-arg))
-;;   (let* ((record (bookmark-make-record))
-;;          (default (car record)))
-
-;;     (bookmark-maybe-load-default-file)
-
-;;     (setq bookmark-current-point (point))
-;;     (setq bookmark-yank-point (point))
-;;     (setq bookmark-current-buffer (current-buffer))
-
-;;     (let ((str
-;;            (or name
-;;                (read-from-minibuffer
-;;                 (format "Set bookmark (%s): " default)
-;;                 nil
-;;                 bookmark-minibuffer-read-name-map
-;;                 nil nil default))))
-;;       (and (string-equal str "") (setq str default))
-;;       (bookmark-store str (cdr record) parg)
-
-;;       ;; Ask for an annotation buffer for this bookmark
-;;       (if bookmark-use-annotations
-;;           (bookmark-edit-annotation str)
-;;         (goto-char bookmark-current-point)))))
-
-;;; File format stuff
-
-;; The OLD format of the bookmark-alist was:
-;;
-;;       ((BOOKMARK-NAME . (FILENAME
-;;                          STRING-IN-FRONT
-;;                          STRING-BEHIND
-;;                          POINT))
-;;        ...)
-;;
-;; The NEW format of the bookmark-alist is:
-;;
-;;       ((BOOKMARK-NAME (filename   . FILENAME)
-;;                       (front-context-string . STRING-IN-FRONT)
-;;                       (rear-context-string  . STRING-BEHIND)
-;;                       (position   . POINT)
-;;                       (annotation . ANNOTATION)
-;;                       (whatever   . VALUE)
-;;                       ...
-;;                       ))
-;;        ...)
-;;
-;;
-;; I switched to using an internal as well as external alist because I
-;; felt that would be a more flexible framework in which to add
-;; features.  It means that the order in which values appear doesn't
-;; matter, and it means that arbitrary values can be added without
-;; risk of interfering with existing ones.
-;;
-;; BOOKMARK-NAME is the string the user gives the bookmark and
-;; accesses it by from then on.
-;;
-;; FILENAME is the location of the file in which the bookmark is set.
-;;
-;; STRING-IN-FRONT is a string of `bookmark-search-size' chars of
-;; context in front of the point at which the bookmark is set.
-;;
-;; STRING-BEHIND is the same thing, but after the point.
-;;
-;; The context strings exist so that modifications to a file don't
-;; necessarily cause a bookmark's position to be invalidated.
-;; bookmark-jump will search for STRING-BEHIND and STRING-IN-FRONT in
-;; case the file has changed since the bookmark was set.  It will
-;; attempt to place the user before the changes, if there were any.
-;; ANNOTATION is the annotation for the bookmark; it may not exist
-;; (for backward compatibility), be nil (no annotation), or be a
-;; string.
-
-;; output of (funcall bookmark-make-record-function):
-
-;; ((filename . "~/labo/bookmark-icicle-region-qp/bookmark+.el")
-;;  (front-context-string . "))\n    ;; Set up")
-;;  (rear-context-string . "record-function)")
-;;  (position . 17799))
-
-;; (defun bookmark-make-record-default (&optional point-only)
-;;   "Return the record describing the location of a new bookmark.
-;; Must be at the correct position in the buffer in which the bookmark is
-;; being set.
-;; If POINT-ONLY is non-nil, then only return the subset of the
-;; record that pertains to the location within the buffer."
-;;   `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
-;;     (front-context-string
-;;      . ,(if (>= (- (point-max) (point)) bookmark-search-size)
-;;             (buffer-substring-no-properties
-;;              (point)
-;;              (+ (point) bookmark-search-size))
-;;           nil))
-;;     (rear-context-string
-;;      . ,(if (>= (- (point) (point-min)) bookmark-search-size)
-;;             (buffer-substring-no-properties
-;;              (point)
-;;              (- (point) bookmark-search-size))
-;;           nil))
-;;     (position . ,(point))))
 
 (defun bookmark-make-record-region (&optional point-only)
   "Return the record describing the location of a new bookmark.
@@ -485,21 +363,8 @@ record that pertains to the location within the buffer."
                  (- end (min bookmark-search-size
                              (- end beg)))))
         (start-position . ,beg)
-        (end-position . ,end))))
-
-
-;; When C-x r l
-;; If fboundp ==> icicle-region
-;;            ==> (region-active-p)
-;; 1) use icicle-region to bookmark this file/region
-;; 2) Notify the bookmark-alist to use icicle-region when jumping to bookmark. How? modify bookmark-make-record?
-
-;; When jump to bookmark
-;; 1) Modify jump to bookmark to use icicle-region if he find an icicle flag in bookmark alist.
-;; 
-;; So the problem is to set a nice entry in bookmark-alist with a flag:
-;; (For this bookmark-name . use icicle-region)
-;; Pass the arg bookmark-name==>alias icicle-region tag to icicle-region.
+        (end-position . ,end)
+        (handler . ,'bookmark-region-handler))))
 
 
 (defun bookmark-make-record ()
@@ -516,6 +381,8 @@ record that pertains to the location within the buffer."
       (setcar record (or bookmark-current-bookmark (bookmark-buffer-name)))
       record)))
 
+;(defun bookmark-region-handler (bmk)
+  
 ;; Not needed for Emacs 22+.
 (unless (> emacs-major-version 21)
   (defun bookmark-menu-jump-other-window (event)
