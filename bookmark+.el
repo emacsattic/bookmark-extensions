@@ -390,17 +390,18 @@ record that pertains to the location within the buffer."
          (beg-pos (cdr (assoc 'start-position (assoc cur-book bookmark-alist))))
          (end-pos (cdr (assoc 'end-position (assoc cur-book bookmark-alist)))))
     (cond ((string= buf "*info*")
-           (info fname)
-           (goto-char beg-pos)
-           (push-mark end-pos 'nomsg 'activate))
+           (info fname))
           (fname
-           (find-file fname)
-           (goto-char beg-pos)
-           (push-mark end-pos 'nomsg 'activate))
+           (when (file-readable-p fname)
+             (find-file-noselect fname)))
           (t
-           (pop-to-buffer buf)
-           (goto-char beg-pos)
-           (push-mark end-pos 'nomsg 'activate)))))
+           (if (not (get-buffer buf))
+               (message "No such file: `%s'" fname))))
+    (when (get-buffer buf)
+      (pop-to-buffer buf)
+      (raise-frame)
+      (goto-char beg-pos)
+      (push-mark end-pos 'nomsg 'activate))))
         
 ;; Not needed for Emacs 22+.
 (unless (> emacs-major-version 21)
