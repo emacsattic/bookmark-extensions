@@ -380,7 +380,7 @@ record that pertains to the location within the buffer."
       (setcar record (or bookmark-current-bookmark (bookmark-buffer-name)))
       record)))
 
-(defun* bookmark-region-handler (bmk)
+(defun bookmark-region-handler (bmk)
   "Special handler to reach bookmarks that have region saved."
   (let* ((cur-book (car bmk))
          (buf (cdr (assoc 'buffer-name (assoc cur-book bookmark-alist))))
@@ -421,7 +421,8 @@ record that pertains to the location within the buffer."
             (setq end-pos end)
             ;; Save new location to `bookmark-alist'.
             (setf (cdr (assoc 'start-position (assoc cur-book bookmark-alist))) beg)
-            (setf (cdr (assoc 'end-position (assoc cur-book bookmark-alist))) end)))))
+            (setf (cdr (assoc 'end-position (assoc cur-book bookmark-alist))) end)
+            (bookmark-save)))))
     (push-mark end-pos 'nomsg 'activate)
     (setq deactivate-mark  nil)
     (message "Region at Start:%s to End:%s" beg-pos end-pos)))
