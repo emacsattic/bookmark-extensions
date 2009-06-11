@@ -130,7 +130,7 @@
   "When non--nil active region if one have been saved
 when jumping to bookmark.")
 (defvar bookmark-region-search-size 40
-  "The same as `bookmark-search-size' but specialized for bookmark regions."
+  "The same as `bookmark-search-size' but specialized for bookmark regions.")
   
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
