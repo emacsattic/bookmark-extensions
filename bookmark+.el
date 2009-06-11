@@ -377,7 +377,9 @@ record that pertains to the location within the buffer."
 
 (defun bookmark-make-record ()
   "Return a new bookmark record (NAME . ALIST) for the current location."
-  (let* ((bookmark-make-record-function (if (region-active-p)
+  (let* ((bookmark-make-record-function (if (and transient-mark-mode
+                                                 (region-active-p)
+                                                 (not (eq (mark) (point))))
                                             'bookmark-make-record-region
                                             'bookmark-make-record-default))
          (record (funcall bookmark-make-record-function)))
