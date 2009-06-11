@@ -35,7 +35,7 @@
 ;;   `bookmark-get-bookmark-record', `bookmark-insert',
 ;;   `bookmark-insert-location', `bookmark-jump', `bookmark-relocate',
 ;;   `bookmark-rename', `bookmark-location', `bookmark-make-record',
-;;   `bookmark-handle-bookmark'.
+;;   `bookmark-handle-bookmark', `bookmark-bmenu-list'.
 ;;
 ;;  * New functions:
 ;;    `bookmark-region-handler', `bookmark-make-record-region',
@@ -356,6 +356,87 @@ candidate."
                ;; if there is an annotation for this bookmark,
                ;; show it in a buffer.
                (bookmark-show-annotation bookmark))))))
+
+(defun bookmark-bmenu-list ()
+  "Display a list of existing bookmarks.
+The list is displayed in a buffer named `*Bookmark List*'.
+The leftmost column displays a D if the bookmark is flagged for
+deletion, or > if it is flagged for displaying."
+  (interactive)
+  (bookmark-maybe-load-default-file)
+  (if (interactive-p)
+      (switch-to-buffer (get-buffer-create "*Bookmark List*"))
+    (set-buffer (get-buffer-create "*Bookmark List*")))
+  (let ((inhibit-read-only t))
+    (erase-buffer)
+    (insert "% Bookmark+\n- --------\n")
+    (add-text-properties (point-min) (point)
+			 '(font-lock-face bookmark-menu-heading))
+    (mapc
+     (lambda (full-record)
+       ;; if a bookmark has an annotation, prepend a "*"
+       ;; in the list of bookmarks.
+       (let ((annotation (bookmark-get-annotation
+                          (bookmark-name-from-full-record full-record))))
+         (if (and annotation (not (string-equal annotation "")))
+             (insert " *")
+           (insert "  "))
+	 (let* ((start (point))
+                (name (bookmark-name-from-full-record full-record))
+                (isfile (bookmark-get-filename name))
+                (istramp (when isfile
+                           (tramp-tramp-file-p isfile)))
+                (isbuf (bookmark-get-buffername name)))
+	   (insert name)
+	   (if (and (display-color-p) (display-mouse-p))
+	       (add-text-properties
+		start
+		(save-excursion (re-search-backward
+				 "[^ \t]")
+				(1+ (point)))
+                (cond ((and isfile ;; dirs
+                            (not istramp)
+                            (file-directory-p isfile))
+                       '(mouse-face highlight
+                         follow-link t
+                         face '((:foreground "DarkRed" :background "LightGray"))
+                         help-echo "mouse-2: go to this bookmark in other window"))
+                      ((and isfile ;; regular files
+                            (not istramp)
+                            (not (file-directory-p isfile))
+                            (file-exists-p isfile))
+                       '(mouse-face highlight
+                         follow-link t
+                         face '((:foreground "blue"))
+                         help-echo "mouse-2: go to this bookmark in other window"))
+                      ((and isbuf ;; buffers non--filename
+                            (not isfile))
+                         '(mouse-face highlight
+                           follow-link t
+                           face '((:foreground "grey"))
+                           help-echo "mouse-2: go to this bookmark in other window"))
+                      ((and (string= isbuf "*w3m*") ;; w3m urls
+                            (when isfile
+                              (not (file-exists-p isfile))))
+                       '(mouse-face highlight
+                         follow-link t
+                         face '((:foreground "yellow"))
+                         help-echo "mouse-2: go to this bookmark in other window"))
+                      ((and (string= isbuf "*info*") ;; info buffers
+                            (when isfile
+                              (not (file-exists-p isfile))))
+                       '(mouse-face highlight
+                         follow-link t
+                         face '((:foreground "green"))
+                         help-echo "mouse-2: go to this bookmark in other window")))))
+	   (insert "\n")
+	   )))
+     (bookmark-maybe-sort-alist)))
+  (goto-char (point-min))
+  (forward-line 2)
+  (bookmark-bmenu-mode)
+  (if bookmark-bmenu-toggle-filenames
+      (bookmark-bmenu-toggle-filenames t)))
 
 (defun bookmark-get-buffername (bookmark)
   "Return the buffer-name of BOOKMARK."
