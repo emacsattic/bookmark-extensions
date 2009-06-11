@@ -104,7 +104,9 @@
 ;;;###autoload
 (define-key ctl-x-map "pj" 'bookmark-jump-other-window)
 
-
+(defvar bookmark-use-region t
+  "When non--nil active region if one have been saved
+when jumping to bookmark.")
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
