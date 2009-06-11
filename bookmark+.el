@@ -304,7 +304,10 @@ bookmark name to delete the bookmark named by the current completion
 candidate."
   (interactive (list (bookmark-completing-read "Jump to bookmark"
                                                bookmark-current-bookmark)))
-  (old-bookmark-jump bookmark))
+  (if current-prefix-arg
+      (let ((bookmark-use-region t))
+        (old-bookmark-jump bookmark))
+      (old-bookmark-jump bookmark)))
 
 ;;;###autoload
 (unless (> emacs-major-version 22)
