@@ -330,9 +330,13 @@ candidate."
                ;; show it in a buffer.
                (bookmark-show-annotation bookmark))))))
 
+(defun bookmark-get-buffername (bookmark)
+  "Return the buffer-name of BOOKMARK."
+  (bookmark-prop-get bookmark 'buffer-name))
 
 ;; set this to higher value to be more accurate 
-(setq bookmark-search-size 40)
+(defvar bookmark-region-search-size 40
+  "The same than `bookmark-search-size' but specialized for region.")
 (defun bookmark-make-record-region (&optional point-only)
   "Return the record describing the location of a new bookmark.
 Must be at the correct position in the buffer in which the bookmark is
@@ -355,13 +359,13 @@ record that pertains to the location within the buffer."
         (front-context-string
          . ,(buffer-substring-no-properties
                  beg
-                 (+ beg (min bookmark-search-size (- end beg)))))
+                 (+ beg (min bookmark-region-search-size (- end beg)))))
         (rear-context-string
          . ,(buffer-substring-no-properties
                  end
-                 (- end (min bookmark-search-size
+                 (- end (min bookmark-region-search-size
                              (- end beg)))))
-        (start-position . ,beg)
+        (position . ,beg)
         (end-position . ,end)
         (handler . ,'bookmark-region-handler))))
 
@@ -387,7 +391,7 @@ record that pertains to the location within the buffer."
          (fname (cdr (assoc 'filename (nth pos-book bookmark-alist))))
          (start-str (cdr (assoc 'front-context-string (nth pos-book bookmark-alist))))
          (end-str (cdr (assoc 'rear-context-string (nth pos-book bookmark-alist))))
-         (beg-pos (cdr (assoc 'start-position (nth pos-book bookmark-alist))))
+         (beg-pos (cdr (assoc 'position (nth pos-book bookmark-alist))))
          (end-pos (cdr (assoc 'end-position (nth pos-book bookmark-alist)))))
     (cond ((string= buf "*info*") ; info buffer?
            (info fname))
@@ -416,7 +420,7 @@ record that pertains to the location within the buffer."
             (re-search-forward (regexp-opt (list end-str) t) nil t)
             (setq end-pos (point)))
           ;; Save new location to `bookmark-alist'.
-          (setf (cdr (assoc 'start-position (nth pos-book bookmark-alist))) beg-pos)
+          (setf (cdr (assoc 'position (nth pos-book bookmark-alist))) beg-pos)
           (setf (cdr (assoc 'end-position (nth pos-book bookmark-alist))) end-pos)
           (bookmark-save))))
   (push-mark end-pos 'nomsg 'activate)
