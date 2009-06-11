@@ -34,7 +34,29 @@
 ;;   `bookmark-completing-read', `bookmark-delete',
 ;;   `bookmark-get-bookmark-record', `bookmark-insert',
 ;;   `bookmark-insert-location', `bookmark-jump', `bookmark-relocate',
-;;   `bookmark-rename'.
+;;   `bookmark-rename', `bookmark-location', `bookmark-make-record',
+;;   `bookmark-handle-bookmark'.
+;;
+;;  * New functions:
+;;    `bookmark-region-handler', `bookmark-make-record-region',
+;;    `bookmark-get-buffername'.
+;;
+;;  * User variables:
+;;    `bookmark-use-region', `bookmark-region-search-size'.
+;;
+;;  * New features:
+;;    - Support for bookmarking region of text.
+;;    - Support bookmarking non--buffer-file-name when using region.
+;;    - Support bookmarking regions in w3m buffers.
+;;
+;;  * Usage:
+;;    Put this file in your load path
+;;    Add to .emacs : (require 'bookmark+)
+;;    If you don't like bookmark active regions when jumping to bookmarks,
+;;    Add to .emacs: (setq bookmark-use-region nil)
+;;    Even if `bookmark-use-region' is nil, you can active the region
+;;    (if this bookmark have one) with a prefix argument (C-u RET) when jumping
+;;    to bookmark.
 ;;
 ;;  These functions (except `bookmark-get-bookmark-record') all bind
 ;;  `S-delete' to delete the current bookmark candidate during
@@ -346,9 +368,6 @@ candidate."
       (bookmark-get-buffername bookmark)
       "*What is this?*"))
 
-;; set this to higher value to be more accurate 
-(defvar bookmark-region-search-size 40
-  "The same than `bookmark-search-size' but specialized for region.")
 (defun bookmark-make-record-region (&optional point-only)
   "Return the record describing the location of a new bookmark.
 Must be at the correct position in the buffer in which the bookmark is
