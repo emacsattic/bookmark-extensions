@@ -339,6 +339,13 @@ candidate."
   "Return the buffer-name of BOOKMARK."
   (bookmark-prop-get bookmark 'buffer-name))
 
+(defun bookmark-location (bookmark)
+  "Return the name of the file or buffer associated with BOOKMARK."
+  (bookmark-maybe-load-default-file)
+  (or (bookmark-get-filename bookmark)
+      (bookmark-get-buffername bookmark)
+      "*What is this?*"))
+
 ;; set this to higher value to be more accurate 
 (defvar bookmark-region-search-size 40
   "The same than `bookmark-search-size' but specialized for region.")
