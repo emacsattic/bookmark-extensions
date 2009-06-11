@@ -427,6 +427,48 @@ record that pertains to the location within the buffer."
   (setq deactivate-mark  nil)
   (message "Region at Start:%s to End:%s" beg-pos end-pos)))
 
+(defun bookmark-handle-bookmark (bookmark)
+  "Call BOOKMARK's handler or `bookmark-default-handler' if it has none.
+Changes current buffer and point and returns nil, or signals a `file-error'.
+BOOKMARK can be a bookmark record used internally by some other
+elisp package, or the name of a bookmark to be found in `bookmark-alist'."
+  (condition-case err
+      (funcall (or (if bookmark-use-region
+                       (bookmark-get-handler bookmark)
+                       (unless
+                           (eq (bookmark-get-handler bookmark)
+                               'bookmark-region-handler)
+                         (bookmark-get-handler bookmark)))
+                   'bookmark-default-handler)
+               (bookmark-get-bookmark bookmark))
+    (file-error
+     ;; We were unable to find the marked file, so ask if user wants to
+     ;; relocate the bookmark, else remind them to consider deletion.
+     (when (stringp bookmark)
+       ;; `bookmark' can either be a bookmark name (found in
+       ;; `bookmark-alist') or a bookmark object.  If it's an object, we
+       ;; assume it's a bookmark used internally by some other package.
+       (let ((file (bookmark-get-filename bookmark)))
+         (when file        ;Don't know how to relocate if there's no `file'.
+           (setq file (expand-file-name file))
+           (ding)
+           (if (y-or-n-p (concat (file-name-nondirectory file)
+                                 " nonexistent.  Relocate \""
+                                 bookmark
+                                 "\"? "))
+               (progn
+                 (bookmark-relocate bookmark)
+                 ;; Try again.
+                 (funcall (or (bookmark-get-handler bookmark)
+                              'bookmark-default-handler)
+                          (bookmark-get-bookmark bookmark)))
+             (message
+              "Bookmark not relocated; consider removing it \(%s\)." bookmark)
+             (signal (car err) (cdr err))))))))
+  ;; Added by db.
+  (when (stringp bookmark)
+    (setq bookmark-current-bookmark bookmark))
+  nil)
 
 ;; Not needed for Emacs 22+.
 (unless (> emacs-major-version 21)
