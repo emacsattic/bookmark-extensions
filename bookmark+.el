@@ -357,6 +357,8 @@ record that pertains to the location within the buffer."
                                                          (file-name-nondirectory Info-current-file)
                                                          ")"
                                                          Info-current-node))
+                                                ((string= (buffer-name) "*w3m*")
+                                                 (w3m-print-current-url))
                                                 (t
                                                  nil)))))
         (buffer-name
@@ -402,6 +404,11 @@ record that pertains to the location within the buffer."
          (end-pos (cdr (assoc 'end-position (nth pos-book bookmark-alist)))))
     (cond ((string= buf "*info*") ; info buffer?
            (info fname))
+          ((string= buf "*w3m*") ; May be use string-match in case of *w3m<2>*...
+           (w3m-browse-url fname)
+           (with-current-buffer "*w3m*"
+             (while (eq (point-min) (point-max))
+               (sit-for 1))))
           (fname ; file?
            (when (file-readable-p fname)
              (find-file-noselect fname)))
