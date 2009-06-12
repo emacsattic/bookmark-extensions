@@ -40,7 +40,7 @@
 ;; 
 ;;; Code:
 
-(defun icicle-exchange-point-and-mark (&optional arg) ; Bound to `C-x C-x'.
+(defun* icicle-exchange-point-and-mark (&optional arg) ; Bound to `C-x C-x'.
   "`exchange-point-and-mark', `icicle-add-region', or `icicle-select-region'.
 With no prefix arg: `exchange-point-and-mark'.
 With a numeric prefix arg:`icicle-add-region'.
@@ -53,11 +53,11 @@ then customize option `icicle-top-level-key-bindings'."
   (interactive "P")
   (if arg
       (if (atom arg)
-          (call-interactively #'icicle-bookmark-cmd 1) ;(call-interactively #'icicle-add-region)
-        (unless (consp (bookmark-region-alist-only));icicle-region-alist)
-          (error "`icicle-region-alist' is empty; try again, with a numeric prefix arg"))
-        (call-interactively #'icicle-select-region))
-    (call-interactively #'exchange-point-and-mark)))
+          (call-interactively #'icicle-bookmark-cmd) ;(call-interactively #'icicle-add-region)
+          (unless (consp (bookmark-region-alist-only));icicle-region-alist)
+            (error "`icicle-region-alist' is empty; try again, with a numeric prefix arg"))
+          (call-interactively #'icicle-select-region))
+      (call-interactively #'exchange-point-and-mark)))
 
 (icicle-define-command icicle-bookmark  ; Command name
   "Jump to a bookmark.
@@ -95,6 +95,55 @@ If `crosshairs.el' is loaded, then the target position is highlighted."
   (bookmark-jump-other-window bookmark))
   ;(icicle-bookmark-jump-1 bookmark))
 
+(defun icicle-bookmark-cmd (&optional parg) ; Bound to what `bookmark-set' is bound to (`C-x r m').
+  "Set bookmark or visit bookmark(s).
+With no prefix argument or a plain prefix arg (`C-u'), call
+`bookmark-set' to set a bookmark, passing the prefix arg.
+
+With a non-negative numeric prefix argument, set a bookmark at point,
+giving it a name that is the buffer name followed by the text starting
+at point (after a space).  At most `icicle-bookmark-name-length-max'
+characters of buffer text are used for the name.  If the prefix
+argument is 0, then do not overwrite any bookmarks that have the same
+name.
+
+With a negative prefix argument, call `icicle-bookmark' to visit a
+bookmark.
+
+By default, Icicle mode remaps all key sequences that are normally
+bound to `bookmark-set' to `icicle-bookmark-cmd'.  If you do not want
+this remapping, then customize option
+`icicle-top-level-key-bindings'."
+  (interactive "P")
+  (if (and parg
+           (< (prefix-numeric-value parg) 0))
+      (icicle-bookmark)
+      (let* ((flag-reg (region-active-p))
+             (bm-name
+              (read-from-minibuffer "Bookmark Name: "
+                                    nil nil nil nil
+                                    (and parg
+                                         (atom parg)
+                                         (concat
+                                          (buffer-name)
+                                          " "
+                                          (buffer-substring
+                                           (or (and flag-reg (mark)) (point))
+                                           (min
+                                            (if flag-reg
+                                                (point)
+                                                (save-excursion
+                                                  (end-of-line)
+                                                  (point)))
+                                            (+ (or (and flag-reg (mark)) (point))
+                                               icicle-bookmark-name-length-max))))))))
+        
+        (when bm-name
+          (message "Setting bookmark `%s'" bm-name)
+          (sit-for 2))
+        (bookmark-set bm-name (and parg
+                                   (or (consp parg)
+                                       (zerop (prefix-numeric-value parg))))))))
 
 
 
