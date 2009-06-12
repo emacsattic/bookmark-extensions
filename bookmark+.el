@@ -497,6 +497,12 @@ deletion, or > if it is flagged for displaying."
      if b
      collect i))
 
+(defun bookmark-region-alist-only-names ()
+  "Similar at `bookmark-all-names' but with only bookmarks with regions."
+  (loop with alist = (bookmark-region-alist-only)
+     for i in alist
+     collect (car i)))
+
 (defvar bookmark-list-only-regions-flag t)
 (defun bookmark-list-only-regions ()
   (let ((tmp-alist bookmark-alist))
