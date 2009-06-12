@@ -117,6 +117,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;
 
+;;; keymap
+;; Prefix is C-x p
+;; Commands are run with C-x p <command> (e.g "C-x p T")
+
 ;;;###autoload
 (define-key bookmark-map "o" 'bookmark-jump-other-window)
 ;;;###autoload
@@ -125,6 +129,8 @@
 (define-key ctl-x-map "p" bookmark-map)
 ;;;###autoload
 (define-key ctl-x-map "pj" 'bookmark-jump-other-window)
+;;;###autoload
+(define-key bookmark-map "T" 'bookmark-toggle-only-regions)
 
 ;;; User variables
 (defvar bookmark-use-region t
@@ -387,6 +393,7 @@ candidate."
                ;; show it in a buffer.
                (bookmark-show-annotation bookmark))))))
 
+;;;###autoload
 (defun bookmark-bmenu-list ()
   "Display a list of existing bookmarks.
 The list is displayed in a buffer named `*Bookmark List*'.
@@ -489,6 +496,25 @@ deletion, or > if it is flagged for displaying."
      for b = (bookmark-get-endposition (car i))
      if b
      collect i))
+
+(defvar bookmark-list-only-regions-flag t)
+(defun bookmark-list-only-regions ()
+  (let ((tmp-alist bookmark-alist))
+    (unwind-protect
+         (progn
+           (setq bookmark-alist (bookmark-region-alist-only))
+           (call-interactively #'bookmark-bmenu-list))
+      (setq bookmark-alist tmp-alist))))
+
+;;;###autoload
+(defun bookmark-toggle-only-regions ()
+  (interactive)
+  (if bookmark-list-only-regions-flag
+      (progn
+        (bookmark-list-only-regions)
+        (setq bookmark-list-only-regions-flag nil))
+      (call-interactively #'bookmark-bmenu-list)
+      (setq bookmark-list-only-regions-flag t)))
 
 (defun bookmark-location (bookmark)
   "Return the name of the file or buffer associated with BOOKMARK."
