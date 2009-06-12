@@ -455,6 +455,13 @@ deletion, or > if it is flagged for displaying."
   "Return the end-position of REGION in BOOKMARK."
   (bookmark-prop-get bookmark 'end-position))
 
+(defun bookmark-region-alist-only ()
+  "Create an alist with only bookmarks with region."
+  (loop for i in bookmark-alist
+     for b = (bookmark-get-endposition (car i))
+     if b
+     collect i))
+
 (defun bookmark-location (bookmark)
   "Return the name of the file or buffer associated with BOOKMARK."
   (bookmark-maybe-load-default-file)
