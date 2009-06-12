@@ -126,12 +126,40 @@
 ;;;###autoload
 (define-key ctl-x-map "pj" 'bookmark-jump-other-window)
 
+;;; User variables
 (defvar bookmark-use-region t
   "When non--nil active region if one have been saved
 when jumping to bookmark.")
+
 (defvar bookmark-region-search-size 40
   "The same as `bookmark-search-size' but specialized for bookmark regions.")
-  
+
+;;; Faces
+(defface bookmark-file-name-face
+  '((t (:foreground "Blue")))
+  "*Face used for file names in bookmark buffer."
+  :group 'bookmark)
+
+(defface bookmark-directory-name-face
+  '((t (:foreground "DarkRed" :background "LightGray")))
+  "*Face used for directory names in bookmark buffer."
+  :group 'bookmark)
+
+(defface bookmark-w3m-url-face
+  '((t (:foreground "yellow")))
+  "*Face used for w3m urls in bookmark buffer."
+  :group 'bookmark)
+
+(defface bookmark-info-buffer-face
+  '((t (:foreground "green")))
+  "*Face used for info buffers in bookmark buffer."
+  :group 'bookmark)
+
+(defface bookmark-buffer-nonfile-name-face
+  '((t (:foreground "grey")))
+  "*Face used for buffer nonfile-names in bookmark buffer."
+  :group 'bookmark)
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Binds `icicle-delete-candidate-object' to `bookmark-delete'.
@@ -403,7 +431,7 @@ deletion, or > if it is flagged for displaying."
                             (file-directory-p isfile))
                        '(mouse-face highlight
                          follow-link t
-                         face '((:foreground "DarkRed" :background "LightGray"))
+                         face 'bookmark-directory-name-face
                          help-echo "mouse-2: go to this dired buffer in other window"))
                       ((and isfile ;; regular files
                             (not istramp)
@@ -411,27 +439,27 @@ deletion, or > if it is flagged for displaying."
                             (file-exists-p isfile))
                        '(mouse-face highlight
                          follow-link t
-                         face '((:foreground "blue"))
+                         face 'bookmark-file-name-face
                          help-echo "mouse-2: go to this file in other window"))
                       ((and isbuf ;; buffers non--filename
                             (not isfile))
                          '(mouse-face highlight
                            follow-link t
-                           face '((:foreground "grey"))
+                           face 'bookmark-buffer-nonfile-name-face 
                            help-echo "mouse-2: go to this non--buffer-filename"))
                       ((and (string= isbuf "*w3m*") ;; w3m urls
                             (when isfile
                               (not (file-exists-p isfile))))
                        '(mouse-face highlight
                          follow-link t
-                         face '((:foreground "yellow"))
+                         face 'bookmark-w3m-url-face
                          help-echo "mouse-2: go to this w3m url"))
                       ((and (string= isbuf "*info*") ;; info buffers
                             (when isfile
                               (not (file-exists-p isfile))))
                        '(mouse-face highlight
                          follow-link t
-                         face '((:foreground "green"))
+                         face 'bookmark-info-buffer-face
                          help-echo "mouse-2: go to this info buffer"))
                       (istramp
                        '(mouse-face highlight
