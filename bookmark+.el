@@ -166,6 +166,11 @@ when jumping to bookmark.")
   "*Face used for buffer nonfile-names in bookmark buffer."
   :group 'bookmark)
 
+(defface bookmark-buffer-file-name-region-face
+  '((t (:foreground "Indianred2")))
+  "*Face used for buffer nonfile-names in bookmark buffer."
+  :group 'bookmark)
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Binds `icicle-delete-candidate-object' to `bookmark-delete'.
@@ -440,6 +445,15 @@ deletion, or > if it is flagged for displaying."
                          follow-link t
                          face 'bookmark-directory-name-face
                          help-echo "mouse-2: go to this dired buffer in other window"))
+                      ((and isfile ;; regular files with region
+                            (not istramp)
+                            (not (file-directory-p isfile))
+                            (file-exists-p isfile)
+                            isregion)
+                         '(mouse-face highlight
+                           follow-link t
+                           face 'bookmark-buffer-file-name-region-face
+                           help-echo "mouse-2: go to this file with region"))
                       ((and isfile ;; regular files
                             (not istramp)
                             (not (file-directory-p isfile))
