@@ -388,6 +388,8 @@ deletion, or > if it is flagged for displaying."
                 (isfile (bookmark-get-filename name))
                 (istramp (when isfile
                            (tramp-tramp-file-p isfile)))
+                (isregion (bookmark-get-endposition name))
+                (isannotation (bookmark-get-annotation name))
                 (isbuf (bookmark-get-buffername name)))
 	   (insert name)
 	   (if (and (display-color-p) (display-mouse-p))
@@ -402,7 +404,7 @@ deletion, or > if it is flagged for displaying."
                        '(mouse-face highlight
                          follow-link t
                          face '((:foreground "DarkRed" :background "LightGray"))
-                         help-echo "mouse-2: go to this bookmark in other window"))
+                         help-echo "mouse-2: go to this dired buffer in other window"))
                       ((and isfile ;; regular files
                             (not istramp)
                             (not (file-directory-p isfile))
@@ -410,27 +412,32 @@ deletion, or > if it is flagged for displaying."
                        '(mouse-face highlight
                          follow-link t
                          face '((:foreground "blue"))
-                         help-echo "mouse-2: go to this bookmark in other window"))
+                         help-echo "mouse-2: go to this file in other window"))
                       ((and isbuf ;; buffers non--filename
                             (not isfile))
                          '(mouse-face highlight
                            follow-link t
                            face '((:foreground "grey"))
-                           help-echo "mouse-2: go to this bookmark in other window"))
+                           help-echo "mouse-2: go to this non--buffer-filename"))
                       ((and (string= isbuf "*w3m*") ;; w3m urls
                             (when isfile
                               (not (file-exists-p isfile))))
                        '(mouse-face highlight
                          follow-link t
                          face '((:foreground "yellow"))
-                         help-echo "mouse-2: go to this bookmark in other window"))
+                         help-echo "mouse-2: go to this w3m url"))
                       ((and (string= isbuf "*info*") ;; info buffers
                             (when isfile
                               (not (file-exists-p isfile))))
                        '(mouse-face highlight
                          follow-link t
                          face '((:foreground "green"))
-                         help-echo "mouse-2: go to this bookmark in other window")))))
+                         help-echo "mouse-2: go to this info buffer"))
+                      (istramp
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'italic
+                         help-echo "mouse-2: go to this tramp buffer")))))
 	   (insert "\n")
 	   )))
      (bookmark-maybe-sort-alist)))
