@@ -451,6 +451,10 @@ deletion, or > if it is flagged for displaying."
   "Return the buffer-name of BOOKMARK."
   (bookmark-prop-get bookmark 'buffer-name))
 
+(defun bookmark-get-endposition (bookmark)
+  "Return the end-position of REGION in BOOKMARK."
+  (bookmark-prop-get bookmark 'end-position))
+
 (defun bookmark-location (bookmark)
   "Return the name of the file or buffer associated with BOOKMARK."
   (bookmark-maybe-load-default-file)
