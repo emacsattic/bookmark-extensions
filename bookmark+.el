@@ -424,6 +424,7 @@ deletion, or > if it is flagged for displaying."
                            (tramp-tramp-file-p isfile)))
                 (isregion (bookmark-get-endposition name))
                 (isannotation (bookmark-get-annotation name))
+                (ishandler (bookmark-get-handler name))
                 (isbuf (bookmark-get-buffername name)))
 	   (insert name)
 	   (if (and (display-color-p) (display-mouse-p))
@@ -469,13 +470,15 @@ deletion, or > if it is flagged for displaying."
                          follow-link t
                          face 'bookmark-w3m-url-face
                          help-echo "mouse-2: go to this w3m url"))
-                      ((and (string= isbuf "*info*") ;; info buffers
-                            (when isfile
-                              (not (file-exists-p isfile))))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-info-buffer-face
-                         help-echo "mouse-2: go to this info buffer"))
+                      ((when (or ;; info buffers
+                              (eq ishandler 'Info-bookmark-jump)
+                              (and (string= isbuf "*info*")
+                                   (when isfile
+                                     (not (file-exists-p isfile)))))
+                         '(mouse-face highlight
+                           follow-link t
+                           face 'bookmark-info-buffer-face
+                           help-echo "mouse-2: go to this info buffer")))
                       (istramp
                        '(mouse-face highlight
                          follow-link t
