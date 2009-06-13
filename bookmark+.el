@@ -122,13 +122,7 @@
 ;; Commands are run with C-x p <command> (e.g "C-x p T")
 
 ;;;###autoload
-(define-key bookmark-map "o" 'bookmark-jump-other-window)
-;;;###autoload
-(define-key bookmark-map "q" 'bookmark-jump-other-window)
-;;;###autoload
 (define-key ctl-x-map "p" bookmark-map)
-;;;###autoload
-(define-key ctl-x-map "pj" 'bookmark-jump-other-window)
 ;;;###autoload
 (define-key bookmark-map "T" 'bookmark-toggle-only-regions)
 
@@ -519,12 +513,8 @@ deletion, or > if it is flagged for displaying."
 
 (defvar bookmark-list-only-regions-flag t)
 (defun bookmark-list-only-regions ()
-  (let ((tmp-alist bookmark-alist))
-    (unwind-protect
-         (progn
-           (setq bookmark-alist (bookmark-region-alist-only))
-           (call-interactively #'bookmark-bmenu-list))
-      (setq bookmark-alist tmp-alist))))
+  (let ((bookmark-alist (bookmark-region-alist-only)))
+    (call-interactively #'bookmark-bmenu-list)))
 
 ;;;###autoload
 (defun bookmark-toggle-only-regions ()
@@ -580,12 +570,12 @@ record that pertains to the location within the buffer."
 
 (defun bookmark-make-record ()
   "Return a new bookmark record (NAME . ALIST) for the current location."
-  (let* ((bookmark-make-record-function (if (and transient-mark-mode
+  (let* ((bookmark-record-function (if (and transient-mark-mode
                                                  (region-active-p)
                                                  (not (eq (mark) (point))))
                                             'bookmark-make-record-region
-                                            'bookmark-make-record-default))
-         (record (funcall bookmark-make-record-function)))
+                                            bookmark-make-record-function))
+         (record (funcall bookmark-record-function)))
     ;; Set up default name.
     (if (stringp (car record))
         ;; The function already provided a default name.
@@ -596,13 +586,12 @@ record that pertains to the location within the buffer."
 
 (defun bookmark-region-handler (bmk)
   "Special handler to reach bookmarks that have region saved."
-  (let* ((pos-book (position bmk bookmark-alist))
-         (buf (cdr (assoc 'buffer-name (nth pos-book bookmark-alist))))
-         (fname (cdr (assoc 'filename (nth pos-book bookmark-alist))))
-         (start-str (cdr (assoc 'front-context-string (nth pos-book bookmark-alist))))
-         (end-str (cdr (assoc 'rear-context-string (nth pos-book bookmark-alist))))
-         (beg-pos (cdr (assoc 'position (nth pos-book bookmark-alist))))
-         (end-pos (cdr (assoc 'end-position (nth pos-book bookmark-alist)))))
+  (let* ((buf (bookmark-prop-get bmk 'buffer-name))
+         (fname (bookmark-prop-get bmk 'filename))
+         (start-str (bookmark-prop-get bmk 'front-context-string))
+         (end-str (bookmark-prop-get bmk 'rear-context-string))
+         (beg-pos (bookmark-prop-get bmk 'position))
+         (end-pos (bookmark-prop-get bmk 'end-position)))
     (cond ((string= buf "*info*") ; info buffer?
            (info fname))
           ((string= buf "*w3m*") ; May be use string-match in case of *w3m<2>*...
@@ -635,8 +624,8 @@ record that pertains to the location within the buffer."
             (re-search-forward (regexp-opt (list end-str) t) nil t)
             (setq end-pos (point)))
           ;; Save new location to `bookmark-alist'.
-          (setf (cdr (assoc 'position (nth pos-book bookmark-alist))) beg-pos)
-          (setf (cdr (assoc 'end-position (nth pos-book bookmark-alist))) end-pos)
+          (setf (cdr (assoc 'position bmk)) beg-pos)
+          (setf (cdr (assoc 'end-position bmk)) end-pos)
           (bookmark-save))))
   (push-mark end-pos 'nomsg 'activate)
   (setq deactivate-mark  nil)
