@@ -364,7 +364,7 @@ candidate."
   (interactive (list (bookmark-completing-read "Jump to bookmark"
                                                bookmark-current-bookmark)))
   (if current-prefix-arg
-      (let ((bookmark-use-region t))
+      (let ((bookmark-use-region (not bookmark-use-region)))
         (old-bookmark-jump bookmark))
       (old-bookmark-jump bookmark)))
 
