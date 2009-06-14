@@ -115,11 +115,12 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bookmark+version-number 1.1.1)
+(defconst bookmark+version-number "1.1.1")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
-  (format "Bookmark+ Version %s" bookmark+version-number))
+  (interactive)
+  (message "Bookmark+ Version %s" bookmark+version-number))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 
