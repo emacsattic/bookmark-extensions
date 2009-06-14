@@ -115,6 +115,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
+(defconst bookmark+version 1.1)
 ;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; keymap
