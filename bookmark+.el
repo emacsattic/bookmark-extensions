@@ -536,6 +536,7 @@ deletion, or > if it is flagged for displaying."
       (call-interactively #'bookmark-bmenu-list)
       (setq bookmark-list-only-regions-flag t)))
 
+;; (find-fline "~/download/bookmark+-2009-06-13a-DREW.el" "defun bookmark-location")
 (defun bookmark-location (bookmark)
   "Return the name of the file or buffer associated with BOOKMARK."
   (bookmark-maybe-load-default-file)
@@ -543,6 +544,8 @@ deletion, or > if it is flagged for displaying."
       (bookmark-get-buffername bookmark)
       "*What is this?*"))
 
+;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record-default")
+;; (find-fline "/usr/share/emacs/23.0.94/lisp/info.el" "defun Info-bookmark-make-record")
 (defun bookmark-make-record-region (&optional point-only)
   "Return the record describing the location of a new bookmark.
 Must be at the correct position in the buffer in which the bookmark is
@@ -577,7 +580,7 @@ record that pertains to the location within the buffer."
         (end-position . ,end)
         (handler . ,'bookmark-region-handler))))
 
-
+;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record")
 (defun bookmark-make-record ()
   "Return a new bookmark record (NAME . ALIST) for the current location."
   (let* ((bookmark-record-function (if (and transient-mark-mode
@@ -594,14 +597,17 @@ record that pertains to the location within the buffer."
       (setcar record (or bookmark-current-bookmark (bookmark-buffer-name)))
       record)))
 
+;; (find-fline "/usr/share/emacs/23.0.94/lisp/info.el" "defun Info-bookmark-jump")
+;; (find-fline "~/download/bookmark+-2009-06-13a-DREW.el" "defun Info-bookmark-jump")
+;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-default-handler")
 (defun bookmark-region-handler (bmk)
   "Special handler to reach bookmarks that have region saved."
-  (let* ((buf (bookmark-prop-get bmk 'buffer-name))
-         (fname (bookmark-prop-get bmk 'filename))
+  (let* ((buf       (bookmark-prop-get bmk 'buffer-name))
+         (fname     (bookmark-prop-get bmk 'filename))
          (start-str (bookmark-prop-get bmk 'front-context-string))
-         (end-str (bookmark-prop-get bmk 'rear-context-string))
-         (beg-pos (bookmark-prop-get bmk 'position))
-         (end-pos (bookmark-prop-get bmk 'end-position)))
+         (end-str   (bookmark-prop-get bmk 'rear-context-string))
+         (beg-pos   (bookmark-prop-get bmk 'position))
+         (end-pos   (bookmark-prop-get bmk 'end-position)))
     (cond ((string= buf "*info*") ; info buffer?
            (info fname))
           ((string= buf "*w3m*") ; May be use string-match in case of *w3m<2>*...
@@ -641,6 +647,7 @@ record that pertains to the location within the buffer."
   (setq deactivate-mark  nil)
   (message "Region at Start:%s to End:%s" beg-pos end-pos)))
 
+;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-handle-bookmark")
 (defun bookmark-handle-bookmark (bookmark)
   "Call BOOKMARK's handler or `bookmark-default-handler' if it has none.
 Changes current buffer and point and returns nil, or signals a `file-error'.
