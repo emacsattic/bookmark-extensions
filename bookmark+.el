@@ -504,7 +504,7 @@ deletion, or > if it is flagged for displaying."
 
 (defun bookmark-get-buffername (bookmark)
   "Return the buffer-name of BOOKMARK."
-  (bookmark-prop-get bookmark 'buffer-name))
+  (bookmark-prop-get bookmark 'buffer))
 
 (defun bookmark-get-endposition (bookmark)
   "Return the end-position of REGION in BOOKMARK."
