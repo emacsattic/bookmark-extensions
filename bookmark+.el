@@ -513,7 +513,9 @@ deletion, or > if it is flagged for displaying."
 (defun bookmark-region-alist-only ()
   "Create an alist with only bookmarks with region."
   (loop for i in bookmark-alist
-     for b = (bookmark-get-endposition (car i))
+     for b = (and (bookmark-get-endposition i)
+                  (/= (bookmark-get-position i)
+                      (bookmark-get-endposition i)))
      if b
      collect i))
 
