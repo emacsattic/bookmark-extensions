@@ -590,7 +590,10 @@ record that pertains to the location within the buffer."
                        (point)
                        (- (point) bookmark-search-size))
                       nil))))
-    `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
+    `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
+                                                 (bookmark-buffer-file-name))
+                                                (t
+                                                 nil)))))
         (buffer
          . ,buf)
         (front-context-string . ,fcs)
@@ -661,12 +664,13 @@ record that pertains to the location within the buffer."
               (goto-char place) (beginning-of-line)
               (message "Region at Start:%s to End:%s not found!" place end-pos)))
         ;; There is no saved region, retrieve file as normal.
-        (cond ((file-readable-p file)
-               (find-file-noselect (expand-file-name file))
-               (unless buf
-                 (if (file-directory-p file)
-                     (setq buf (file-name-nondirectory (directory-file-name file)))
-                     (setq buf (file-name-nondirectory file)))))
+        (cond ((when (and file
+                          (file-readable-p file))
+                 (find-file-noselect (expand-file-name file))
+                 (unless buf
+                   (if (file-directory-p file)
+                       (setq buf (file-name-nondirectory (directory-file-name file)))
+                       (setq buf (file-name-nondirectory file))))))
               (t
                ;; No file found we search for a buffer non--filename
                ;; if not found signal file doesn't exist anymore
