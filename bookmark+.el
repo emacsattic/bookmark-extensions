@@ -115,7 +115,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bookmark+version-number "1.1.1")
+(defconst bookmark+version-number "1.1.2")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -540,15 +540,13 @@ deletion, or > if it is flagged for displaying."
       (call-interactively #'bookmark-bmenu-list)
       (setq bookmark-list-only-regions-flag t)))
 
-;; (find-fline "~/download/bookmark+-2009-06-13a-DREW.el" "defun bookmark-location")
-;; TODO Replace with Drew version:
-;; (find-fline "~/download/bookmark+-2009-06-13a-DREW.el" "defun bookmark-location")
+
 (defun bookmark-location (bookmark)
   "Return the name of the file or buffer associated with BOOKMARK."
   (bookmark-maybe-load-default-file)
   (or (bookmark-get-filename bookmark)
       (bookmark-get-buffername bookmark)
-      "*What is this?*"))
+      (error "Bookmark has no file or buffer name: %S" bookmark)))
 
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record")
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record-default")
