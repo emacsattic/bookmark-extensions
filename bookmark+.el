@@ -703,6 +703,30 @@ record that pertains to the location within the buffer."
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-default-handler")
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-handle-bookmark")
 
+;; W3M support
+(defun w3m-bookmark-make-record ()
+  "Make a special entry for w3m buffers."
+  `(,@(bookmark-make-record-default 'point-only)
+    (filename . ,w3m-current-url)
+    (handler . w3m-bookmark-jump)))
+
+(add-hook 'w3m-mode-hook
+          #'(lambda ()
+            (set (make-local-variable 'bookmark-make-record-function)
+                 'w3m-bookmark-make-record)))
+
+(defun w3m-bookmark-jump (bmk)
+  ;; This implements the `handler' function interface for record type returned
+  ;; by `w3m-bookmark-make-record', which see.
+  (let* ((file  (bookmark-prop-get bmk 'filename))
+         (buf   (bookmark-prop-get bmk 'buffer)))                 
+    (w3m-browse-url file)
+    (with-current-buffer "*w3m*"
+      (while (eq (point-min) (point-max))
+        (sit-for 1)))
+    (bookmark-default-handler
+     (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
+
 
 ;; Not needed for Emacs 22+.
 (unless (> emacs-major-version 21)
