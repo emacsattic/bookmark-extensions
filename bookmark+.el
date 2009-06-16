@@ -1,12 +1,11 @@
 ;;; bookmark+.el --- Extensions to `bookmark.el'.
-;;
+
 ;; Filename: bookmark+.el
 ;; Description: Extensions to `bookmark.el'.
 ;; Author: Drew Adams
 ;; Maintainer: Drew Adams
 ;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
 ;; Created: Fri Sep 15 07:58:41 2000
-;; Version: 21.0
 
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki/bookmark+.el
 ;; Keywords: bookmarks, placeholders, annotations, search
@@ -629,8 +628,7 @@ record that pertains to the location within the buffer."
             (raise-frame)
             (goto-char place)      
             ;; Check if start of region have moved
-            (unless (and ;(not (eq place end-pos))
-                         (string= forward-str (buffer-substring-no-properties (point) (+ (point) (length forward-str))))
+            (unless (and (string= forward-str (buffer-substring-no-properties (point) (+ (point) (length forward-str))))
                          (save-excursion
                            ;; check also if end of region have changed
                            (goto-char end-pos)
