@@ -611,11 +611,15 @@ record that pertains to the location within the buffer."
          (region-retrieved-p     t))
     (if (and end-pos
              (/= place end-pos))
-        ;; A saved region exists retrieve it
+        ;; A saved region exists, create buffer and retrieve it
         (progn
-          (cond ((and file ;; file exists and is readable
-                      (file-readable-p file))
-                    (find-file-noselect file))
+          (cond ((when (and file ;; file exists and is readable
+                            (file-readable-p file))
+                   ;; setup buffer
+                   ;; handle buf buf<2>...
+                   (with-current-buffer (find-file-noselect (expand-file-name file))
+                     (let ((buf-name (buffer-name)))
+                         (setq buf buf-name)))))
                  (t
                   ;; No file found we search for a buffer non--filename
                   ;; if not found, signal file doesn't exist anymore
@@ -662,11 +666,10 @@ record that pertains to the location within the buffer."
         ;; There is no saved region, retrieve file as normal.
         (cond ((when (and file
                           (file-readable-p file))
-                 (find-file-noselect (expand-file-name file))
-                 (unless buf
-                   (if (file-directory-p file)
-                       (setq buf (file-name-nondirectory (directory-file-name file)))
-                       (setq buf (file-name-nondirectory file))))))
+                 ;; in case buf buf<2>...
+                 (with-current-buffer (find-file-noselect (expand-file-name file))
+                   (let ((buf-name (buffer-name)))
+                     (setq buf buf-name)))))
               (t
                ;; No file found we search for a buffer non--filename
                ;; if not found signal file doesn't exist anymore
