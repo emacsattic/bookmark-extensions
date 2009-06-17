@@ -630,7 +630,11 @@ record that pertains to the location within the buffer."
           (when (get-buffer buf)
             (pop-to-buffer buf)
             (raise-frame)
-            (goto-char place)      
+              (if (> place (point-max))
+                  (progn
+                    (goto-char (point-max))
+                    (error "Can't retrieve text!"))
+                  (goto-char place))
             ;; Check if start of region have moved
             (unless (and (string= forward-str (buffer-substring-no-properties (point) (+ (point) (length forward-str))))
                          (save-excursion
