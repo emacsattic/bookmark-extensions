@@ -609,7 +609,8 @@ record that pertains to the location within the buffer."
          (place                  (bookmark-get-position bmk))
          (end-pos                (bookmark-prop-get bmk 'end-position))
          (region-retrieved-p     t))
-    (if (and end-pos
+    (if (and bookmark-use-region
+             end-pos
              (/= place end-pos))
         ;; A saved region exists, create buffer and retrieve it
         (progn
