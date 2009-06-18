@@ -113,8 +113,9 @@
 
 (require 'bookmark)
 (eval-when-compile (require 'cl))
+(require 'tramp)
 
-(defconst bookmark+version-number "1.1.2")
+(defconst bookmark+version-number "1.2.5")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -441,43 +442,43 @@ deletion, or > if it is flagged for displaying."
 		(save-excursion (re-search-backward
 				 "[^ \t]")
 				(1+ (point)))
-                (cond ((and isfile ;; dirs
-                            (not istramp)
-                            (file-directory-p isfile))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-directory-name-face
-                         help-echo "mouse-2: go to this dired buffer in other window"))
-                      ((and isfile ;; regular files with region
-                            (not istramp)
-                            (not (file-directory-p isfile))
-                            (file-exists-p isfile)
-                            isregion)
+                (cond ((when (and isfile ;; dirs
+                                  (not istramp)
+                                  (file-directory-p isfile))
+                         '(mouse-face highlight
+                           follow-link t
+                           face 'bookmark-directory-name-face
+                           help-echo "mouse-2: go to this dired buffer in other window")))
+                      ((when (and isfile ;; regular files with region
+                                  (not istramp)
+                                  (not (file-directory-p isfile))
+                                  (file-exists-p isfile)
+                                  isregion)
                          '(mouse-face highlight
                            follow-link t
                            face 'bookmark-buffer-file-name-region-face
-                           help-echo "mouse-2: go to this file with region"))
-                      ((and isfile ;; regular files
-                            (not istramp)
-                            (not (file-directory-p isfile))
-                            (file-exists-p isfile))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-file-name-face
-                         help-echo "mouse-2: go to this file in other window"))
-                      ((and isbuf ;; buffers non--filename
-                            (not isfile))
+                           help-echo "mouse-2: go to this file with region")))
+                      ((when (and isfile ;; regular files
+                                  (not istramp)
+                                  (not (file-directory-p isfile))
+                                  (file-exists-p isfile))
+                         '(mouse-face highlight
+                           follow-link t
+                           face 'bookmark-file-name-face
+                           help-echo "mouse-2: go to this file in other window")))
+                      ((when (and isbuf ;; buffers non--filename
+                                  (not isfile))
                          '(mouse-face highlight
                            follow-link t
                            face 'bookmark-buffer-nonfile-name-face 
-                           help-echo "mouse-2: go to this non--buffer-filename"))
-                      ((and (string= isbuf "*w3m*") ;; w3m urls
-                            (when isfile
-                              (not (file-exists-p isfile))))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-w3m-url-face
-                         help-echo "mouse-2: go to this w3m url"))
+                           help-echo "mouse-2: go to this non--buffer-filename")))
+                      ((when (and (string= isbuf "*w3m*") ;; w3m urls
+                                  (when isfile
+                                    (not (file-exists-p isfile))))
+                         '(mouse-face highlight
+                           follow-link t
+                           face 'bookmark-w3m-url-face
+                           help-echo "mouse-2: go to this w3m url")))
                       ((when (or ;; info buffers
                               (eq ishandler 'Info-bookmark-jump)
                               (and (string= isbuf "*info*")
@@ -487,11 +488,11 @@ deletion, or > if it is flagged for displaying."
                            follow-link t
                            face 'bookmark-info-buffer-face
                            help-echo "mouse-2: go to this info buffer")))
-                      (istramp
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'italic
-                         help-echo "mouse-2: go to this tramp buffer")))))
+                      ((when istramp
+                         '(mouse-face highlight
+                           follow-link t
+                           face 'italic
+                           help-echo "mouse-2: go to this tramp buffer"))))))
 	   (insert "\n")
 	   )))
      (bookmark-maybe-sort-alist)))
