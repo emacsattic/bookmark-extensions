@@ -587,7 +587,19 @@ record that pertains to the location within the buffer."
                       (buffer-substring-no-properties
                        (point)
                        (- (point) bookmark-search-size))
-                      nil))))
+                      nil)))
+         (fcrs (when isregion
+                 (goto-char beg)
+                 (re-search-backward ".[^ ]" nil t)
+                 (buffer-substring-no-properties (max (- (point) bookmark-region-search-size)
+                                        (point-min))
+                                   beg)))
+         (ecrs (when isregion
+                 (goto-char end)
+                 (re-search-forward "^.*[^ \n]" nil t)
+                 (beginning-of-line)
+                 (buffer-substring-no-properties end (+ (point) (min bookmark-region-search-size
+                                                       (- (point-max) (point))))))))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (t
@@ -596,6 +608,8 @@ record that pertains to the location within the buffer."
          . ,buf)
         (front-context-string . ,fcs)
         (rear-context-string . ,ecs)
+        (front-context-region-string . ,fcrs)
+        (rear-context-region-string . ,ecrs)
         (position . ,beg)
         (end-position . ,end))))
 
@@ -658,6 +672,7 @@ record that pertains to the location within the buffer."
                             end-pos end)
                       (setf (cdr (assoc 'position bmk)) place)
                       (setf (cdr (assoc 'end-position bmk)) end-pos))
+                    ;; At this point give us a secoond chance to retrieve region
                     (setq region-retrieved-p nil)))))
           ;; Region found
           (if region-retrieved-p
