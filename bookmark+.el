@@ -115,7 +115,7 @@
 (eval-when-compile (require 'cl))
 (require 'tramp)
 
-(defconst bookmark+version-number "1.2.5")
+(defconst bookmark+version-number "1.2.10")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
