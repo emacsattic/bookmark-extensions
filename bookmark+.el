@@ -556,6 +556,7 @@ record that pertains to the location within the buffer."
   (let* ((isregion (and transient-mark-mode
                         (region-active-p)
                         (not (eq (mark) (point)))))
+         (isdired (car (rassq (current-buffer) dired-buffers)))
          (beg (if isregion
                   (region-beginning)
                   (point)))
@@ -596,6 +597,7 @@ record that pertains to the location within the buffer."
                                                        (- (point-max) (point))))))))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
+                                                (isdired)
                                                 (t
                                                  nil)))))
         (buffer
