@@ -621,6 +621,8 @@ record that pertains to the location within the buffer."
          (buf                    (bookmark-prop-get bmk 'buffer))
          (forward-str            (bookmark-get-front-context-string bmk))
          (behind-str             (bookmark-get-rear-context-string bmk))
+         (str-bef                (cdr (assoc 'front-context-region-string bmk)))
+         (str-aft                (cdr (assoc 'rear-context-region-string bmk)))
          (place                  (bookmark-get-position bmk))
          (end-pos                (bookmark-prop-get bmk 'end-position))
          (region-retrieved-p     t))
@@ -658,13 +660,16 @@ record that pertains to the location within the buffer."
                            (goto-char end-pos)
                            (string= behind-str (buffer-substring-no-properties (point) (- (point) (length forward-str))))))
               ;; Position have changed: relocate region.
-              (goto-char (point-max))
+              ;(goto-char (point-max))
               (let (beg end)
-                (when (re-search-backward (regexp-opt (list forward-str) t) nil t)
-                  (setq beg (point))
-                  (save-excursion
-                    (when (re-search-forward (regexp-opt (list behind-str) t) nil t)
-                      (setq end (point)))))
+                (if (re-search-forward (regexp-opt (list behind-str) t) (point-max) t)
+                    (setq end (point))
+                    (when (re-search-forward (regexp-opt (list str-aft) t) (point-max) t)
+                      (setq end (match-beginning 0))))
+                (if (re-search-backward (regexp-opt (list forward-str) t) (point-min) t)
+                    (setq beg (point))
+                    (when (re-search-backward (regexp-opt (list str-bef) t) (point-min) t)
+                      (setq beg (match-end 0))))
                 ;; Save new location to `bookmark-alist'.
                 (if (and beg end)
                     (progn
@@ -672,11 +677,11 @@ record that pertains to the location within the buffer."
                             end-pos end)
                       (setf (cdr (assoc 'position bmk)) place)
                       (setf (cdr (assoc 'end-position bmk)) end-pos))
-                    ;; At this point give us a secoond chance to retrieve region
                     (setq region-retrieved-p nil)))))
           ;; Region found
           (if region-retrieved-p
               (progn
+                (goto-char place)
                 (push-mark end-pos 'nomsg 'activate)
                 (setq deactivate-mark  nil)
                 (message "Region at Start:%s to End:%s" place end-pos))
