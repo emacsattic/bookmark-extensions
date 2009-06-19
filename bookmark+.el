@@ -519,27 +519,22 @@ deletion, or > if it is flagged for displaying."
      if b
      collect i))
 
-(defun bookmark-region-alist-only-names ()
-  "Similar at `bookmark-all-names' but with only bookmarks with regions."
-  (loop with alist = (bookmark-region-alist-only)
-     for i in alist
-     collect (car i)))
-
+;; Internal use only!
 (defvar bookmark-list-only-regions-flag t)
 (defun bookmark-list-only-regions ()
+  "Return only the elements of `bookmark-alist' that have a recorded region."
   (let ((bookmark-alist (bookmark-region-alist-only)))
     (call-interactively #'bookmark-bmenu-list)))
 
+;; (find-fline "~/download/bookmark+-2009-06-13a-DREW.el" "defun bookmark-toggle-use-only-regions")
 ;;;###autoload
-(defun bookmark-toggle-only-regions ()
+(defun bookmark-toggle-use-only-regions ()
+  "Toggle visibility of bookmarks that have not a region recorded."
   (interactive)
+  (setq bookmark-list-only-regions-flag (not bookmark-list-only-regions-flag))
   (if bookmark-list-only-regions-flag
-      (progn
-        (bookmark-list-only-regions)
-        (setq bookmark-list-only-regions-flag nil))
-      (call-interactively #'bookmark-bmenu-list)
-      (setq bookmark-list-only-regions-flag t)))
-
+      (bookmark-list-only-regions)
+      (call-interactively #'bookmark-bmenu-list)))
 
 (defun bookmark-location (bookmark)
   "Return the name of the file or buffer associated with BOOKMARK."
@@ -552,7 +547,6 @@ deletion, or > if it is flagged for displaying."
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record-default")
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/info.el" "defun Info-bookmark-make-record")
 
-;; That do not handle anymore info nor w3m
 (defun bookmark-make-record-default (&optional point-only)
   "Return the record describing the location of a new bookmark.
 Must be at the correct position in the buffer in which the bookmark is
