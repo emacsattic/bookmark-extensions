@@ -656,16 +656,27 @@ record that pertains to the location within the buffer."
                            (goto-char end-pos)
                            (string= behind-str (buffer-substring-no-properties (point) (- (point) (length forward-str))))))
               ;; Position have changed: relocate region.
-              ;(goto-char (point-max))
               (let (beg end)
+                ;; Try to search end point with `behind-str'.
                 (if (re-search-forward (regexp-opt (list behind-str) t) (point-max) t)
                     (setq end (point))
+                    ;; If failed try with `str-af'.
                     (when (re-search-forward (regexp-opt (list str-aft) t) (point-max) t)
-                      (setq end (match-beginning 0))))
+                      (setq end (match-beginning 0))
+                      (goto-char end)
+                      ;; If `str-aft' have moved one or more line forward reach it.
+                      (while (not (looking-back ".[^ \n]")) (forward-char -1))
+                      (setq end (point))))
+                ;; Try to search beg point with `forward-str'
                 (if (re-search-backward (regexp-opt (list forward-str) t) (point-min) t)
                     (setq beg (point))
+                    ;; If failed try with `str-bef'.
                     (when (re-search-backward (regexp-opt (list str-bef) t) (point-min) t)
-                      (setq beg (match-end 0))))
+                      (setq beg (match-end 0))
+                      (goto-char beg)
+                      ;; If region have moved one or more line forward reach it.
+                      (while (not (looking-at ".[^ \n]")) (forward-char 1))
+                      (setq beg (point))))
                 ;; Save new location to `bookmark-alist'.
                 (if (and beg end)
                     (progn
