@@ -131,7 +131,7 @@
 ;;;###autoload
 (define-key ctl-x-map "p" bookmark-map)
 ;;;###autoload
-(define-key bookmark-map "T" 'bookmark-toggle-only-regions)
+(define-key bookmark-map "T" 'bookmark-toggle-use-only-regions)
 
 ;;; User variables
 (defvar bookmark-use-region t
