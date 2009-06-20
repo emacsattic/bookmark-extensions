@@ -543,9 +543,50 @@ deletion, or > if it is flagged for displaying."
       (bookmark-get-buffername bookmark)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
+;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-set ")
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record")
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record-default")
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/info.el" "defun Info-bookmark-make-record")
+
+(defun bookmark-get-fcs (b e regionp)
+  (if regionp
+      (buffer-substring-no-properties
+       beg
+       (+ beg (min bookmark-region-search-size (- end beg))))
+      (if (>= (- (point-max) (point)) bookmark-search-size)
+          (buffer-substring-no-properties
+           (point)
+           (+ (point) bookmark-search-size))
+          nil)))
+
+(defun bookmark-get-ecs (b e regionp)
+  (if regionp
+      (buffer-substring-no-properties
+       end
+       (- end (min bookmark-region-search-size
+                   (- end beg))))
+      (if (>= (- (point) (point-min)) bookmark-search-size)
+          (buffer-substring-no-properties
+           (point)
+           (- (point) bookmark-search-size))
+          nil)))
+
+(defun bookmark-get-fcrs (b e regionp)
+  (when regionp
+    (goto-char beg)
+    (re-search-backward ".[^ ]" nil t)
+    (buffer-substring-no-properties (max (- (point) bookmark-region-search-size)
+                                         (point-min))
+                                    beg)))
+      
+(defun bookmark-get-ecrs (b e regionp)
+  (when regionp
+    (goto-char end)
+    (re-search-forward "^.*[^ \n]" nil t)
+    (beginning-of-line)
+    (buffer-substring-no-properties end (+ (point) (min bookmark-region-search-size
+                                                        (- (point-max) (point)))))))
+      
 
 (defun bookmark-make-record-default (&optional point-only)
   "Return the record describing the location of a new bookmark.
@@ -564,37 +605,10 @@ record that pertains to the location within the buffer."
                   (region-end)
                   (point)))
          (buf (buffer-name))
-         (fcs (if isregion
-                  (buffer-substring-no-properties
-                   beg
-                   (+ beg (min bookmark-region-search-size (- end beg))))
-                  (if (>= (- (point-max) (point)) bookmark-search-size)
-                      (buffer-substring-no-properties
-                       (point)
-                       (+ (point) bookmark-search-size))
-                      nil)))
-         (ecs (if isregion
-                  (buffer-substring-no-properties
-                   end
-                   (- end (min bookmark-region-search-size
-                               (- end beg))))
-                  (if (>= (- (point) (point-min)) bookmark-search-size)
-                      (buffer-substring-no-properties
-                       (point)
-                       (- (point) bookmark-search-size))
-                      nil)))
-         (fcrs (when isregion
-                 (goto-char beg)
-                 (re-search-backward ".[^ ]" nil t)
-                 (buffer-substring-no-properties (max (- (point) bookmark-region-search-size)
-                                        (point-min))
-                                   beg)))
-         (ecrs (when isregion
-                 (goto-char end)
-                 (re-search-forward "^.*[^ \n]" nil t)
-                 (beginning-of-line)
-                 (buffer-substring-no-properties end (+ (point) (min bookmark-region-search-size
-                                                       (- (point-max) (point))))))))
+         (fcs (bookmark-get-fcs beg end isregion))
+         (ecs (bookmark-get-ecs beg end isregion))
+         (fcrs (bookmark-get-fcrs beg end isregion))
+         (ecrs (bookmark-get-ecrs beg end isregion)))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
@@ -610,6 +624,7 @@ record that pertains to the location within the buffer."
         (end-position . ,end))))
 
 
+;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-set ")
 ;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-default-handler")
 ;; Redefine `bookmark-default-handler' with support for region
 (defun bookmark-default-handler (bmk)
@@ -682,8 +697,12 @@ record that pertains to the location within the buffer."
                     (progn
                       (setq place beg
                             end-pos end)
-                      (setf (cdr (assoc 'position bmk)) place)
-                      (setf (cdr (assoc 'end-position bmk)) end-pos))
+                      (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs beg end t))
+                      (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs beg end t))
+                      (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs beg end t))
+                      (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs beg end t))
+                      (bookmark-prop-set bmk 'position place)
+                      (bookmark-prop-set bmk 'end-position end-pos))                
                     (setq region-retrieved-p nil)))))
           ;; Region found
           (if region-retrieved-p
