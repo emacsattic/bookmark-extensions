@@ -671,6 +671,7 @@ record that pertains to the location within the buffer."
                            (goto-char end-pos)
                            (string= behind-str (buffer-substring-no-properties (point) (- (point) (length forward-str))))))
               ;; Position have changed: relocate region.
+              (goto-char (point-min))
               (let (beg end)
                 ;; Try to search end point with `behind-str'.
                 (if (re-search-forward (regexp-opt (list behind-str) t) (point-max) t)
