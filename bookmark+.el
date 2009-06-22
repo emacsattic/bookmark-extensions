@@ -543,10 +543,10 @@ deletion, or > if it is flagged for displaying."
       (bookmark-get-buffername bookmark)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-set ")
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record")
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-make-record-default")
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/info.el" "defun Info-bookmark-make-record")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-set ")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-make-record")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-make-record-default")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/info.el" "defun Info-bookmark-make-record")
 
 (defun bookmark-get-fcs (breg ereg regionp)
   (if regionp
@@ -624,8 +624,8 @@ record that pertains to the location within the buffer."
         (end-position . ,end))))
 
 
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-set ")
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-default-handler")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-set ")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-default-handler")
 ;; Redefine `bookmark-default-handler' with support for region
 (defun bookmark-default-handler (bmk)
   (let* ((file                   (bookmark-get-filename bmk))
@@ -643,7 +643,9 @@ record that pertains to the location within the buffer."
         ;; A saved region exists, create buffer and retrieve it
         (progn
           (cond ((when (and file ;; file exists and is readable
-                            (file-readable-p file))
+                            (file-readable-p file)
+                            (not (info-file-exists-p ;; let Info doing the job
+                                  (bookmark-file-or-variation-thereof file))))
                    ;; setup buffer
                    ;; handle buf buf<2>...
                    (with-current-buffer (find-file-noselect (expand-file-name file))
@@ -718,7 +720,9 @@ record that pertains to the location within the buffer."
               (message "Region at Start:%s to End:%s not found!" place end-pos)))
         ;; There is no saved region, retrieve file as normal.
         (cond ((when (and file
-                          (file-readable-p file))
+                          (file-readable-p file)
+                          (not (info-file-exists-p
+                                (bookmark-file-or-variation-thereof file))))
                  ;; in case buf buf<2>...
                  (with-current-buffer (find-file-noselect (expand-file-name file))
                    (let ((buf-name (buffer-name)))
@@ -749,11 +753,11 @@ record that pertains to the location within the buffer."
         nil)))
 
 
-;; (when (re-search-forward "^.*[^ \n]") (beginning-of-line))
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/info.el" "defun Info-bookmark-jump")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-file-or-variation-thereof")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/info.el" "defun Info-bookmark-jump")
 ;; (find-fline "~/download/bookmark+-2009-06-13a-DREW.el" "defun Info-bookmark-jump")
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-default-handler")
-;; (find-fline "/usr/share/emacs/23.0.94/lisp/bookmark.el" "defun bookmark-handle-bookmark")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-default-handler")
+;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-handle-bookmark")
 
 ;; W3M support
 (defun w3m-bookmark-make-record ()
