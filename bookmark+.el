@@ -653,7 +653,8 @@ record that pertains to the location within the buffer."
         (progn
           (cond ((when (and file ;; file exists and is readable
                             (file-readable-p file)
-                            (not (file-info-p file)))
+                            (not (file-info-p file))
+                            (not (buffer-live-p buf)))
                    ;; setup buffer
                    ;; handle buf buf<2>...
                    (with-current-buffer (find-file-noselect (expand-file-name file))
@@ -729,7 +730,8 @@ record that pertains to the location within the buffer."
         ;; There is no saved region, retrieve file as normal.
         (cond ((when (and file
                           (file-readable-p file)
-                          (not (file-info-p file)))
+                          (not (file-info-p file))
+                          (not (buffer-live-p buf)))
                  ;; in case buf buf<2>...
                  (with-current-buffer (find-file-noselect (expand-file-name file))
                    (let ((buf-name (buffer-name)))
