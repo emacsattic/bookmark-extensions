@@ -111,9 +111,13 @@
 ;;; Code:
 
 
+
 (require 'bookmark)
 (eval-when-compile (require 'cl))
-(require 'tramp)
+
+;; Quiet the byte-compiler
+(defvar w3m-current-url)
+(when (< emacs-major-version 22) (defvar tramp-file-name-regexp)) ; Defined `tramp.el'.
 
 (defconst bookmark+version-number "1.3.9")
 
@@ -134,12 +138,13 @@
 (define-key bookmark-map "T" 'bookmark-toggle-use-only-regions)
 
 ;;; User variables
-(defvar bookmark-use-region t
-  "When non--nil active region if one have been saved
-when jumping to bookmark.")
+(defcustom bookmark-use-region-flag t
+  "*Non-nil means jumping to bookmark activates bookmarked region, if any."
+  :type 'boolean :group 'bookmark)
 
-(defvar bookmark-region-search-size 40
-  "The same as `bookmark-search-size' but specialized for bookmark regions.")
+(defcustom bookmark-region-search-size 40
+  "The same as `bookmark-search-size' but specialized for bookmark regions."
+  :type 'boolean :group 'bookmark)
 
 ;;; Faces
 (defface bookmark-file-name-face
@@ -371,7 +376,7 @@ candidate."
   (interactive (list (bookmark-completing-read "Jump to bookmark"
                                                bookmark-current-bookmark)))
   (if current-prefix-arg
-      (let ((bookmark-use-region (not bookmark-use-region)))
+      (let ((bookmark-use-region-flag (not bookmark-use-region-flag)))
         (old-bookmark-jump bookmark))
       (old-bookmark-jump bookmark)))
 
@@ -427,8 +432,8 @@ deletion, or > if it is flagged for displaying."
 	 (let* ((start (point))
                 (name (bookmark-name-from-full-record full-record))
                 (isfile (bookmark-get-filename name))
-                (istramp (when isfile
-                           (tramp-tramp-file-p isfile)))
+                (istramp (and isfile
+                              (string-match tramp-file-name-regexp isfile)))
                 (isregion (and (bookmark-get-end-position name)
                                (/= (bookmark-get-position name)
                                    (bookmark-get-end-position name))))
@@ -488,7 +493,7 @@ deletion, or > if it is flagged for displaying."
                          follow-link t
                          face 'bookmark-info-buffer-face
                          help-echo "mouse-2: go to this info buffer"))
-                      (istramp
+                      (istramp ;; tramp buffers
                        '(mouse-face highlight
                          follow-link t
                          face 'italic
@@ -632,12 +637,12 @@ record that pertains to the location within the buffer."
          (buf                    (bookmark-prop-get bmk 'buffer-name))
          (forward-str            (bookmark-get-front-context-string bmk))
          (behind-str             (bookmark-get-rear-context-string bmk))
-         (str-bef                (cdr (assoc 'front-context-region-string bmk)))
-         (str-aft                (cdr (assoc 'rear-context-region-string bmk)))
+         (str-bef                (bookmark-prop-get bmk 'front-context-region-string))
+         (str-aft                (bookmark-prop-get bmk 'rear-context-region-string))
          (place                  (bookmark-get-position bmk))
          (end-pos                (bookmark-prop-get bmk 'end-position))
          (region-retrieved-p     t))
-    (if (and bookmark-use-region
+    (if (and bookmark-use-region-flag
              end-pos
              (/= place end-pos))
         ;; A saved region exists, create buffer and retrieve it
