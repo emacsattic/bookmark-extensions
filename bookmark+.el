@@ -429,12 +429,12 @@ deletion, or > if it is flagged for displaying."
                 (isfile (bookmark-get-filename name))
                 (istramp (when isfile
                            (tramp-tramp-file-p isfile)))
-                (isregion (and (bookmark-get-endposition name)
+                (isregion (and (bookmark-get-end-position name)
                                (/= (bookmark-get-position name)
-                                   (bookmark-get-endposition name))))
+                                   (bookmark-get-end-position name))))
                 (isannotation (bookmark-get-annotation name))
                 (ishandler (bookmark-get-handler name))
-                (isbuf (bookmark-get-buffername name)))
+                (isbuf (bookmark-get-buffer-name name)))
 	   (insert name)
 	   (if (and (display-color-p) (display-mouse-p))
 	       (add-text-properties
@@ -442,58 +442,58 @@ deletion, or > if it is flagged for displaying."
 		(save-excursion (re-search-backward
 				 "[^ \t]")
 				(1+ (point)))
-                (cond ((when (and isfile ;; dirs
-                                  (not istramp)
-                                  (file-directory-p isfile))
-                         '(mouse-face highlight
-                           follow-link t
-                           face 'bookmark-directory-name-face
-                           help-echo "mouse-2: go to this dired buffer in other window")))
-                      ((when (and isfile ;; regular files with region
-                                  (not istramp)
-                                  (not (file-directory-p isfile))
-                                  (file-exists-p isfile)
-                                  isregion)
-                         '(mouse-face highlight
-                           follow-link t
-                           face 'bookmark-buffer-file-name-region-face
-                           help-echo "mouse-2: go to this file with region")))
-                      ((when (and isfile ;; regular files
-                                  (not istramp)
-                                  (not (file-directory-p isfile))
-                                  (file-exists-p isfile))
-                         '(mouse-face highlight
-                           follow-link t
-                           face 'bookmark-file-name-face
-                           help-echo "mouse-2: go to this file in other window")))
-                      ((when (and isbuf ;; buffers non--filename
-                                  (not isfile))
-                         '(mouse-face highlight
-                           follow-link t
-                           face 'bookmark-buffer-nonfile-name-face 
-                           help-echo "mouse-2: go to this non--buffer-filename")))
-                      ((when (and (string= isbuf "*w3m*") ;; w3m urls
-                                  (when isfile
-                                    (not (file-exists-p isfile))))
-                         '(mouse-face highlight
-                           follow-link t
-                           face 'bookmark-w3m-url-face
-                           help-echo "mouse-2: go to this w3m url")))
-                      ((when (or ;; info buffers
-                              (eq ishandler 'Info-bookmark-jump)
-                              (and (string= isbuf "*info*")
-                                   (when isfile
-                                     (not (file-exists-p isfile)))))
-                         '(mouse-face highlight
-                           follow-link t
-                           face 'bookmark-info-buffer-face
-                           help-echo "mouse-2: go to this info buffer")))
-                      ((when istramp
-                         '(mouse-face highlight
-                           follow-link t
-                           face 'italic
-                           help-echo "mouse-2: go to this tramp buffer"))))))
-	   (insert "\n")
+                (cond ((and isfile ;; dirs
+                            (not istramp)
+                            (file-directory-p isfile))
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'bookmark-directory-name-face
+                         help-echo "mouse-2: go to this dired buffer in other window"))
+                      ((and isfile ;; regular files with region
+                            (not istramp)
+                            (not (file-directory-p isfile))
+                            (file-exists-p isfile)
+                            isregion)
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'bookmark-buffer-file-name-region-face
+                         help-echo "mouse-2: go to this file with region"))
+                      ((and isfile ;; regular files
+                            (not istramp)
+                            (not (file-directory-p isfile))
+                            (file-exists-p isfile))
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'bookmark-file-name-face
+                         help-echo "mouse-2: go to this file in other window"))
+                      ((and isbuf ;; buffers non--filename
+                            (not isfile))
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'bookmark-buffer-nonfile-name-face 
+                         help-echo "mouse-2: go to this non--buffer-filename"))
+                      ((and (string= isbuf "*w3m*") ;; w3m urls
+                            (when isfile
+                              (not (file-exists-p isfile))))
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'bookmark-w3m-url-face
+                         help-echo "mouse-2: go to this w3m url"))
+                      ((or ;; info buffers
+                        (eq ishandler 'Info-bookmark-jump)
+                        (and (string= isbuf "*info*")
+                             (when isfile
+                               (not (file-exists-p isfile)))))
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'bookmark-info-buffer-face
+                         help-echo "mouse-2: go to this info buffer"))
+                      (istramp
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'italic
+                         help-echo "mouse-2: go to this tramp buffer")))))
+           (insert "\n")
 	   )))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
@@ -502,20 +502,20 @@ deletion, or > if it is flagged for displaying."
   (if bookmark-bmenu-toggle-filenames
       (bookmark-bmenu-toggle-filenames t)))
 
-(defun bookmark-get-buffername (bookmark)
+(defun bookmark-get-buffer-name (bookmark)
   "Return the buffer-name of BOOKMARK."
-  (bookmark-prop-get bookmark 'buffer))
+  (bookmark-prop-get bookmark 'buffer-name))
 
-(defun bookmark-get-endposition (bookmark)
+(defun bookmark-get-end-position (bookmark)
   "Return the end-position of REGION in BOOKMARK."
   (bookmark-prop-get bookmark 'end-position))
 
 (defun bookmark-region-alist-only ()
   "Create an alist with only bookmarks with region."
   (loop for i in bookmark-alist
-     for b = (and (bookmark-get-endposition i)
+     for b = (and (bookmark-get-end-position i)
                   (/= (bookmark-get-position i)
-                      (bookmark-get-endposition i)))
+                      (bookmark-get-end-position i)))
      if b
      collect i))
 
@@ -540,7 +540,7 @@ deletion, or > if it is flagged for displaying."
   "Return the name of the file or buffer associated with BOOKMARK."
   (bookmark-maybe-load-default-file)
   (or (bookmark-get-filename bookmark)
-      (bookmark-get-buffername bookmark)
+      (bookmark-get-buffer-name bookmark)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
 ;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-set ")
@@ -615,8 +615,7 @@ record that pertains to the location within the buffer."
                                                 (isdired)
                                                 (t
                                                  nil)))))
-        (buffer
-         . ,buf)
+        (buffer-name . ,buf)
         (front-context-string . ,fcs)
         (rear-context-string . ,ecs)
         (front-context-region-string . ,fcrs)
@@ -630,7 +629,7 @@ record that pertains to the location within the buffer."
 ;; Redefine `bookmark-default-handler' with support for region
 (defun bookmark-default-handler (bmk)
   (let* ((file                   (bookmark-get-filename bmk))
-         (buf                    (bookmark-prop-get bmk 'buffer))
+         (buf                    (bookmark-prop-get bmk 'buffer-name))
          (forward-str            (bookmark-get-front-context-string bmk))
          (behind-str             (bookmark-get-rear-context-string bmk))
          (str-bef                (cdr (assoc 'front-context-region-string bmk)))
@@ -648,7 +647,7 @@ record that pertains to the location within the buffer."
                       (not (buffer-live-p buf)))
                  ;; setup buffer
                  ;; handle buf buf<2>...
-                 (with-current-buffer (find-file-noselect (expand-file-name file))
+                 (with-current-buffer (find-file-noselect file)
                    (let ((buf-name (buffer-name)))
                      (setq buf buf-name))))
                  (t
