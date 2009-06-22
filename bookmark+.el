@@ -643,15 +643,14 @@ record that pertains to the location within the buffer."
              (/= place end-pos))
         ;; A saved region exists, create buffer and retrieve it
         (progn
-          (cond ((when (and file ;; file exists and is readable
-                            (file-readable-p file)
-                            ;(not (file-info-p file))
-                            (not (buffer-live-p buf)))
-                   ;; setup buffer
-                   ;; handle buf buf<2>...
-                   (with-current-buffer (find-file-noselect (expand-file-name file))
-                     (let ((buf-name (buffer-name)))
-                         (setq buf buf-name)))))
+          (cond ((and file ;; file exists and is readable
+                      (file-readable-p file)
+                      (not (buffer-live-p buf)))
+                 ;; setup buffer
+                 ;; handle buf buf<2>...
+                 (with-current-buffer (find-file-noselect (expand-file-name file))
+                   (let ((buf-name (buffer-name)))
+                     (setq buf buf-name))))
                  (t
                   ;; No file found we search for a buffer non--filename
                   ;; if not found, signal file doesn't exist anymore
@@ -720,14 +719,13 @@ record that pertains to the location within the buffer."
               (goto-char place) (beginning-of-line)
               (message "Region at Start:%s to End:%s not found!" place end-pos)))
         ;; There is no saved region, retrieve file as normal.
-        (cond ((when (and file
-                          (file-readable-p file)
-                          ;(not (file-info-p file))
-                          (not (buffer-live-p buf)))
-                 ;; in case buf buf<2>...
-                 (with-current-buffer (find-file-noselect (expand-file-name file))
-                   (let ((buf-name (buffer-name)))
-                     (setq buf buf-name)))))
+        (cond ((and file
+                    (file-readable-p file)
+                    (not (buffer-live-p buf)))
+               ;; in case buf buf<2>...
+               (with-current-buffer (find-file-noselect file)
+                 (let ((buf-name (buffer-name)))
+                   (setq buf buf-name))))
               (t
                ;; No file found we search for a buffer non--filename
                ;; if not found signal file doesn't exist anymore
