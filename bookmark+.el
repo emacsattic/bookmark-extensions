@@ -548,6 +548,15 @@ deletion, or > if it is flagged for displaying."
 ;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-make-record-default")
 ;; (find-fline "/usr/share/emacs/23.0.95/lisp/info.el" "defun Info-bookmark-make-record")
 
+(defun file-info-p (file)
+  (progn (require 'info)  ; ensure Info-suffix-list is bound
+         (catch 'found
+           (dolist (i Info-suffix-list)
+             (unless (equal (car i) "")
+               (let ((suffixed-file (concat file (car i))))
+                 (if (file-exists-p suffixed-file)
+                     (throw 'found suffixed-file))))))))
+
 (defun bookmark-get-fcs (breg ereg regionp)
   (if regionp
       (buffer-substring-no-properties
@@ -644,8 +653,7 @@ record that pertains to the location within the buffer."
         (progn
           (cond ((when (and file ;; file exists and is readable
                             (file-readable-p file)
-                            (not (info-file-exists-p ;; let Info doing the job
-                                  (bookmark-file-or-variation-thereof file))))
+                            (not (file-info-p file)))
                    ;; setup buffer
                    ;; handle buf buf<2>...
                    (with-current-buffer (find-file-noselect (expand-file-name file))
@@ -721,8 +729,7 @@ record that pertains to the location within the buffer."
         ;; There is no saved region, retrieve file as normal.
         (cond ((when (and file
                           (file-readable-p file)
-                          (not (info-file-exists-p
-                                (bookmark-file-or-variation-thereof file))))
+                          (not (file-info-p file)))
                  ;; in case buf buf<2>...
                  (with-current-buffer (find-file-noselect (expand-file-name file))
                    (let ((buf-name (buffer-name)))
