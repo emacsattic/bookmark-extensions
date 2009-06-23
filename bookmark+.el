@@ -599,6 +599,12 @@ deletion, or > if it is flagged for displaying."
                          follow-link t
                          face 'bookmark-w3m-url
                          help-echo "mouse-2: go to this w3m url"))
+                      ((and ishandler
+                            (eq ishandler 'bookmark-jump-gnus))
+                       '(mouse-face highlight
+                         follow-link t
+                         face '((:foreground "red"))
+                         help-echo "mouse-2: go to this info buffer"))
                       ((or ;; info buffers
                         (eq ishandler 'Info-bookmark-jump)
                         (and (string= isbuf "*info*")
@@ -931,11 +937,42 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
 
 (defun bookmark-jump-w3m (bmk)
   ;; This implements the `handler' function interface for record type returned
-  ;; by `w3m-bookmark-make-record', which see.
+  ;; by `bookmark-make-w3m-record', which see.
   (let* ((file  (bookmark-prop-get bmk 'filename))
          (buf   (bookmark-prop-get bmk 'buffer)))
     (w3m-browse-url file)
     (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
+    (bookmark-default-handler (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
+
+;; GNUS support
+(defun bookmark-make-gnus-record ()
+  "Make a special entry for gnus buffers."  
+  (require 'gnus)
+  (let* ((grp  (car gnus-article-current))
+         (art  (cdr gnus-article-current))
+         (head (gnus-summary-article-header art))
+         (id (mail-header-id head)))
+  `(,@(bookmark-make-record-default 'point-only)
+      (group . ,grp)
+      (article . ,art)
+      (message-id . ,id)
+      (handler . bookmark-jump-gnus))))
+
+(add-hook 'gnus-summary-mode-hook
+          #'(lambda ()
+              (set (make-local-variable 'bookmark-make-record-function)
+                   'bookmark-make-gnus-record)))
+
+(defun bookmark-jump-gnus (bmk)
+  ;; This implements the `handler' function interface for record type returned
+  ;; by `bookmark-make-gnus-record', which see.
+  (let* ((group    (bookmark-prop-get bmk 'group))
+         (article  (bookmark-prop-get bmk 'article))
+         (id       (bookmark-prop-get bmk 'message-id))
+         (buf      (bookmark-prop-get bmk 'buffer)))
+    (gnus-fetch-group group (list article))
+    (gnus-summary-insert-cached-articles)
+    (gnus-summary-goto-article id nil 'force)
     (bookmark-default-handler (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
 
 ;; Not needed for Emacs 22+.
