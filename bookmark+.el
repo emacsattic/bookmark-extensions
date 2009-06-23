@@ -211,6 +211,11 @@
   "*Face used for a bookmarked w3m url."
   :group 'bookmark)
 
+(defface bookmark-gnus
+    '((t (:foreground "magenta")))
+  "*Face used for a gnus bookmark."
+  :group 'bookmark)
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Binds `icicle-delete-candidate-object' to `bookmark-delete'.
@@ -554,6 +559,7 @@ deletion, or > if it is flagged for displaying."
                                    (bookmark-get-end-position name))))
                 (isannotation (bookmark-get-annotation name))
                 (ishandler (bookmark-get-handler name))
+                (isgnus (assq 'group full-record))
                 (isbuf (bookmark-get-buffer-name name)))
            (insert name)
            (if (and (display-color-p) (display-mouse-p))
@@ -586,6 +592,11 @@ deletion, or > if it is flagged for displaying."
                          follow-link t
                          face 'bookmark-file
                          help-echo "mouse-2: go to this file in other window"))
+                      (isgnus
+                       '(mouse-face highlight
+                         follow-link t
+                         face 'bookmark-gnus
+                         help-echo "mouse-2: go to this info buffer"))
                       ((and isbuf ;; buffers non--filename
                             (not isfile))
                        '(mouse-face highlight
@@ -599,12 +610,6 @@ deletion, or > if it is flagged for displaying."
                          follow-link t
                          face 'bookmark-w3m-url
                          help-echo "mouse-2: go to this w3m url"))
-                      ((and ishandler
-                            (eq ishandler 'bookmark-jump-gnus))
-                       '(mouse-face highlight
-                         follow-link t
-                         face '((:foreground "red"))
-                         help-echo "mouse-2: go to this info buffer"))
                       ((or ;; info buffers
                         (eq ishandler 'Info-bookmark-jump)
                         (and (string= isbuf "*info*")
@@ -927,8 +932,8 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
   "Make a special entry for w3m buffers."
   (require 'w3m) ;; Be sure `w3m-current-url' is bound.
   `(,@(bookmark-make-record-default 'point-only)
-    (filename . ,w3m-current-url)
-    (handler . bookmark-jump-w3m)))
+      (filename . ,w3m-current-url)
+      (handler . bookmark-jump-w3m)))
 
 (add-hook 'w3m-mode-hook
           #'(lambda ()
@@ -945,20 +950,30 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
     (bookmark-default-handler (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
 
 ;; GNUS support
+;; This do not handle regions.
 (defun bookmark-make-gnus-record ()
   "Make a special entry for gnus buffers."  
   (require 'gnus)
+  (when (or (not (eq major-mode 'gnus-summary-mode))
+            (not gnus-article-current))
+    (error "Please retry from the Gnus summary buffer"))
   (let* ((grp  (car gnus-article-current))
          (art  (cdr gnus-article-current))
          (head (gnus-summary-article-header art))
          (id (mail-header-id head)))
-  `(,@(bookmark-make-record-default 'point-only)
-      (group . ,grp)
-      (article . ,art)
-      (message-id . ,id)
-      (handler . bookmark-jump-gnus))))
+    `(,@(bookmark-make-record-default 'point-only)
+        (group . ,grp)
+        (article . ,art)
+        (message-id . ,id)
+        (handler . bookmark-jump-gnus)))))
 
 (add-hook 'gnus-summary-mode-hook
+          #'(lambda ()
+              (set (make-local-variable 'bookmark-make-record-function)
+                   'bookmark-make-gnus-record)))
+
+;; Raise an error if we try to bookmark from here
+(add-hook 'gnus-article-mode-hook
           #'(lambda ()
               (set (make-local-variable 'bookmark-make-record-function)
                    'bookmark-make-gnus-record)))
