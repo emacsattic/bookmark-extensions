@@ -534,7 +534,7 @@ deletion, or > if it is flagged for displaying."
     (erase-buffer)
     (insert "% Bookmark+\n- --------\n")
     (add-text-properties (point-min) (point)
-			 '(font-lock-face bookmark-menu-heading))
+                         '(font-lock-face bookmark-menu-heading))
     (mapc
      (lambda (full-record)
        ;; if a bookmark has an annotation, prepend a "*"
@@ -544,7 +544,7 @@ deletion, or > if it is flagged for displaying."
          (if (and annotation (not (string-equal annotation "")))
              (insert " *")
            (insert "  "))
-	 (let* ((start (point))
+         (let* ((start (point))
                 (name (bookmark-name-from-full-record full-record))
                 (isfile (bookmark-get-filename name))
                 (istramp (and isfile
@@ -555,13 +555,13 @@ deletion, or > if it is flagged for displaying."
                 (isannotation (bookmark-get-annotation name))
                 (ishandler (bookmark-get-handler name))
                 (isbuf (bookmark-get-buffer-name name)))
-	   (insert name)
-	   (if (and (display-color-p) (display-mouse-p))
-	       (add-text-properties
-		start
-		(save-excursion (re-search-backward
-				 "[^ \t]")
-				(1+ (point)))
+           (insert name)
+           (if (and (display-color-p) (display-mouse-p))
+               (add-text-properties
+                start
+                (save-excursion (re-search-backward
+                                 "[^ \t]")
+                                (1+ (point)))
                 (cond ((and isfile ;; dirs
                             (not istramp)
                             (file-directory-p isfile))
@@ -590,7 +590,7 @@ deletion, or > if it is flagged for displaying."
                             (not isfile))
                        '(mouse-face highlight
                          follow-link t
-                         face 'bookmark-nonfile-buffer 
+                         face 'bookmark-nonfile-buffer
                          help-echo "mouse-2: go to this non--buffer-filename"))
                       ((and (string= isbuf "*w3m*") ;; w3m urls
                             (when isfile
@@ -614,7 +614,7 @@ deletion, or > if it is flagged for displaying."
                          face 'italic
                          help-echo "mouse-2: go to this tramp buffer")))))
            (insert "\n")
-	   )))
+           )))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
   (forward-line 2)
@@ -675,7 +675,14 @@ deletion, or > if it is flagged for displaying."
 
 
 (defun bookmark-get-fcs (breg ereg regionp)
-  "@@@@@@@@@@ NEED DESCRIPTION, including args"
+  "Create the `bookmark-alist' entry `front-context-string'.
+It will not have the same meaning depending buffer to bookmark
+have a region active or not.
+If region is active: 
+return the string starting from
+BEGINNING OF REGION to `bookmark-region-search-size' characters after this point.
+If region is inactive:
+return the string `bookmark-region-search-size' BEFORE REGION."
   (if regionp
       (buffer-substring-no-properties
        breg
@@ -687,7 +694,14 @@ deletion, or > if it is flagged for displaying."
           nil)))
 
 (defun bookmark-get-ecs (breg ereg regionp)
-  "@@@@@@@@@@ NEED DESCRIPTION, including args"
+  "Create the `bookmark-alist' entry `rear-context-string'.
+It will not have the same meaning depending buffer to bookmark
+have a region active or not.
+If region is active: 
+return the string starting from
+`bookmark-region-search-size' characters BEFORE END OF REGION to END OF REGION.
+If region is inactive:
+return the string `bookmark-region-search-size' BEFORE REGION."
   (if regionp
       (buffer-substring-no-properties
        ereg
@@ -700,7 +714,9 @@ deletion, or > if it is flagged for displaying."
           nil)))
 
 (defun bookmark-get-fcrs (breg regionp)
-  "@@@@@@@@@@ NEED DESCRIPTION, including args"
+  "Create the `bookmark-alist' entry `front-context-region-string'.
+That is the string BEFORE REGION.
+It will be recorded only if region is active."
   (if (not regionp)
       nil
     (goto-char breg)
@@ -708,9 +724,11 @@ deletion, or > if it is flagged for displaying."
     (buffer-substring-no-properties (max (- (point) bookmark-region-search-size)
                                          (point-min))
                                     breg)))
-      
+
 (defun bookmark-get-ecrs (ereg regionp)
-  "@@@@@@@@@@ NEED DESCRIPTION, including args"
+  "Create the `bookmark-alist' entry `rear-context-region-string'.
+That is the string AFTER REGION.
+It will be recorded only if region is active."
   (if (not regionp)
       nil
     (goto-char ereg)
@@ -718,7 +736,7 @@ deletion, or > if it is flagged for displaying."
     (beginning-of-line)
     (buffer-substring-no-properties ereg (+ (point) (min bookmark-region-search-size
                                                         (- (point-max) (point)))))))
-      
+
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -845,7 +863,7 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
                       (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs beg t))
                       (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end t))
                       (bookmark-prop-set bmk 'position place)
-                      (bookmark-prop-set bmk 'end-position end-pos))                
+                      (bookmark-prop-set bmk 'end-position end-pos))
                     (setq region-retrieved-p nil)))))
           ;; Region found
           (if region-retrieved-p
@@ -915,7 +933,7 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
   ;; This implements the `handler' function interface for record type returned
   ;; by `w3m-bookmark-make-record', which see.
   (let* ((file  (bookmark-prop-get bmk 'filename))
-         (buf   (bookmark-prop-get bmk 'buffer)))                 
+         (buf   (bookmark-prop-get bmk 'buffer)))
     (w3m-browse-url file)
     (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
     (bookmark-default-handler (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
