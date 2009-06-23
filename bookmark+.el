@@ -216,6 +216,11 @@
   "*Face used for a gnus bookmark."
   :group 'bookmark)
 
+(defface bookmark-remote-file
+    '((t (:foreground "pink")))
+  "*Face used for a bookmarked local file (without a region)."
+  :group 'bookmark)
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Binds `icicle-delete-candidate-object' to `bookmark-delete'.
@@ -544,94 +549,61 @@ deletion, or > if it is flagged for displaying."
      (lambda (full-record)
        ;; if a bookmark has an annotation, prepend a "*"
        ;; in the list of bookmarks.
-       (let ((annotation (bookmark-get-annotation
-                          (bookmark-name-from-full-record full-record))))
-         (if (and annotation (not (string-equal annotation "")))
-             (insert " *")
-           (insert "  "))
-         (let* ((start (point))
-                (name (bookmark-name-from-full-record full-record))
-                (isfile (bookmark-get-filename name))
-                (istramp (and isfile
-                              (string-match tramp-file-name-regexp isfile)))
-                (isregion (and (bookmark-get-end-position name)
-                               (/= (bookmark-get-position name)
-                                   (bookmark-get-end-position name))))
-                (isannotation (bookmark-get-annotation name))
-                (ishandler (bookmark-get-handler name))
-                (isgnus (assq 'group full-record))
-                (isbuf (bookmark-get-buffer-name name)))
+       (let ((annotation (bookmark-get-annotation (bookmark-name-from-full-record full-record))))
+         (insert (if (and annotation (not (string-equal annotation "")))  " *"  "  "))
+         (let* ((start         (point))
+                (name          (bookmark-name-from-full-record full-record))
+                (isfile        (bookmark-get-filename name))
+                (istramp       (and isfile (string-match tramp-file-name-regexp isfile)))
+                (isregion      (and (bookmark-get-end-position name)
+                                (/= (bookmark-get-position name)
+                                    (bookmark-get-end-position name))))
+                (isannotation  (bookmark-get-annotation name))
+                (ishandler     (bookmark-get-handler name))
+                (isgnus        (assq 'group full-record))
+                (isbuf         (bookmark-get-buffer-name name)))
            (insert name)
-           (if (and (display-color-p) (display-mouse-p))
-               (add-text-properties
-                start
-                (save-excursion (re-search-backward
-                                 "[^ \t]")
-                                (1+ (point)))
-                (cond ((and isfile ;; dirs
-                            (not istramp)
-                            (file-directory-p isfile))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-directory
-                         help-echo "mouse-2: go to this dired buffer in other window"))
-                      ((and isfile ;; regular files with region
-                            (not istramp)
-                            (not (file-directory-p isfile))
-                            (file-exists-p isfile)
-                            isregion)
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-buffer-file-name-region-face
-                         help-echo "mouse-2: go to this file with region"))
-                      ((and isfile ;; regular files
-                            (not istramp)
-                            (not (file-directory-p isfile))
-                            (file-exists-p isfile))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-file
-                         help-echo "mouse-2: go to this file in other window"))
-                      (isgnus
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-gnus
-                         help-echo "mouse-2: go to this info buffer"))
-                      ((and isbuf ;; buffers non--filename
-                            (not isfile))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-nonfile-buffer
-                         help-echo "mouse-2: go to this non--buffer-filename"))
-                      ((and (string= isbuf "*w3m*") ;; w3m urls
-                            (when isfile
-                              (not (file-exists-p isfile))))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-w3m-url
-                         help-echo "mouse-2: go to this w3m url"))
-                      ((or ;; info buffers
-                        (eq ishandler 'Info-bookmark-jump)
-                        (and (string= isbuf "*info*")
-                             (when isfile
-                               (not (file-exists-p isfile)))))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-info-node
-                         help-echo "mouse-2: go to this info buffer"))
-                      (istramp ;; tramp buffers
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'italic
-                         help-echo "mouse-2: go to this tramp buffer")))))
-           (insert "\n")
-           )))
+           (add-text-properties
+            start
+            (save-excursion (re-search-backward
+                             "[^ \t]")
+                            (1+ (point)))
+            (cond ((and isfile (not istramp) (file-directory-p isfile)) ; Local directory
+                   '(mouse-face highlight
+                     follow-link t face 'bookmark-directory
+                     help-echo "mouse-2: go to this dired buffer in other window"))
+                  ((and isfile (not istramp) (not (file-directory-p isfile))
+                        (file-exists-p isfile) isregion) ; Local file with region
+                   '(mouse-face highlight follow-link t
+                     face 'bookmark-buffer-file-name-region-face
+                     help-echo "mouse-2: go to this file with region"))
+                  ((and isfile (not istramp) (not (file-directory-p isfile))
+                        (file-exists-p isfile)) ; Local file without region
+                   '(mouse-face highlight follow-link t face 'bookmark-file
+                     help-echo "mouse-2: go to this file in other window"))
+                  (isgnus ; Gnus
+                   '(mouse-face highlight
+                     follow-link t face 'bookmark-gnus
+                     help-echo "mouse-2: go to this gnus buffer"))
+                  ((and isbuf (not isfile) (not isgnus)) ; Buffer without a file
+                   '(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
+                     help-echo "mouse-2: go to this non--buffer-filename"))
+                  ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; w3m url
+                   '(mouse-face highlight follow-link t face 'bookmark-w3m-url
+                     help-echo "mouse-2: go to this w3m url"))
+                  ((or (eq ishandler 'Info-bookmark-jump) ; Info buffer
+                       (and (string= isbuf "*info*") (and isfile (not (file-exists-p isfile)))))
+                   '(mouse-face highlight follow-link t face 'bookmark-info-node
+                     help-echo "mouse-2: go to this info buffer"))
+                  (istramp              ; Remote file
+                   '(mouse-face highlight follow-link t face 'bookmark-remote-file
+                     help-echo "mouse-2: go to this tramp buffer"))))
+           (insert "\n"))))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
   (forward-line 2)
   (bookmark-bmenu-mode)
-  (if bookmark-bmenu-toggle-filenames
-      (bookmark-bmenu-toggle-filenames t)))
+  (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t)))
 
 (defun bookmark-get-buffer-name (bookmark)
   "Return the buffer-name of BOOKMARK."
@@ -956,11 +928,11 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
   (require 'gnus)
   (when (or (not (eq major-mode 'gnus-summary-mode))
             (not gnus-article-current))
-    (error "Please retry from the Gnus summary buffer"))
+    (error "Please retry from the Gnus summary buffer")) ;[1]
   (let* ((grp  (car gnus-article-current))
          (art  (cdr gnus-article-current))
          (head (gnus-summary-article-header art))
-         (id (mail-header-id head)))
+         (id   (mail-header-id head)))
     `(,@(bookmark-make-record-default 'point-only)
         (group . ,grp)
         (article . ,art)
@@ -972,7 +944,7 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
               (set (make-local-variable 'bookmark-make-record-function)
                    'bookmark-make-gnus-record)))
 
-;; Raise an error if we try to bookmark from here
+;; Raise an error if we try to bookmark from here [1]
 (add-hook 'gnus-article-mode-hook
           #'(lambda ()
               (set (make-local-variable 'bookmark-make-record-function)
