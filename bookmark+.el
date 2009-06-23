@@ -765,6 +765,10 @@ record that pertains to the location within the buffer."
 ;; Support regions and buffer names.
 ;;
 (defun bookmark-default-handler (bmk)
+  "Default handler to jump to a particular bookmark location.
+BMK is a bookmark record.
+Changes current buffer and point and returns nil, or signals a `file-error'."
+
   (let* ((file                   (bookmark-get-filename bmk))
          (buf                    (bookmark-prop-get bmk 'buffer-name))
          (forward-str            (bookmark-get-front-context-string bmk))
@@ -811,21 +815,21 @@ record that pertains to the location within the buffer."
               ;; Position have changed: relocate region.
               (goto-char (point-min))
               (let (beg end)
-                ;; Try to search end point with `behind-str'.
-                (if (re-search-forward (regexp-opt (list behind-str) t) (point-max) t)
+                ;; Try to find <END POINT OF REGION> with `behind-str'.
+                (if (search-forward behind-str (point-max) t)
                     (setq end (point))
-                    ;; If failed try with `str-af'.
-                    (when (re-search-forward (regexp-opt (list str-aft) t) (point-max) t)
+                    ;; If failed try to find <BEG POINT OF STRING AFTER REGION> with `str-af'.
+                    (when (search-forward str-aft (point-max) t)
                       (setq end (match-beginning 0))
                       (goto-char end)
                       ;; If `str-aft' have moved one or more line forward reach it.
                       (while (not (looking-back ".[^ \n]")) (forward-char -1))
                       (setq end (point))))
-                ;; Try to search beg point with `forward-str'
-                (if (re-search-backward (regexp-opt (list forward-str) t) (point-min) t)
+                ;; Try to find <BEG POINT OF REGION> with `forward-str'
+                (if (search-backward forward-str (point-min) t)
                     (setq beg (point))
-                    ;; If failed try with `str-bef'.
-                    (when (re-search-backward (regexp-opt (list str-bef) t) (point-min) t)
+                    ;; If failed try to find <END POINT OF STRING BEFORE REGION> with `str-bef'.
+                    (when (search-backward str-bef (point-min) t)
                       (setq beg (match-end 0))
                       (goto-char beg)
                       ;; If region have moved one or more line forward reach it.
@@ -897,8 +901,7 @@ record that pertains to the location within the buffer."
 ;; W3M support
 (defun bookmark-make-w3m-record ()
   "Make a special entry for w3m buffers."
-  ;; @@@@@@@ Isn't this `require' needed, so `w3m-current-url' will be defined?
-  ;(require 'w3m)
+  (require 'w3m) ;; Be sure `w3m-current-url' is bound.
   `(,@(bookmark-make-record-default 'point-only)
     (filename . ,w3m-current-url)
     (handler . bookmark-jump-w3m)))
