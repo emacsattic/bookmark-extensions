@@ -965,7 +965,7 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
         (group . ,grp)
         (article . ,art)
         (message-id . ,id)
-        (handler . bookmark-jump-gnus)))))
+        (handler . bookmark-jump-gnus))))
 
 (add-hook 'gnus-summary-mode-hook
           #'(lambda ()
