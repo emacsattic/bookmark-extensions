@@ -844,22 +844,24 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
                     ;; If failed try to find <BEG POINT OF STRING AFTER REGION> with `str-af'.
                     (when (search-forward str-aft (point-max) t)
                       (setq end (match-beginning 0))
-                      (goto-char end)
-                      ;; If `str-aft' have moved one or more line forward reach it.
-                      (while (and (not (bobp)) (not (looking-back ".[^ \n]"))) (forward-char -1))
-                      (setq end (point))))
-                ;; Try to find <BEG POINT OF REGION> with `forward-str'
-                ;; if we have failed to find END point go to EOB and search from there.
+                      (when end
+                        (goto-char end)
+                        ;; If `str-aft' have moved one or more line forward reach it.
+                        (while (and (not (bobp)) (not (looking-back ".[^ \n]"))) (forward-char -1))
+                        (setq end (point)))))
+                ;; If we have failed to find END point go to EOB and search from there.
                 (unless end (goto-char (point-max)))
+                ;; Try now to find <BEG POINT OF REGION> with `forward-str'
                 (if (search-backward forward-str (point-min) t)
                     (setq beg (point))
                     ;; If failed try to find <END POINT OF STRING BEFORE REGION> with `str-bef'.
                     (when (search-backward str-bef (point-min) t)
                       (setq beg (match-end 0))
-                      (goto-char beg)
-                      ;; If region have moved one or more line forward reach it.
-                      (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
-                      (setq beg (point))))
+                      (when beg
+                        (goto-char beg)
+                        ;; If region have moved one or more line forward reach it.
+                        (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
+                        (setq beg (point)))))
                 ;; Save new location to `bookmark-alist' only if `beg' OR `end' have been found.
                 ;; If only one of (`beg' `end') have been retrieved we will have an approximative
                 ;; region actived. If the both are retrieved we will have the exact region.
