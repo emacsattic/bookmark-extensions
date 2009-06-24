@@ -145,7 +145,7 @@
 (defvar w3m-current-url)
 (when (< emacs-major-version 22) (defvar tramp-file-name-regexp)) ; Defined `tramp.el'.
 
-(defconst bookmark+version-number "1.4.9")
+(defconst bookmark+version-number "1.4.10")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -854,19 +854,26 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
                       ;; If region have moved one or more line forward reach it.
                       (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
                       (setq beg (point))))
-                ;; Save new location to `bookmark-alist'.
-                (if (and beg end)
-                    (progn
-                      (setq place beg
-                            end-pos end)
-                      (when bookmark-always-save-relocated-position
-                        (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs beg end t))
-                        (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs beg end t))
-                        (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs beg t))
-                        (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end t))
-                        (bookmark-prop-set bmk 'position place)
-                        (bookmark-prop-set bmk 'end-position end-pos)))
-                    (setq region-retrieved-p nil)))))
+                ;; Save new location to `bookmark-alist' only if `beg' OR `end' have been found.
+                ;; If only one of (`beg' `end') have been retrieved we will have an approximative
+                ;; region actived. If the both are retrieved we will have the exact region.
+                ;; FIXME should we save the new context string if only one point have been relocated?
+                (cond ((and beg end)
+                       (setq place beg
+                             end-pos end))
+                      ((and beg (not end))
+                       (setq place beg))
+                      ((and (not beg) end)
+                       (setq end-pos end))
+                      (t
+                       (setq region-retrieved-p nil)))
+                (when (and region-retrieved-p bookmark-always-save-relocated-position)
+                  (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs place end-pos t))
+                  (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs place end-pos t))
+                  (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs place t))
+                  (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end-pos t))
+                  (bookmark-prop-set bmk 'position place)
+                  (bookmark-prop-set bmk 'end-position end-pos)))))
           ;; Region found
           (if region-retrieved-p
               (progn
