@@ -765,6 +765,18 @@ record that pertains to the location within the buffer."
 ;;
 ;; Support regions and buffer names.
 ;;
+(when (< emacs-major-version 22)
+  (defun looking-back (regexp)
+    (save-excursion
+      (and (re-search-backward regexp (- (point) 1) t)
+           (point))))
+
+  (defun looking-at (regexp)
+    (save-excursion
+      (and (re-search-forward regexp (+ (point) 1) t)
+           (point))))
+  )
+
 (defun bookmark-default-handler (bmk)
   "Default handler to jump to a particular bookmark location.
 BMK is a bookmark record.
@@ -805,7 +817,7 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
               (if (> place (point-max))
                   (progn
                     (goto-char (point-max))
-                    (error "Can't retrieve text!"))
+                    (error "Bookmark position is beyond buffer max"))
                   (goto-char place))
             ;; Check if start of region have moved
             (unless (and (string= forward-str (buffer-substring-no-properties (point) (+ (point) (length forward-str))))
@@ -824,9 +836,11 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
                       (setq end (match-beginning 0))
                       (goto-char end)
                       ;; If `str-aft' have moved one or more line forward reach it.
-                      (while (not (looking-back ".[^ \n]")) (forward-char -1))
+                      (while (and (not (bobp)) (not (looking-back ".[^ \n]"))) (forward-char -1))
                       (setq end (point))))
                 ;; Try to find <BEG POINT OF REGION> with `forward-str'
+                ;; if we have failed to find END point go to EOB and search from there.
+                (unless end (goto-char (point-max)))
                 (if (search-backward forward-str (point-min) t)
                     (setq beg (point))
                     ;; If failed try to find <END POINT OF STRING BEFORE REGION> with `str-bef'.
@@ -834,7 +848,7 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
                       (setq beg (match-end 0))
                       (goto-char beg)
                       ;; If region have moved one or more line forward reach it.
-                      (while (not (looking-at ".[^ \n]")) (forward-char 1))
+                      (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
                       (setq beg (point))))
                 ;; Save new location to `bookmark-alist'.
                 (if (and beg end)
