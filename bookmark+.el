@@ -177,6 +177,10 @@
 
 (defcustom bookmark-region-search-size 40
   "The same as `bookmark-search-size' but specialized for bookmark regions."
+  :type 'integer :group 'bookmark)
+
+(defcustom bookmark-always-save-relocated-position t
+  "Always save relocated position of regions when non--nil."
   :type 'boolean :group 'bookmark)
 
 ;;; Faces
@@ -855,12 +859,13 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
                     (progn
                       (setq place beg
                             end-pos end)
-                      (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs beg end t))
-                      (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs beg end t))
-                      (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs beg t))
-                      (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end t))
-                      (bookmark-prop-set bmk 'position place)
-                      (bookmark-prop-set bmk 'end-position end-pos))
+                      (when bookmark-always-save-relocated-position
+                        (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs beg end t))
+                        (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs beg end t))
+                        (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs beg t))
+                        (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end t))
+                        (bookmark-prop-set bmk 'position place)
+                        (bookmark-prop-set bmk 'end-position end-pos)))
                     (setq region-retrieved-p nil)))))
           ;; Region found
           (if region-retrieved-p
