@@ -473,6 +473,12 @@ See `bookmark-jump'."
 
   ;; Same as vanilla Emacs 23+ definition.
   ;;
+  (defun bookmark-prop-get (bookmark prop)
+  "Return the property PROP of BOOKMARK, or nil if none."
+  (cdr (assq prop (bookmark-get-bookmark-record bookmark))))
+
+  ;; Same as vanilla Emacs 23+ definition.
+  ;;
   (defun bookmark-get-handler (bookmark)
     "Return the `handler' entry for BOOKMARK."
     (bookmark-prop-get bookmark 'handler))
