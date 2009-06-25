@@ -743,7 +743,7 @@ being set.
 If POINT-ONLY is non-nil, then only return the subset of the
 record that pertains to the location within the buffer."
   (let* ((isregion (and transient-mark-mode
-                        (region-active-p)
+                        mark-active
                         (not (eq (mark) (point)))))
          (isdired (car (rassq (current-buffer) dired-buffers)))
          (beg (if isregion
