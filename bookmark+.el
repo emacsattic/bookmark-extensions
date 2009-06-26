@@ -177,6 +177,10 @@
 
 (defcustom bookmark-region-search-size 40
   "The same as `bookmark-search-size' but specialized for bookmark regions."
+  :type 'integer :group 'bookmark)
+
+(defcustom bookmark-always-save-relocated-position t
+  "Always save relocated position of regions when non--nil."
   :type 'boolean :group 'bookmark)
 
 ;;; Faces
@@ -209,6 +213,16 @@
 (defface bookmark-w3m-url
     '((t (:foreground "yellow")))
   "*Face used for a bookmarked w3m url."
+  :group 'bookmark)
+
+(defface bookmark-gnus
+    '((t (:foreground "magenta")))
+  "*Face used for a gnus bookmark."
+  :group 'bookmark)
+
+(defface bookmark-remote-file
+    '((t (:foreground "pink")))
+  "*Face used for a bookmarked local file (without a region)."
   :group 'bookmark)
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -459,6 +473,12 @@ See `bookmark-jump'."
 
   ;; Same as vanilla Emacs 23+ definition.
   ;;
+  (defun bookmark-prop-get (bookmark prop)
+  "Return the property PROP of BOOKMARK, or nil if none."
+  (cdr (assq prop (bookmark-get-bookmark-record bookmark))))
+
+  ;; Same as vanilla Emacs 23+ definition.
+  ;;
   (defun bookmark-get-handler (bookmark)
     "Return the `handler' entry for BOOKMARK."
     (bookmark-prop-get bookmark 'handler))
@@ -539,88 +559,61 @@ deletion, or > if it is flagged for displaying."
      (lambda (full-record)
        ;; if a bookmark has an annotation, prepend a "*"
        ;; in the list of bookmarks.
-       (let ((annotation (bookmark-get-annotation
-                          (bookmark-name-from-full-record full-record))))
-         (if (and annotation (not (string-equal annotation "")))
-             (insert " *")
-           (insert "  "))
-         (let* ((start (point))
-                (name (bookmark-name-from-full-record full-record))
-                (isfile (bookmark-get-filename name))
-                (istramp (and isfile
-                              (string-match tramp-file-name-regexp isfile)))
-                (isregion (and (bookmark-get-end-position name)
-                               (/= (bookmark-get-position name)
-                                   (bookmark-get-end-position name))))
-                (isannotation (bookmark-get-annotation name))
-                (ishandler (bookmark-get-handler name))
-                (isbuf (bookmark-get-buffer-name name)))
+       (let ((annotation (bookmark-get-annotation (bookmark-name-from-full-record full-record))))
+         (insert (if (and annotation (not (string-equal annotation "")))  " *"  "  "))
+         (let* ((start         (point))
+                (name          (bookmark-name-from-full-record full-record))
+                (isfile        (bookmark-get-filename name))
+                (istramp       (and isfile (string-match tramp-file-name-regexp isfile)))
+                (isregion      (and (bookmark-get-end-position name)
+                                (/= (bookmark-get-position name)
+                                    (bookmark-get-end-position name))))
+                (isannotation  (bookmark-get-annotation name))
+                (ishandler     (bookmark-get-handler name))
+                (isgnus        (assq 'group full-record))
+                (isbuf         (bookmark-get-buffer-name name)))
            (insert name)
-           (if (and (display-color-p) (display-mouse-p))
-               (add-text-properties
-                start
-                (save-excursion (re-search-backward
-                                 "[^ \t]")
-                                (1+ (point)))
-                (cond ((and isfile ;; dirs
-                            (not istramp)
-                            (file-directory-p isfile))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-directory
-                         help-echo "mouse-2: go to this dired buffer in other window"))
-                      ((and isfile ;; regular files with region
-                            (not istramp)
-                            (not (file-directory-p isfile))
-                            (file-exists-p isfile)
-                            isregion)
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-buffer-file-name-region-face
-                         help-echo "mouse-2: go to this file with region"))
-                      ((and isfile ;; regular files
-                            (not istramp)
-                            (not (file-directory-p isfile))
-                            (file-exists-p isfile))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-file
-                         help-echo "mouse-2: go to this file in other window"))
-                      ((and isbuf ;; buffers non--filename
-                            (not isfile))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-nonfile-buffer
-                         help-echo "mouse-2: go to this non--buffer-filename"))
-                      ((and (string= isbuf "*w3m*") ;; w3m urls
-                            (when isfile
-                              (not (file-exists-p isfile))))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-w3m-url
-                         help-echo "mouse-2: go to this w3m url"))
-                      ((or ;; info buffers
-                        (eq ishandler 'Info-bookmark-jump)
-                        (and (string= isbuf "*info*")
-                             (when isfile
-                               (not (file-exists-p isfile)))))
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'bookmark-info-node
-                         help-echo "mouse-2: go to this info buffer"))
-                      (istramp ;; tramp buffers
-                       '(mouse-face highlight
-                         follow-link t
-                         face 'italic
-                         help-echo "mouse-2: go to this tramp buffer")))))
-           (insert "\n")
-           )))
+           (add-text-properties
+            start
+            (save-excursion (re-search-backward
+                             "[^ \t]")
+                            (1+ (point)))
+            (cond ((and isfile (not istramp) (file-directory-p isfile)) ; Local directory
+                   '(mouse-face highlight
+                     follow-link t face 'bookmark-directory
+                     help-echo "mouse-2: go to this dired buffer in other window"))
+                  ((and isfile (not istramp) (not (file-directory-p isfile))
+                        (file-exists-p isfile) isregion) ; Local file with region
+                   '(mouse-face highlight follow-link t
+                     face 'bookmark-buffer-file-name-region-face
+                     help-echo "mouse-2: go to this file with region"))
+                  ((and isfile (not istramp) (not (file-directory-p isfile))
+                        (file-exists-p isfile)) ; Local file without region
+                   '(mouse-face highlight follow-link t face 'bookmark-file
+                     help-echo "mouse-2: go to this file in other window"))
+                  (isgnus ; Gnus
+                   '(mouse-face highlight
+                     follow-link t face 'bookmark-gnus
+                     help-echo "mouse-2: go to this gnus buffer"))
+                  ((and isbuf (not isfile) (not isgnus)) ; Buffer without a file
+                   '(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
+                     help-echo "mouse-2: go to this non--buffer-filename"))
+                  ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; w3m url
+                   '(mouse-face highlight follow-link t face 'bookmark-w3m-url
+                     help-echo "mouse-2: go to this w3m url"))
+                  ((or (eq ishandler 'Info-bookmark-jump) ; Info buffer
+                       (and (string= isbuf "*info*") (and isfile (not (file-exists-p isfile)))))
+                   '(mouse-face highlight follow-link t face 'bookmark-info-node
+                     help-echo "mouse-2: go to this info buffer"))
+                  (istramp              ; Remote file
+                   '(mouse-face highlight follow-link t face 'bookmark-remote-file
+                     help-echo "mouse-2: go to this tramp buffer"))))
+           (insert "\n"))))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
   (forward-line 2)
   (bookmark-bmenu-mode)
-  (if bookmark-bmenu-toggle-filenames
-      (bookmark-bmenu-toggle-filenames t)))
+  (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t)))
 
 (defun bookmark-get-buffer-name (bookmark)
   "Return the buffer-name of BOOKMARK."
@@ -750,7 +743,7 @@ being set.
 If POINT-ONLY is non-nil, then only return the subset of the
 record that pertains to the location within the buffer."
   (let* ((isregion (and transient-mark-mode
-                        (region-active-p)
+                        mark-active
                         (not (eq (mark) (point)))))
          (isdired (car (rassq (current-buffer) dired-buffers)))
          (beg (if isregion
@@ -782,6 +775,18 @@ record that pertains to the location within the buffer."
 ;;
 ;; Support regions and buffer names.
 ;;
+(when (< emacs-major-version 22)
+  (defun looking-back (regexp)
+    (save-excursion
+      (and (re-search-backward regexp (- (point) 1) t)
+           (point))))
+
+  (defun looking-at (regexp)
+    (save-excursion
+      (and (re-search-forward regexp (+ (point) 1) t)
+           (point))))
+  )
+
 (defun bookmark-default-handler (bmk)
   "Default handler to jump to a particular bookmark location.
 BMK is a bookmark record.
@@ -822,7 +827,7 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
               (if (> place (point-max))
                   (progn
                     (goto-char (point-max))
-                    (error "Can't retrieve text!"))
+                    (error "Bookmark position is beyond buffer max"))
                   (goto-char place))
             ;; Check if start of region have moved
             (unless (and (string= forward-str (buffer-substring-no-properties (point) (+ (point) (length forward-str))))
@@ -839,32 +844,44 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
                     ;; If failed try to find <BEG POINT OF STRING AFTER REGION> with `str-af'.
                     (when (search-forward str-aft (point-max) t)
                       (setq end (match-beginning 0))
-                      (goto-char end)
-                      ;; If `str-aft' have moved one or more line forward reach it.
-                      (while (not (looking-back ".[^ \n]")) (forward-char -1))
-                      (setq end (point))))
-                ;; Try to find <BEG POINT OF REGION> with `forward-str'
+                      (when end
+                        (goto-char end)
+                        ;; If `str-aft' have moved one or more line forward reach it.
+                        (while (and (not (bobp)) (not (looking-back ".[^ \n]"))) (forward-char -1))
+                        (setq end (point)))))
+                ;; If we have failed to find END point go to EOB and search from there.
+                (unless end (goto-char (point-max)))
+                ;; Try now to find <BEG POINT OF REGION> with `forward-str'
                 (if (search-backward forward-str (point-min) t)
                     (setq beg (point))
                     ;; If failed try to find <END POINT OF STRING BEFORE REGION> with `str-bef'.
                     (when (search-backward str-bef (point-min) t)
                       (setq beg (match-end 0))
-                      (goto-char beg)
-                      ;; If region have moved one or more line forward reach it.
-                      (while (not (looking-at ".[^ \n]")) (forward-char 1))
-                      (setq beg (point))))
-                ;; Save new location to `bookmark-alist'.
-                (if (and beg end)
-                    (progn
-                      (setq place beg
-                            end-pos end)
-                      (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs beg end t))
-                      (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs beg end t))
-                      (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs beg t))
-                      (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end t))
-                      (bookmark-prop-set bmk 'position place)
-                      (bookmark-prop-set bmk 'end-position end-pos))
-                    (setq region-retrieved-p nil)))))
+                      (when beg
+                        (goto-char beg)
+                        ;; If region have moved one or more line forward reach it.
+                        (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
+                        (setq beg (point)))))
+                ;; Save new location to `bookmark-alist' only if `beg' OR `end' have been found.
+                ;; If only one of (`beg' `end') have been retrieved we will have an approximative
+                ;; region actived. If the both are retrieved we will have the exact region.
+                ;; FIXME should we save the new context string if only one point have been relocated?
+                (cond ((and beg end)
+                       (setq place beg
+                             end-pos end))
+                      ((and beg (not end))
+                       (setq place beg))
+                      ((and (not beg) end)
+                       (setq end-pos end))
+                      (t
+                       (setq region-retrieved-p nil)))
+                (when (and region-retrieved-p bookmark-always-save-relocated-position)
+                  (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs place end-pos t))
+                  (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs place end-pos t))
+                  (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs place t))
+                  (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end-pos t))
+                  (bookmark-prop-set bmk 'position place)
+                  (bookmark-prop-set bmk 'end-position end-pos)))))
           ;; Region found
           (if region-retrieved-p
               (progn
@@ -921,8 +938,8 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
   "Make a special entry for w3m buffers."
   (require 'w3m) ;; Be sure `w3m-current-url' is bound.
   `(,@(bookmark-make-record-default 'point-only)
-    (filename . ,w3m-current-url)
-    (handler . bookmark-jump-w3m)))
+      (filename . ,w3m-current-url)
+      (handler . bookmark-jump-w3m)))
 
 (add-hook 'w3m-mode-hook
           #'(lambda ()
@@ -931,11 +948,52 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
 
 (defun bookmark-jump-w3m (bmk)
   ;; This implements the `handler' function interface for record type returned
-  ;; by `w3m-bookmark-make-record', which see.
+  ;; by `bookmark-make-w3m-record', which see.
   (let* ((file  (bookmark-prop-get bmk 'filename))
          (buf   (bookmark-prop-get bmk 'buffer)))
     (w3m-browse-url file)
     (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
+    (bookmark-default-handler (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
+
+;; GNUS support
+;; This do not handle regions.
+(defun bookmark-make-gnus-record ()
+  "Make a special entry for gnus buffers."  
+  (require 'gnus)
+  (when (or (not (eq major-mode 'gnus-summary-mode))
+            (not gnus-article-current))
+    (error "Please retry from the Gnus summary buffer")) ;[1]
+  (let* ((grp  (car gnus-article-current))
+         (art  (cdr gnus-article-current))
+         (head (gnus-summary-article-header art))
+         (id   (mail-header-id head)))
+    `(,@(bookmark-make-record-default 'point-only)
+        (group . ,grp)
+        (article . ,art)
+        (message-id . ,id)
+        (handler . bookmark-jump-gnus))))
+
+(add-hook 'gnus-summary-mode-hook
+          #'(lambda ()
+              (set (make-local-variable 'bookmark-make-record-function)
+                   'bookmark-make-gnus-record)))
+
+;; Raise an error if we try to bookmark from here [1]
+(add-hook 'gnus-article-mode-hook
+          #'(lambda ()
+              (set (make-local-variable 'bookmark-make-record-function)
+                   'bookmark-make-gnus-record)))
+
+(defun bookmark-jump-gnus (bmk)
+  ;; This implements the `handler' function interface for record type returned
+  ;; by `bookmark-make-gnus-record', which see.
+  (let* ((group    (bookmark-prop-get bmk 'group))
+         (article  (bookmark-prop-get bmk 'article))
+         (id       (bookmark-prop-get bmk 'message-id))
+         (buf      (bookmark-prop-get bmk 'buffer)))
+    (gnus-fetch-group group (list article))
+    (gnus-summary-insert-cached-articles)
+    (gnus-summary-goto-article id nil 'force)
     (bookmark-default-handler (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
 
 ;; Not needed for Emacs 22+.
