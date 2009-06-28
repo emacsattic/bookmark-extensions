@@ -755,7 +755,6 @@ This string is just after the region end."
                                                          (- (point-max) (point)))))))
 
 (defun bookmark-retrieve-region-lax (forward-str behind-str str-bef str-aft pos end-pos)
-  ;; Relocate region if it has moved.
   (unless (and (string= forward-str (buffer-substring-no-properties
                                      (point) (+ (point) (length forward-str))))
                (save-excursion
@@ -817,6 +816,29 @@ This string is just after the region end."
          (goto-char pos) (beginning-of-line)
          (message "No region from %d to %d" pos end-pos))))
 
+
+(defun bookmark-simple-retrieve-position (file buf pos forward-str behind-str)
+  (if (and file (file-readable-p file) (not (buffer-live-p buf)))
+      (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
+      ;; No file found we search for a buffer non--filename
+      ;; if not found signal file doesn't exist anymore
+      (unless (and buf (get-buffer buf))
+        (signal 'file-error `("Jumping to bookmark" "No such file or directory"
+                                                    (bookmark-get-filename bmk)))))
+  (pop-to-buffer buf)
+  (setq deactivate-mark  t)
+  (raise-frame)
+  (goto-char pos)
+  ;; Search forward first.  Then, if FORWARD-STR exists and
+  ;; was found in the file, we can search backward for BEHIND-STR.
+  ;; Rationale is that if text was inserted between the two in the
+  ;; file, it's better to be put point before it so you can read it,
+  ;; rather than after and remain perhaps unaware of the changes.
+  (when (and forward-str (search-forward forward-str (point-max) t))
+    (goto-char (match-beginning 0)))
+  (when (and behind-str (search-backward behind-str (point-min) t))
+    (goto-char (match-end 0)))
+  nil))))
 
 ;;;###autoload
 (when (< emacs-major-version 23)
@@ -1005,32 +1027,14 @@ Changes current buffer and point."
                (goto-char pos)
              (goto-char (point-max))
              (error "Bookmark position is beyond buffer end"))
+           
+           ;; Relocate region if it has moved.
            (if (eq bookmark-retrieve-region-method-is 'lax)
                (bookmark-retrieve-region-lax forward-str behind-str str-bef str-aft pos end-pos)))
 
           ;; Single-position bookmark (no region).  Go to it.
           (t
-           (if (and file (file-readable-p file) (not (buffer-live-p buf)))
-               (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
-             ;; No file found we search for a buffer non--filename
-             ;; if not found signal file doesn't exist anymore
-             (unless (and buf (get-buffer buf))
-               (signal 'file-error `("Jumping to bookmark" "No such file or directory"
-                                     (bookmark-get-filename bmk)))))
-           (pop-to-buffer buf)
-           (setq deactivate-mark  t)
-           (raise-frame)
-           (goto-char pos)
-           ;; Search forward first.  Then, if FORWARD-STR exists and
-           ;; was found in the file, we can search backward for BEHIND-STR.
-           ;; Rationale is that if text was inserted between the two in the
-           ;; file, it's better to be put point before it so you can read it,
-           ;; rather than after and remain perhaps unaware of the changes.
-           (when (and forward-str (search-forward forward-str (point-max) t))
-             (goto-char (match-beginning 0)))
-           (when (and behind-str (search-backward behind-str (point-min) t))
-             (goto-char (match-end 0)))
-           nil))))
+           (bookmark-simple-retrieve-position file buf pos forward-str behind-str)))))
 
 ;;;###autoload
 (when (< emacs-major-version 23)
