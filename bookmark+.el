@@ -1,12 +1,15 @@
 ;;; bookmark+.el --- Extensions to `bookmark.el'.
-
+;;
 ;; Filename: bookmark+.el
 ;; Description: Extensions to `bookmark.el'.
 ;; Author: Drew Adams
 ;; Maintainer: Drew Adams
 ;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
 ;; Created: Fri Sep 15 07:58:41 2000
-
+;; Version: 21.0
+;; Last-Updated: Sat Jun 27 16:45:07 2009 (-0700)
+;;           By: dradams
+;;     Update #: 878
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki/bookmark+.el
 ;; Keywords: bookmarks, placeholders, annotations, search
 ;; Compatibility: GNU Emacs 20.x, GNU Emacs 21.x, GNU Emacs 22.x
@@ -27,24 +30,27 @@
 ;;
 ;;  * User options defined here:
 ;;
-;;    `bookmark-list-only-regions-flag', `bookmark-use-region-flag'.
+;;    `bookmark-list-only-regions-flag',
+;;    `bookmark-save-new-location-flag', `bookmark-use-region-flag'.
 ;;
 ;;  * Faces defined here:
 ;;
 ;;    `bookmark-directory', `bookmark-file', `bookmark-file-region',
-;;    `bookmark-info-node', `bookmark-nonfile-buffer',
-;;    `bookmark-remote-file', `bookmark-w3m-url',
+;;    `bookmark-gnus', `bookmark-info-node',
+;;    `bookmark-nonfile-buffer', `bookmark-remote-file',
+;;    `bookmark-w3m-url'.
 ;;
 ;;  * Non-interactive functions defined here:
 ;;
 ;;    `bookmark-get-buffer-name', `bookmark-get-ecrs',
 ;;    `bookmark-get-ecs', `bookmark-get-end-position',
-;;    `bookmark-get-fcrs', `bookmark-get-fcs', `bookmark-jump-w3m',
-;;    `bookmark-list-only-regions', `bookmark-make-record-function'
+;;    `bookmark-get-fcrs', `bookmark-get-fcs', `bookmark-jump-gnus',
+;;    `bookmark-jump-w3m', `bookmark-list-only-regions',
+;;    `bookmark-make-gnus-record', `bookmark-make-record-function'
 ;;    (Emacs 20-22), `bookmark-make-record-region',
 ;;    `bookmark-make-w3m-record', `bookmark-menu-jump-other-window'
 ;;    (Emacs 20, 21), `bookmark-region-alist-only',
-;;    `bookmark-region-handler'.
+;;    `bookmark-region-handler', `bookmark+version'.
 ;;
 ;;  * Internal variables defined here:
 ;;
@@ -66,6 +72,13 @@
 ;;   `bookmark-make-record-default', `bookmark-prop-get' (Emacs 20,
 ;;   21), `bookmark-prop-set' (Emacs 20, 21), `bookmark-relocate',
 ;;   `bookmark-rename', `bookmark-set', `bookmark-store'.
+;;
+;;
+;;  ***** NOTE: The following functions defined in `info.el'
+;;              have been REDEFINED HERE (Emacs 20-22):
+;;
+;;   `Info-bookmark-jump', `Info-bookmark-make-record'.
+;;
 ;;
 ;;  * Features:
 ;;
@@ -140,9 +153,10 @@
 
 (require 'bookmark)
 (eval-when-compile (require 'cl))
+(eval-when-compile (require 'gnus)) ; mail-header-id (really in `nnheader.el').
 
 ;; Quiet the byte-compiler
-(defvar w3m-current-url)
+(defvar w3m-current-url)                ; Defined in `w3m.el'. @@@@@@@ Correct?
 (when (< emacs-major-version 22) (defvar tramp-file-name-regexp)) ; Defined `tramp.el'.
 
 (defconst bookmark+version-number "1.5.0")
@@ -153,10 +167,6 @@
   (message "Bookmark+ Version %s" bookmark+version-number))
 
 ;;;;;;;;;;;;;;;;;;;;;;
-
-;;; keymap
-;; Prefix is C-x p
-;; Commands are run with C-x p <command> (e.g "C-x p T")
 
 ;;;###autoload
 (define-key bookmark-map "o" 'bookmark-jump-other-window)
@@ -175,12 +185,18 @@
   "*Non-nil means jumping to bookmark activates bookmarked region, if any."
   :type 'boolean :group 'bookmark)
 
+(defcustom bookmark-list-only-regions-flag t
+  "*Non-nil means bookmark commands use only bookmarks with regions."
+  :type 'boolean :group 'bookmark)
+
 (defcustom bookmark-region-search-size 40
   "The same as `bookmark-search-size' but specialized for bookmark regions."
   :type 'integer :group 'bookmark)
 
-(defcustom bookmark-always-save-relocated-position t
-  "Always save relocated position of regions when non--nil."
+(defcustom bookmark-save-new-location-flag t
+  "*Non-nil means save relocated bookmarks.
+If nil, then the new bookmark location is visited, but it is not saved
+as part of the bookmark definition."
   :type 'boolean :group 'bookmark)
 
 ;;; Faces
@@ -190,7 +206,7 @@
   "*Face used for a bookmarked non-file buffer."
   :group 'bookmark)
 
-(defface bookmark-buffer-file-name-region-face
+(defface bookmark-file-region
     '((t (:foreground "Indianred2")))
   "*Face used for a bookmarked region in a local file."
   :group 'bookmark)
@@ -224,6 +240,7 @@
     '((t (:foreground "pink")))
   "*Face used for a bookmarked local file (without a region)."
   :group 'bookmark)
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -373,7 +390,7 @@ Otherwise look for the corresponding bookmark in `bookmark-alist'."
        (or (if (fboundp 'assoc-string)  ; Emacs 22+.
                (assoc-string bookmark bookmark-alist bookmark-completion-ignore-case)
              (assoc bookmark bookmark-alist))
-           (unless noerror (error "Invalid bookmark %s" bookmark))))))
+           (unless noerror (error "Invalid bookmark: `%s'" bookmark))))))
 
   ;; Same as vanilla Emacs 23+ definition.
   ;;
@@ -474,11 +491,16 @@ See `bookmark-jump'."
   ;; Same as vanilla Emacs 23+ definition.
   ;;
   (defun bookmark-prop-get (bookmark prop)
-  "Return the property PROP of BOOKMARK, or nil if none."
-  (cdr (assq prop (bookmark-get-bookmark-record bookmark))))
+    "Return the property PROP of BOOKMARK, or nil if none."
+    (cdr (assq prop (bookmark-get-bookmark-record bookmark))))
 
-  ;; Same as vanilla Emacs 23+ definition.
-  ;;
+  (defun bookmark-prop-set (bookmark prop val)
+    "Set the property PROP of BOOKMARK to VAL."
+    (let ((cell  (assq prop (bookmark-get-bookmark-record bookmark))))
+      (if cell
+          (setcdr cell val)
+        (nconc (bookmark-get-bookmark-record bookmark) (list (cons prop val))))))
+
   (defun bookmark-get-handler (bookmark)
     "Return the `handler' entry for BOOKMARK."
     (bookmark-prop-get bookmark 'handler))
@@ -509,12 +531,14 @@ elisp package, or the name of a bookmark to be found in `bookmark-alist'."
        ;; We were unable to find the marked file, so ask if user wants to
        ;; relocate the bookmark, else remind them to consider deletion.
        (when (stringp bookmark)
-         ;; `bookmark' can be either a bookmark name (found in `bookmark-alist') or a bookmark
-         ;; object.  If an object, assume it's a bookmark used internally by some other package.
+         ;; BOOKMARK can be either a bookmark name (found in `bookmark-alist') or a bookmark
+         ;; object.  If an object, assume it's a bookmark used internally by some other
+         ;; package.
          (let ((file  (bookmark-get-filename bookmark)))
            (when file                   ; Don't know how to relocate if file doesn't exist.
              (setq file  (expand-file-name file)) (ding)
-             (cond ((y-or-n-p (concat (file-name-nondirectory file) " nonexistent.  Relocate \""
+             (cond ((y-or-n-p (concat (file-name-nondirectory file)
+                                      " nonexistent.  Relocate \""
                                       bookmark "\"? "))
                     (bookmark-relocate bookmark) ; Try again
                     (funcall (or (bookmark-get-handler bookmark) 'bookmark-default-handler)
@@ -557,14 +581,14 @@ deletion, or > if it is flagged for displaying."
                          '(font-lock-face bookmark-menu-heading))
     (mapc
      (lambda (full-record)
-       ;; if a bookmark has an annotation, prepend a "*"
-       ;; in the list of bookmarks.
-       (let ((annotation (bookmark-get-annotation (bookmark-name-from-full-record full-record))))
+       ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
+       (let ((annotation  (bookmark-get-annotation (bookmark-name-from-full-record full-record))))
          (insert (if (and annotation (not (string-equal annotation "")))  " *"  "  "))
          (let* ((start         (point))
                 (name          (bookmark-name-from-full-record full-record))
                 (isfile        (bookmark-get-filename name))
-                (istramp       (and isfile (string-match tramp-file-name-regexp isfile)))
+                (istramp       (and isfile (boundp 'tramp-file-name-regexp)
+                                    (save-match-data (string-match tramp-file-name-regexp isfile))))
                 (isregion      (and (bookmark-get-end-position name)
                                 (/= (bookmark-get-position name)
                                     (bookmark-get-end-position name))))
@@ -572,12 +596,14 @@ deletion, or > if it is flagged for displaying."
                 (ishandler     (bookmark-get-handler name))
                 (isgnus        (assq 'group full-record))
                 (isbuf         (bookmark-get-buffer-name name)))
-           (insert name)
-           (add-text-properties
-            start
-            (save-excursion (re-search-backward
-                             "[^ \t]")
-                            (1+ (point)))
+	   (insert name)
+	   (add-text-properties
+            start  (save-excursion (re-search-backward "[^ \t]") (1+ (point)))
+            ;; @@@@@@@ FIXME LATER
+            ;;         Aren't some of these conditions redundant?
+            ;;         My impression is you could start with the ISTRAMP and Info clauses,
+            ;;         then maybe a NOT ISFILE clause, and such reordering would simplify
+            ;;         the conditions used (and so help readability).
             (cond ((and isfile (not istramp) (file-directory-p isfile)) ; Local directory
                    '(mouse-face highlight
                      follow-link t face 'bookmark-directory
@@ -585,7 +611,7 @@ deletion, or > if it is flagged for displaying."
                   ((and isfile (not istramp) (not (file-directory-p isfile))
                         (file-exists-p isfile) isregion) ; Local file with region
                    '(mouse-face highlight follow-link t
-                     face 'bookmark-buffer-file-name-region-face
+                     face 'bookmark-file-region
                      help-echo "mouse-2: go to this file with region"))
                   ((and isfile (not istramp) (not (file-directory-p isfile))
                         (file-exists-p isfile)) ; Local file without region
@@ -594,8 +620,8 @@ deletion, or > if it is flagged for displaying."
                   (isgnus ; Gnus
                    '(mouse-face highlight
                      follow-link t face 'bookmark-gnus
-                     help-echo "mouse-2: go to this gnus buffer"))
-                  ((and isbuf (not isfile) (not isgnus)) ; Buffer without a file
+                     help-echo "mouse-2: Go to this gnus buffer"))
+                  ((and isbuf (not isfile)) ; Buffer without a file
                    '(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
                      help-echo "mouse-2: go to this non--buffer-filename"))
                   ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; w3m url
@@ -632,8 +658,6 @@ deletion, or > if it is flagged for displaying."
      if b
      collect i))
 
-;; Internal use only!
-(defvar bookmark-list-only-regions-flag t)
 (defun bookmark-list-only-regions ()
   "Return only the elements of `bookmark-alist' that have a recorded region."
   (let ((bookmark-alist (bookmark-region-alist-only)))
@@ -666,70 +690,177 @@ deletion, or > if it is flagged for displaying."
 ;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-make-record-default")
 ;; (find-fline "/usr/share/emacs/23.0.95/lisp/info.el" "defun Info-bookmark-make-record")
 
-
 (defun bookmark-get-fcs (breg ereg regionp)
   "Create the `bookmark-alist' entry `front-context-string'.
-It will not have the same meaning depending buffer to bookmark
-have a region active or not.
-If region is active: 
-return the string starting from
-BEGINNING OF REGION to `bookmark-region-search-size' characters after this point.
-If region is inactive:
-return the string `bookmark-region-search-size' BEFORE REGION."
+The meaning depends on whether the buffer to bookmark has an active
+region.
+
+If so, return the string from the region beginning to
+`bookmark-region-search-size' characters after that position.
+
+If not, return the string between point and
+`bookmark-region-search-size' chars before point."
+  ;; @@@ Is that sentence correct? You had said "`bookmark-region-search-size'
+  ;;     BEFORE REGION", but there isn't necessarily any region in this case.
   (if regionp
       (buffer-substring-no-properties
        breg
        (+ breg (min bookmark-region-search-size (- ereg breg))))
-      (if (>= (- (point-max) (point)) bookmark-search-size)
-          (buffer-substring-no-properties
-           (point)
-           (+ (point) bookmark-search-size))
-          nil)))
+    (if (>= (- (point-max) (point)) bookmark-search-size)
+        (buffer-substring-no-properties
+         (point)
+         (+ (point) bookmark-search-size))
+      nil)))
 
 (defun bookmark-get-ecs (breg ereg regionp)
   "Create the `bookmark-alist' entry `rear-context-string'.
-It will not have the same meaning depending buffer to bookmark
-have a region active or not.
-If region is active: 
-return the string starting from
-`bookmark-region-search-size' characters BEFORE END OF REGION to END OF REGION.
-If region is inactive:
-return the string `bookmark-region-search-size' BEFORE REGION."
+The meaning depends on whether the buffer to bookmark has an active
+region.
+
+If so, return the string from `bookmark-region-search-size' characters
+before the region beginning to the end of the region.
+
+If not, return the string between point and
+`bookmark-region-search-size' chars before point."
+  ;; @@@ Is that sentence correct? You had said "`bookmark-region-search-size'
+  ;;     BEFORE REGION", but there isn't necessarily any region in this case.
   (if regionp
       (buffer-substring-no-properties
-       ereg
-       (- ereg (min bookmark-region-search-size
-                   (- ereg breg))))
-      (if (>= (- (point) (point-min)) bookmark-search-size)
-          (buffer-substring-no-properties
-           (point)
-           (- (point) bookmark-search-size))
-          nil)))
+       ereg (- ereg (min bookmark-region-search-size (- ereg breg))))
+    (if (>= (- (point) (point-min)) bookmark-search-size)
+        (buffer-substring-no-properties (point) (- (point) bookmark-search-size))
+      nil)))
 
 (defun bookmark-get-fcrs (breg regionp)
   "Create the `bookmark-alist' entry `front-context-region-string'.
-That is the string BEFORE REGION.
-It will be recorded only if region is active."
+This string is just before the region beginning."
   (if (not regionp)
       nil
     (goto-char breg)
     (re-search-backward ".[^ ]" nil t)
-    (buffer-substring-no-properties (max (- (point) bookmark-region-search-size)
-                                         (point-min))
+    (buffer-substring-no-properties (max (- (point) bookmark-region-search-size) (point-min))
                                     breg)))
 
 (defun bookmark-get-ecrs (ereg regionp)
   "Create the `bookmark-alist' entry `rear-context-region-string'.
-That is the string AFTER REGION.
-It will be recorded only if region is active."
+This string is just after the region end."
   (if (not regionp)
       nil
     (goto-char ereg)
     (re-search-forward "^.*[^ \n]" nil t)
     (beginning-of-line)
     (buffer-substring-no-properties ereg (+ (point) (min bookmark-region-search-size
-                                                        (- (point-max) (point)))))))
+                                                         (- (point-max) (point)))))))
 
+
+;;;###autoload
+(when (< emacs-major-version 23)
+
+  ;; REPLACES ORIGINAL in `bookmark.el'.
+  ;;
+  ;; Uses `bookmark-make-record'.
+  ;;
+  (defun bookmark-set (&optional name parg)
+    "Set a bookmark named NAME inside a file.
+If name is nil, then the user will be prompted.
+With prefix arg, will not overwrite a bookmark that has the same name
+as NAME if such a bookmark already exists, but instead will \"push\"
+the new bookmark onto the bookmark alist.  Thus the most recently set
+bookmark with name NAME would be the one in effect at any given time,
+but the others are still there, should you decide to delete the most
+recent one.
+
+To yank words from the text of the buffer and use them as part of the
+bookmark name, type C-w while setting a bookmark.  Successive C-w's
+yank successive words.
+
+Typing C-u inserts the name of the last bookmark used in the buffer
+\(as an aid in using a single bookmark name to track your progress
+through a large file\).  If no bookmark was used, then C-u inserts the
+name of the file being visited.
+
+Use \\[bookmark-delete] to remove bookmarks \(you give it a name,
+and it removes only the first instance of a bookmark with that name from
+the list of bookmarks.\)"
+    (interactive (list nil current-prefix-arg))
+    (let* ((record   (bookmark-make-record))
+           (default  (car record)))
+      (bookmark-maybe-load-default-file)
+      (setq bookmark-current-point   (point)
+            bookmark-yank-point      (point)
+            bookmark-current-buffer  (current-buffer))
+      (let ((str         (or name (read-from-minibuffer
+                                   (format "Set bookmark (%s): " default) nil
+                                   (let ((map  (copy-keymap minibuffer-local-map)))
+                                     (define-key map "\C-w" 'bookmark-yank-word)
+                                     (define-key map "\C-u" 'bookmark-insert-current-bookmark)
+                                     map)
+                                   nil nil default)))
+            (annotation  nil))
+        (and (string-equal str "") (setq str  default))
+        (bookmark-store str (cdr record) parg)
+        ;; Ask for an annotation buffer for this bookmark
+        (if bookmark-use-annotations
+            (bookmark-edit-annotation str)
+          (goto-char bookmark-current-point)))))
+
+  ;; Same as vanilla Emacs 23+ definition.
+  ;;
+  (defun bookmark-store (name alist no-overwrite)
+    "Store the bookmark NAME with data ALIST.
+If NO-OVERWRITE is non-nil and another bookmark of the same name already
+exists in `bookmark-alist', record the new bookmark without throwing away the
+old one."
+    (bookmark-maybe-load-default-file)
+    (let ((stripped-name  (copy-sequence name)))
+      (or (featurep 'xemacs)
+          ;; XEmacs's `set-text-properties' doesn't work on free-standing strings.
+          (set-text-properties 0 (length stripped-name) nil stripped-name))
+      (if (and (not no-overwrite) (bookmark-get-bookmark stripped-name 'no-error))
+          ;; Existing bookmark under that name and no prefix arg means just overwrite old.
+          ;; Use the new (NAME . ALIST) format.
+          (setcdr (bookmark-get-bookmark stripped-name) alist)
+        (push (cons stripped-name alist) bookmark-alist))
+      (setq bookmark-current-bookmark          stripped-name
+            bookmark-alist-modification-count  (1+ bookmark-alist-modification-count))
+      (when (bookmark-time-to-save-p) (bookmark-save))
+      (setq bookmark-current-bookmark  stripped-name)
+      (bookmark-bmenu-surreptitiously-rebuild-list)))
+
+  ;; Same as vanilla Emacs 23+ definition.
+  ;;
+  (defvar bookmark-make-record-function 'bookmark-make-record-default
+    "A function that should be called to create a bookmark record.
+Modes may set this variable buffer-locally to enable bookmarking of
+locations that should be treated specially, such as Info nodes,
+news posts, images, pdf documents, etc.
+
+The function will be called with no arguments.
+It should signal a user error if it is unable to construct a record for
+the current location.
+
+The returned record should be a cons cell of the form (NAME . ALIST)
+where ALIST is as described in `bookmark-alist' and may typically contain
+a special cons (handler . SOME-FUNCTION) which sets the handler function
+that should be used to open this bookmark instead of
+`bookmark-default-handler'.  The handler should follow the same calling
+convention as the one used by `bookmark-default-handler'.
+
+NAME is a suggested name for the constructed bookmark.  It can be nil
+in which case a default heuristic will be used.  The function can also
+equivalently just return ALIST without NAME.")
+
+  ;; Same as vanilla Emacs 23+ definition.
+  ;;
+  (defun bookmark-make-record ()
+    "Return a new bookmark record (NAME . ALIST) for the current location."
+    (let ((record  (funcall bookmark-make-record-function)))
+      ;; Set up default name.
+      (if (stringp (car record))
+          record                        ; The function already provided a default name.
+        (when (car record) (push nil record))
+        (setcar record  (or bookmark-current-bookmark (bookmark-buffer-name)))
+        record))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -770,161 +901,131 @@ record that pertains to the location within the buffer."
         (position . ,beg)
         (end-position . ,end))))
 
+;; @@@@@@ FIXME LATER
+;;        Don't add stuff that has a nil value to the bookmark record (it is not used).
+;;        For example, don't add the buffer name if the file name is present.
+;;        This is not critical and can be done later.
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Support regions and buffer names.
 ;;
-(when (< emacs-major-version 22)
-  (defun looking-back (regexp)
-    (save-excursion
-      (and (re-search-backward regexp (- (point) 1) t)
-           (point))))
-
-  (defun looking-at (regexp)
-    (save-excursion
-      (and (re-search-forward regexp (+ (point) 1) t)
-           (point))))
-  )
-
 (defun bookmark-default-handler (bmk)
-  "Default handler to jump to a particular bookmark location.
-BMK is a bookmark record.
-Changes current buffer and point and returns nil, or signals a `file-error'."
-
+  "Default handler to jump to a bookmark location.
+BMK is a bookmark record.  Return nil or signal a `file-error.
+Changes current buffer and point."
   (let* ((file                   (bookmark-get-filename bmk))
-         (buf                    (bookmark-prop-get bmk 'buffer-name))
+         (buf                    (bookmark-prop-get bmk 'buffer))
          (forward-str            (bookmark-get-front-context-string bmk))
          (behind-str             (bookmark-get-rear-context-string bmk))
          (str-bef                (bookmark-prop-get bmk 'front-context-region-string))
          (str-aft                (bookmark-prop-get bmk 'rear-context-region-string))
-         (place                  (bookmark-get-position bmk))
+         (pos                    (bookmark-get-position bmk))
          (end-pos                (bookmark-prop-get bmk 'end-position))
          (region-retrieved-p     t))
-    (if (and bookmark-use-region-flag
-             end-pos
-             (/= place end-pos))
-        ;; A saved region exists, create buffer and retrieve it
-        (progn
-          (cond ((and file ;; file exists and is readable
-                      (file-readable-p file)
-                      (not (buffer-live-p buf)))
-                 ;; setup buffer
-                 ;; handle buf buf<2>...
-                 (with-current-buffer (find-file-noselect file)
-                   (let ((buf-name (buffer-name)))
-                     (setq buf buf-name))))
+
+    ;; Bookmark with a region.  Go to it and select region.
+    (cond ((and bookmark-use-region-flag end-pos (/= pos end-pos))
+           ;; Get buffer.
+           (if (and file (file-readable-p file) (not (buffer-live-p buf)))
+               (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
+             ;; No file found.  If no buffer either, then signal that file doesn't exist.
+             (unless (and buf (get-buffer buf))
+               (signal 'file-error `("Jumping to bookmark" "No such file or directory"
+                                     (bookmark-get-filename bmk)))))
+           (pop-to-buffer buf)
+           (raise-frame)
+           (if (<= pos (point-max))
+               (goto-char pos)
+             (goto-char (point-max))
+             (error "Bookmark position is beyond buffer end"))
+
+           ;; Relocate region if it has moved.
+           (unless (and (string= forward-str (buffer-substring-no-properties
+                                              (point) (+ (point) (length forward-str))))
+                        (save-excursion
+                          (goto-char end-pos)
+                          (string= behind-str (buffer-substring-no-properties
+                                               (point) (- (point) (length forward-str))))))
+             (goto-char (point-min))    ; Start at bob and search forward.
+             (let (beg end)
+               (if (search-forward behind-str (point-max) t) ; Find END, using `behind-str'.
+                   (setq end  (point))
+                 (when (search-forward str-aft (point-max) t) ; Find END, using `str-aft'.
+                   (setq end  (match-beginning 0))
+                   (when end
+                     (goto-char end)
+                     ;; If `str-aft' moved, then look for END one or more lines back.
+                     (while (and (not (bobp))
+                                 (not (save-excursion ; This is `looking-back', for older Emacs.
+                                        (and (re-search-backward "\\(.[^ \n]\\)\\=" nil t)
+                                             (point)))))
+                       (forward-char -1))
+                     (setq end  (point)))))
+               ;; If failed to find END, go to eob and search backward from there.
+               (unless end (goto-char (point-max)))
+               (if (search-backward forward-str (point-min) t) ; Find BEG, using `forward-str'.
+                   (setq beg  (point))
+                 (when (search-backward str-bef (point-min) t) ; Find BEG, using `str-bef'.
+                   (setq beg (match-end 0))
+                   (when beg
+                     (goto-char beg)
+                     ;; If `str-bef' moved, then look for BEG one or more lines forward.
+                     (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
+                     (setq beg (point)))))
+
+               ;; @@@ FIXME: Should we save new context string if only one position was relocated?
+
+               ;; Save new location to `bookmark-alist' only if BEG or END was found.
+               ;; If only one of them was found, the located region is only approximate.
+               ;; If both were found, it is exact.
+               (cond ((and beg end) (setq pos      beg
+                                          end-pos  end))
+                     ((and beg (not end)) (setq pos  beg))
+                     ((and (not beg) end) (setq end-pos  end))
+                     (t (setq region-retrieved-p  nil)))
+               (when (and region-retrieved-p bookmark-save-new-location-flag)
+                 (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs pos end-pos t))
+                 (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs pos end-pos t))
+                 (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs pos t))
+                 (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end-pos t))
+                 (bookmark-prop-set bmk 'position pos)
+                 (bookmark-prop-set bmk 'end-position end-pos))))
+
+           (cond (region-retrieved-p
+                  (goto-char pos)
+                  (push-mark end-pos 'nomsg 'activate)
+                  (setq deactivate-mark  nil)
+                  (message "Region is from %d to %d" pos end-pos))
                  (t
-                  ;; No file found we search for a buffer non--filename
-                  ;; if not found, signal file doesn't exist anymore
-                  (if (not (get-buffer buf))
-                      (signal 'file-error
-                              `("Jumping to bookmark" "No such file or directory"
-                                                   (bookmark-get-filename bmk))))))
-          (when (get-buffer buf)
-            (pop-to-buffer buf)
-            (raise-frame)
-              (if (> place (point-max))
-                  (progn
-                    (goto-char (point-max))
-                    (error "Bookmark position is beyond buffer max"))
-                  (goto-char place))
-            ;; Check if start of region have moved
-            (unless (and (string= forward-str (buffer-substring-no-properties (point) (+ (point) (length forward-str))))
-                         (save-excursion
-                           ;; check also if end of region have changed
-                           (goto-char end-pos)
-                           (string= behind-str (buffer-substring-no-properties (point) (- (point) (length forward-str))))))
-              ;; Position have changed: relocate region.
-              (goto-char (point-min))
-              (let (beg end)
-                ;; Try to find <END POINT OF REGION> with `behind-str'.
-                (if (search-forward behind-str (point-max) t)
-                    (setq end (point))
-                    ;; If failed try to find <BEG POINT OF STRING AFTER REGION> with `str-af'.
-                    (when (search-forward str-aft (point-max) t)
-                      (setq end (match-beginning 0))
-                      (when end
-                        (goto-char end)
-                        ;; If `str-aft' have moved one or more line forward reach it.
-                        (while (and (not (bobp)) (not (looking-back ".[^ \n]"))) (forward-char -1))
-                        (setq end (point)))))
-                ;; If we have failed to find END point go to EOB and search from there.
-                (unless end (goto-char (point-max)))
-                ;; Try now to find <BEG POINT OF REGION> with `forward-str'
-                (if (search-backward forward-str (point-min) t)
-                    (setq beg (point))
-                    ;; If failed try to find <END POINT OF STRING BEFORE REGION> with `str-bef'.
-                    (when (search-backward str-bef (point-min) t)
-                      (setq beg (match-end 0))
-                      (when beg
-                        (goto-char beg)
-                        ;; If region have moved one or more line forward reach it.
-                        (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
-                        (setq beg (point)))))
-                ;; Save new location to `bookmark-alist' only if `beg' OR `end' have been found.
-                ;; If only one of (`beg' `end') have been retrieved we will have an approximative
-                ;; region actived. If the both are retrieved we will have the exact region.
-                ;; FIXME should we save the new context string if only one point have been relocated?
-                (cond ((and beg end)
-                       (setq place beg
-                             end-pos end))
-                      ((and beg (not end))
-                       (setq place beg))
-                      ((and (not beg) end)
-                       (setq end-pos end))
-                      (t
-                       (setq region-retrieved-p nil)))
-                (when (and region-retrieved-p bookmark-always-save-relocated-position)
-                  (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs place end-pos t))
-                  (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs place end-pos t))
-                  (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs place t))
-                  (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end-pos t))
-                  (bookmark-prop-set bmk 'position place)
-                  (bookmark-prop-set bmk 'end-position end-pos)))))
-          ;; Region found
-          (if region-retrieved-p
-              (progn
-                (goto-char place)
-                (push-mark end-pos 'nomsg 'activate)
-                (setq deactivate-mark  nil)
-                (message "Region at Start:%s to End:%s" place end-pos))
-              ;; Region doesn't exist anymore, go at old start pos
-              ;; and don't push-mark.
-              (goto-char place) (beginning-of-line)
-              (message "Region at Start:%s to End:%s not found!" place end-pos)))
-        ;; There is no saved region, retrieve file as normal.
-        (cond ((and file
-                    (file-readable-p file)
-                    (not (buffer-live-p buf)))
-               ;; in case buf buf<2>...
-               (with-current-buffer (find-file-noselect file)
-                 (let ((buf-name (buffer-name)))
-                   (setq buf buf-name))))
-              (t
-               ;; No file found we search for a buffer non--filename
-               ;; if not found signal file doesn't exist anymore
-               (if (not (get-buffer buf))
-                   (signal 'file-error
-                           `("Jumping to bookmark" "No such file or directory"
-                                                   (bookmark-get-filename bmk))))))
-        (when (get-buffer buf)
-          (pop-to-buffer buf)
-          (setq deactivate-mark  t)
-          (raise-frame)
-          (goto-char place)
-          ;; Go searching forward first.  Then, if forward-str exists and
-          ;; was found in the file, we can search backward for behind-str.
-          ;; Rationale is that if text was inserted between the two in the
-          ;; file, it's better to be put before it so you can read it,
-          ;; rather than after and remain perhaps unaware of the changes.
-          (if forward-str
-              (if (search-forward forward-str (point-max) t)
-                  (goto-char (match-beginning 0))))
-          (if behind-str
-              (if (search-backward behind-str (point-min) t)
-                  (goto-char (match-end 0)))))
-        nil)))
+                  ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
+                  (goto-char pos) (beginning-of-line)
+                  (message "No region from %d to %d" pos end-pos))))
+
+          ;; Single-position bookmark (no region).  Go to it.
+          (t
+           (if (and file (file-readable-p file) (not (buffer-live-p buf)))
+               (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
+             ;; No file found we search for a buffer non--filename
+             ;; if not found signal file doesn't exist anymore
+             (unless (and buf (get-buffer buf))
+               (signal 'file-error `("Jumping to bookmark" "No such file or directory"
+                                     (bookmark-get-filename bmk)))))
+           (pop-to-buffer buf)
+           (setq deactivate-mark  t)
+           (raise-frame)
+           (goto-char pos)
+           ;; Search forward first.  Then, if FORWARD-STR exists and
+           ;; was found in the file, we can search backward for BEHIND-STR.
+           ;; Rationale is that if text was inserted between the two in the
+           ;; file, it's better to be put point before it so you can read it,
+           ;; rather than after and remain perhaps unaware of the changes.
+           (when (and forward-str (search-forward forward-str (point-max) t))
+             (goto-char (match-beginning 0)))
+           (when (and behind-str (search-backward behind-str (point-min) t))
+             (goto-char (match-end 0)))
+           nil))))
 
 
 ;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-file-or-variation-thereof")
@@ -933,45 +1034,67 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
 ;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-default-handler")
 ;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-handle-bookmark")
 
+;;;###autoload
+(when (< emacs-major-version 23)
+  (defun Info-bookmark-make-record ()
+    `(,Info-current-node
+      ,@(bookmark-make-record-default 'point-only)
+      (filename . ,Info-current-file)
+      (info-node . ,Info-current-node)
+      (handler . Info-bookmark-jump)))
+
+  (defun Info-bookmark-jump (bmk)
+    ;; This implements the `handler' function interface for record type returned
+    ;; by `Info-bookmark-make-record', which see.
+    (let* ((file                   (bookmark-prop-get bmk 'filename))
+           (info-node              (bookmark-prop-get bmk 'info-node))
+           (buf (save-window-excursion  ;FIXME: doesn't work with frames!
+                  (Info-find-node file info-node) (current-buffer))))
+      ;; Use bookmark-default-handler to move to the appropriate location
+      ;; within the node.
+      (bookmark-default-handler
+       (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
+
+  (add-hook 'Info-mode-hook (lambda ()
+                              (set (make-local-variable 'bookmark-make-record-function)
+                                   'Info-bookmark-make-record))))
+
 ;; W3M support
 (defun bookmark-make-w3m-record ()
   "Make a special entry for w3m buffers."
-  (require 'w3m) ;; Be sure `w3m-current-url' is bound.
+  (require 'w3m)                        ; For `w3m-current-url'.
   `(,@(bookmark-make-record-default 'point-only)
-      (filename . ,w3m-current-url)
-      (handler . bookmark-jump-w3m)))
+    (filename . ,w3m-current-url)
+    (handler . bookmark-jump-w3m)))
 
 (add-hook 'w3m-mode-hook
           #'(lambda ()
-            (set (make-local-variable 'bookmark-make-record-function)
-                 'bookmark-make-w3m-record)))
+              (set (make-local-variable 'bookmark-make-record-function)
+                   'bookmark-make-w3m-record)))
 
 (defun bookmark-jump-w3m (bmk)
-  ;; This implements the `handler' function interface for record type returned
-  ;; by `bookmark-make-w3m-record', which see.
+  ;; Handler function for record returned by `bookmark-make-w3m-record'.
   (let* ((file  (bookmark-prop-get bmk 'filename))
          (buf   (bookmark-prop-get bmk 'buffer)))
     (w3m-browse-url file)
     (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
     (bookmark-default-handler (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
 
-;; GNUS support
-;; This do not handle regions.
+;; GNUS support.  Does not handle regions.
 (defun bookmark-make-gnus-record ()
-  "Make a special entry for gnus buffers."  
+  "Make a bookmark entry for gnus buffers."  
   (require 'gnus)
-  (when (or (not (eq major-mode 'gnus-summary-mode))
-            (not gnus-article-current))
+  (unless (and (eq major-mode 'gnus-summary-mode) gnus-article-current)
     (error "Please retry from the Gnus summary buffer")) ;[1]
-  (let* ((grp  (car gnus-article-current))
-         (art  (cdr gnus-article-current))
-         (head (gnus-summary-article-header art))
-         (id   (mail-header-id head)))
+  (let* ((grp   (car gnus-article-current))
+         (art   (cdr gnus-article-current))
+         (head  (gnus-summary-article-header art))
+         (id    (mail-header-id head)))
     `(,@(bookmark-make-record-default 'point-only)
-        (group . ,grp)
-        (article . ,art)
-        (message-id . ,id)
-        (handler . bookmark-jump-gnus))))
+      (group . ,grp)
+      (article . ,art)
+      (message-id . ,id)
+      (handler . bookmark-jump-gnus))))
 
 (add-hook 'gnus-summary-mode-hook
           #'(lambda ()
@@ -985,12 +1108,11 @@ Changes current buffer and point and returns nil, or signals a `file-error'."
                    'bookmark-make-gnus-record)))
 
 (defun bookmark-jump-gnus (bmk)
-  ;; This implements the `handler' function interface for record type returned
-  ;; by `bookmark-make-gnus-record', which see.
-  (let* ((group    (bookmark-prop-get bmk 'group))
-         (article  (bookmark-prop-get bmk 'article))
-         (id       (bookmark-prop-get bmk 'message-id))
-         (buf      (bookmark-prop-get bmk 'buffer)))
+  ;; Handler' function for record returned by `bookmark-make-gnus-record'.
+  (let ((group    (bookmark-prop-get bmk 'group))
+        (article  (bookmark-prop-get bmk 'article))
+        (id       (bookmark-prop-get bmk 'message-id))
+        (buf      (bookmark-prop-get bmk 'buffer)))
     (gnus-fetch-group group (list article))
     (gnus-summary-insert-cached-articles)
     (gnus-summary-goto-article id nil 'force)
@@ -1008,7 +1130,7 @@ See `bookmark-jump-other-window'."
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(provide 'bookmark+)
+(provide 'bookmark+-2009-06-27d-DREW)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bookmark+.el ends here
