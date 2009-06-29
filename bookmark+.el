@@ -1004,6 +1004,7 @@ BMK is a bookmark record.  Return nil or signal a `file-error.
 Changes current buffer and point."
   (let* ((file                   (bookmark-get-filename bmk))
          (buf                    (bookmark-prop-get bmk 'buffer))
+         (bufname                (bookmark-prop-get bmk 'buffer-name))
          (forward-str            (bookmark-get-front-context-string bmk))
          (behind-str             (bookmark-get-rear-context-string bmk))
          (str-bef                (bookmark-prop-get bmk 'front-context-region-string))
@@ -1018,10 +1019,13 @@ Changes current buffer and point."
            (if (and file (file-readable-p file) (not (buffer-live-p buf)))
                (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
              ;; No file found.  If no buffer either, then signal that file doesn't exist.
-             (unless (and buf (get-buffer buf))
+             (unless (or (and buf (get-buffer buf))
+                         (and bufname (get-buffer bufname) (not (string= buf bufname))))
                (signal 'file-error `("Jumping to bookmark" "No such file or directory"
                                      (bookmark-get-filename bmk)))))
-           (pop-to-buffer buf)
+           (if buf
+               (pop-to-buffer buf)
+               (pop-to-buffer bufname))
            (raise-frame)
            (if (<= pos (point-max))
                (goto-char pos)
