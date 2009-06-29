@@ -838,7 +838,7 @@ This string is just after the region end."
     (goto-char (match-beginning 0)))
   (when (and behind-str (search-backward behind-str (point-min) t))
     (goto-char (match-end 0)))
-  nil))))
+  nil)
 
 ;;;###autoload
 (when (< emacs-major-version 23)
