@@ -1003,7 +1003,7 @@ record that pertains to the location within the buffer."
 BMK is a bookmark record.  Return nil or signal a `file-error.
 Changes current buffer and point."
   (let* ((file                   (bookmark-get-filename bmk))
-         (buf                    (bookmark-prop-get bmk 'buffer-name))
+         (buf                    (bookmark-prop-get bmk 'buffer))
          (forward-str            (bookmark-get-front-context-string bmk))
          (behind-str             (bookmark-get-rear-context-string bmk))
          (str-bef                (bookmark-prop-get bmk 'front-context-region-string))
@@ -1077,10 +1077,11 @@ Changes current buffer and point."
 (defun bookmark-jump-w3m (bmk)
   ;; Handler function for record returned by `bookmark-make-w3m-record'.
   (let* ((file  (bookmark-prop-get bmk 'filename))
-         (buf   (bookmark-prop-get bmk 'buffer)))
+         (buf   "*w3m*"))
     (w3m-browse-url file)
-    (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
-    (bookmark-default-handler (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bmk)))))
+    (with-current-buffer buf (while (eq (point-min) (point-max)) (sit-for 1)))
+    (bookmark-default-handler
+     (list* "" `(buffer . ,(buffer-name (current-buffer))) (bookmark-get-bookmark-record bmk)))))
 
 ;; GNUS support.  Does not handle regions.
 (defun bookmark-make-gnus-record ()
