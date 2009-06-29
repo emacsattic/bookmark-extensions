@@ -743,17 +743,6 @@ This string is just before the region beginning."
     (buffer-substring-no-properties (max (- (point) bookmark-region-search-size) (point-min))
                                     breg)))
 
-(defun bookmark-get-ecrs (ereg regionp)
-  "Create the `bookmark-alist' entry `rear-context-region-string'.
-This string is just after the region end."
-  (if (not regionp)
-      nil
-    (goto-char ereg)
-    (re-search-forward "^.*[^ \n]" nil t)
-    (beginning-of-line)
-    (buffer-substring-no-properties ereg (+ (point) (min bookmark-region-search-size
-                                                         (- (point-max) (point)))))))
-
 (defun bookmark-retrieve-region-lax (forward-str behind-str str-bef str-aft pos end-pos)
   (unless (and (string= forward-str (buffer-substring-no-properties
                                      (point) (+ (point) (length forward-str))))
@@ -822,10 +811,13 @@ This string is just after the region end."
       (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
       ;; No file found we search for a buffer non--filename
       ;; if not found signal file doesn't exist anymore
-      (unless (and buf (get-buffer buf))
+      (unless (or (and buf (get-buffer buf))
+                  (and bufname (get-buffer bufname) (not (string= buf bufname))))
         (signal 'file-error `("Jumping to bookmark" "No such file or directory"
                                                     (bookmark-get-filename bmk)))))
-  (pop-to-buffer buf)
+  (if buf
+      (pop-to-buffer buf)
+      (pop-to-buffer bufname))
   (setq deactivate-mark  t)
   (raise-frame)
   (goto-char pos)
@@ -1034,7 +1026,8 @@ Changes current buffer and point."
            
            ;; Relocate region if it has moved.
            (if (eq bookmark-retrieve-region-method-is 'lax)
-               (bookmark-retrieve-region-lax forward-str behind-str str-bef str-aft pos end-pos)))
+               (bookmark-retrieve-region-lax forward-str behind-str str-bef str-aft pos end-pos)
+               (bookmark-retrieve-region-strict forward-str behind-str str-bef str-aft pos end-pos)))
 
           ;; Single-position bookmark (no region).  Go to it.
           (t
