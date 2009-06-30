@@ -1191,7 +1191,7 @@ See `bookmark-jump-other-window'."
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(provide 'bookmark+-2009-06-27d-DREW)
+(provide 'bookmark+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bookmark+.el ends here
