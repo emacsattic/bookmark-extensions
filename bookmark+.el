@@ -761,33 +761,30 @@ This string is just after the region end."
                  (goto-char end-pos)
                  (string= behind-str (buffer-substring-no-properties
                                       (point) (- (point) (length forward-str))))))
-    (goto-char (point-min))    ; Start at bob and search forward.
     (let (beg end)
-      (if (search-forward str-aft (point-max) t) ; Find END, using `str-aft'.
-          (progn
-            (goto-char (match-beginning 0))
-            (when (search-backward behind-str (point-min) t) ; Find END, using `behind-str'.
-              (setq end  (match-end 0)))))
-      ;; If failed to find END, go to eob and search backward from there.
-      (unless end (goto-char (point-max)))
-      (if (search-backward str-bef (point-min) t) ; Find BEG, using `str-bef'.
-          (progn
-            (goto-char (match-end 0))
-            (when (search-forward forward-str (point-max) t) ; Find BEG, using `forward-str'.
-            (setq beg (match-beginning 0)))))
-
-      ;; @@@ FIXME: Should we save new context string if only one position was relocated?
-
-      ;; Save new location to `bookmark-alist' only if BEG or END was found.
-      ;; If only one of them was found, the located region is only approximate.
-      ;; If both were found, it is exact.
+      (goto-char (point-min))
+      ;; Search end
+      (save-excursion
+        (when (search-forward behind-str (point-max) t) ; Find END, using `behind-str'.
+          (setq end (point)) 
+          (goto-char end))
+        (when (search-forward str-aft (point-max) t) ; Find END, using `str-aft'.
+          (setq end  (match-beginning 0))))
+      ;; Search beg
+      (when (search-forward forward-str (point-max) t) ; Find BEG, using `forward-str'.
+        (setq beg (match-beginning 0)) 
+        (goto-char beg))
+      ;; We should be now at beg of region; verify.
+      ;; if beg has not been found try to set it here.
+      (unless beg (goto-char (or end (point-max)))) ; Be sure we are not back to point-min.
+      (when (search-backward str-bef (point-min) t) ; Find BEG, using `str-bef'.
+        (setq beg (match-end 0)))
       (cond ((and beg end)
              (setq pos     beg
                    end-pos end))
-            ((and beg (not end)) (setq pos  beg))
-            ((and (not beg) end) (setq end-pos  end))
             (t
              (setq region-retrieved-p  nil)))
+      ;; If beg and end have been retrieved may be save the new location.
       (when (and region-retrieved-p bookmark-save-new-location-flag)
         (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs pos end-pos t))
         (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs pos end-pos t))
@@ -795,7 +792,7 @@ This string is just after the region end."
         (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end-pos t))
         (bookmark-prop-set bmk 'position pos)
         (bookmark-prop-set bmk 'end-position end-pos))))
-
+  ;; Finally if region have been retrieved activate it. 
   (cond (region-retrieved-p
          (goto-char pos)
          (push-mark end-pos 'nomsg 'activate)
