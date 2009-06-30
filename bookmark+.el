@@ -754,7 +754,7 @@ This string is just after the region end."
     (buffer-substring-no-properties ereg (+ (point) (min bookmark-region-search-size
                                                          (- (point-max) (point)))))))
 
-(defun bookmark-retrieve-region-strict (forward-str behind-str str-bef str-aft pos end-pos)
+(defun bookmark-retrieve-region-strict (bmk region-retrieved-p forward-str behind-str str-bef str-aft pos end-pos)
   (unless (and (string= forward-str (buffer-substring-no-properties
                                      (point) (+ (point) (length forward-str))))
                (save-excursion
@@ -805,7 +805,7 @@ This string is just after the region end."
          (goto-char pos) (beginning-of-line)
          (message "No region from %d to %d" pos end-pos))))
 
-(defun bookmark-retrieve-region-lax (forward-str behind-str str-bef str-aft pos end-pos)
+(defun bookmark-retrieve-region-lax (bmk region-retrieved-p bufname forward-str behind-str str-bef str-aft pos end-pos)
   (unless (and (string= forward-str (buffer-substring-no-properties
                                      (point) (+ (point) (length forward-str))))
                (save-excursion
@@ -868,7 +868,7 @@ This string is just after the region end."
          (message "No region from %d to %d" pos end-pos))))
 
 
-(defun bookmark-simple-retrieve-position (file buf pos forward-str behind-str)
+(defun bookmark-simple-retrieve-position (file buf bufname pos forward-str behind-str)
   (if (and file (file-readable-p file) (not (buffer-live-p buf)))
       (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
       ;; No file found we search for a buffer non--filename
@@ -1088,12 +1088,14 @@ Changes current buffer and point."
            
            ;; Relocate region if it has moved.
            (if (eq bookmark-retrieve-region-method-is 'lax)
-               (bookmark-retrieve-region-lax forward-str behind-str str-bef str-aft pos end-pos)
-               (bookmark-retrieve-region-strict forward-str behind-str str-bef str-aft pos end-pos)))
+               (bookmark-retrieve-region-lax bmk region-retrieved-p bufname forward-str
+                                             behind-str str-bef str-aft pos end-pos)
+               (bookmark-retrieve-region-strict bmk region-retrieved-p forward-str
+                                                behind-str str-bef str-aft pos end-pos)))
 
           ;; Single-position bookmark (no region).  Go to it.
           (t
-           (bookmark-simple-retrieve-position file buf pos forward-str behind-str)))))
+           (bookmark-simple-retrieve-position file buf bufname pos forward-str behind-str)))))
 
 ;;;###autoload
 (when (< emacs-major-version 23)
