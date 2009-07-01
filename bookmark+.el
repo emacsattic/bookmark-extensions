@@ -157,7 +157,7 @@
 (defvar w3m-current-url)                ; Defined in `w3m.el'. @@@@@@@ Correct? yes
 (when (< emacs-major-version 22) (defvar tramp-file-name-regexp)) ; Defined `tramp.el'.
 
-(defconst bookmark+version-number "1.5.14")
+(defconst bookmark+version-number "1.5.15")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -756,8 +756,9 @@ This string is just after the region end."
         (when (search-forward behind-str (point-max) t) ; Find END, using `behind-str'.
           (setq end (point)) 
           (goto-char end))
-        (when (search-forward str-aft (point-max) t) ; Find END, using `str-aft'.
-          (setq end  (match-beginning 0))))
+        (unless (search-forward str-bef (point-max) t) ; In case region have moved BEFORE his context.
+          (when (search-forward str-aft (point-max) t) ; Find END, using `str-aft'.
+            (setq end  (match-beginning 0)))))
       ;; Search beg
       (when (search-forward forward-str (point-max) t) ; Find BEG, using `forward-str'.
         (setq beg (match-beginning 0)) 
@@ -765,8 +766,9 @@ This string is just after the region end."
       ;; We should be now at beg of region; verify.
       ;; if beg has not been found try to set it here.
       (unless beg (goto-char (or end (point-max)))) ; Be sure we are not back to point-min.
-      (when (search-backward str-bef (point-min) t) ; Find BEG, using `str-bef'.
-        (setq beg (match-end 0)))
+      (unless (search-backward str-aft (point-min) t) ; In case region have moved AFTER his context.
+        (when (search-backward str-bef (point-min) t) ; Find BEG, using `str-bef'.
+          (setq beg (match-end 0))))
       (cond ((and beg end)
              (setq pos     beg
                    end-pos end))
