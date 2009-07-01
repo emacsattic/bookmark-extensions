@@ -687,10 +687,6 @@ deletion, or > if it is flagged for displaying."
       (bookmark-get-buffer-name bookmark)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
-;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-set ")
-;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-make-record")
-;; (find-fline "/usr/share/emacs/23.0.95/lisp/bookmark.el" "defun bookmark-make-record-default")
-;; (find-fline "/usr/share/emacs/23.0.95/lisp/info.el" "defun Info-bookmark-make-record")
 
 (defun bookmark-get-fcs (breg ereg regionp)
   "Create the `bookmark-alist' entry `front-context-string'.
@@ -700,10 +696,7 @@ region.
 If so, return the string from the region beginning to
 `bookmark-region-search-size' characters after that position.
 
-If not, return the string between point and
-`bookmark-region-search-size' chars before point."
-  ;; @@@ Is that sentence correct? You had said "`bookmark-region-search-size'
-  ;;     BEFORE REGION", but there isn't necessarily any region in this case.
+If not, the same but with a lenght of `bookmark-search-size'."
   (if regionp
       (buffer-substring-no-properties
        breg
@@ -719,13 +712,11 @@ If not, return the string between point and
 The meaning depends on whether the buffer to bookmark has an active
 region.
 
-If so, return the string from `bookmark-region-search-size' characters
-before the region beginning to the end of the region.
+If so, return the string that is the `bookmark-region-search-size' characters
+at the END of region. \(i.e the END of region\)
 
-If not, return the string between point and
-`bookmark-region-search-size' chars before point."
-  ;; @@@ Is that sentence correct? You had said "`bookmark-region-search-size'
-  ;;     BEFORE REGION", but there isn't necessarily any region in this case.
+If not, return the string from
+`bookmark-search-size' chars before point to point.\(i.e the string BEFORE point\)"
   (if regionp
       (buffer-substring-no-properties
        ereg (- ereg (min bookmark-region-search-size (- ereg breg))))
@@ -736,8 +727,7 @@ If not, return the string between point and
 (defun bookmark-get-fcrs (breg regionp)
   "Create the `bookmark-alist' entry `front-context-region-string'.
 This string is just before the region beginning."
-  (if (not regionp)
-      nil
+  (when regionp
     (goto-char breg)
     (re-search-backward ".[^ ]" nil t)
     (buffer-substring-no-properties (max (- (point) bookmark-region-search-size) (point-min))
@@ -746,8 +736,7 @@ This string is just before the region beginning."
 (defun bookmark-get-ecrs (ereg regionp)
   "Create the `bookmark-alist' entry `rear-context-region-string'.
 This string is just after the region end."
-  (if (not regionp)
-      nil
+  (when regionp
     (goto-char ereg)
     (re-search-forward "^.*[^ \n]" nil t)
     (beginning-of-line)
