@@ -154,10 +154,10 @@
 (eval-when-compile (require 'gnus)) ; mail-header-id (really in `nnheader.el').
 
 ;; Quiet the byte-compiler
-(defvar w3m-current-url)                ; Defined in `w3m.el'. @@@@@@@ Correct?
+(defvar w3m-current-url)                ; Defined in `w3m.el'. @@@@@@@ Correct? yes
 (when (< emacs-major-version 22) (defvar tramp-file-name-regexp)) ; Defined `tramp.el'.
 
-(defconst bookmark+version-number "1.5.0")
+(defconst bookmark+version-number "1.5.14")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -665,7 +665,6 @@ deletion, or > if it is flagged for displaying."
   (let ((bookmark-alist (bookmark-region-alist-only)))
     (call-interactively #'bookmark-bmenu-list)))
 
-;; (find-fline "~/download/bookmark+-2009-06-13a-DREW.el" "defun bookmark-toggle-use-only-regions")
 ;;;###autoload
 (defun bookmark-toggle-use-only-regions ()
   "Toggle `bookmark-list-only-regions-flag', and redisplay bookmark list."
