@@ -687,7 +687,7 @@ deletion, or > if it is flagged for displaying."
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
 
-(defun bookmark-get-fcs (breg ereg regionp)
+(defun bookmark-record-front-context-string (breg ereg regionp)
   "Create the `bookmark-alist' entry `front-context-string'.
 The meaning depends on whether the buffer to bookmark has an active
 region.
@@ -706,34 +706,33 @@ If not, the same but with a lenght of `bookmark-search-size'."
          (+ (point) bookmark-search-size))
       nil)))
 
-(defun bookmark-get-ecs (breg ereg regionp)
+
+(defun bookmark-record-rear-context-string (breg regionp)
   "Create the `bookmark-alist' entry `rear-context-string'.
-The meaning depends on whether the buffer to bookmark has an active
-region.
-
-If so, return the string that is the `bookmark-region-search-size' characters
-at the END of region. \(i.e the END of region\)
-
-If not, return the string from
-`bookmark-search-size' chars before point to point.\(i.e the string BEFORE point\)"
+When region is active, this string is the last `bookmark-region-search-size'
+characters of string before region.
+Otherwise, it is the same but with a length of `bookmark-search-size' only.
+\(i.e the string before region or point\)."
   (if regionp
-      (buffer-substring-no-properties
-       ereg (- ereg (min bookmark-region-search-size (- ereg breg))))
-    (if (>= (- (point) (point-min)) bookmark-search-size)
-        (buffer-substring-no-properties (point) (- (point) bookmark-search-size))
-      nil)))
+      (progn
+        (goto-char breg)
+        (re-search-backward ".[^ ]" nil t)
+        (buffer-substring-no-properties (max (- (point) bookmark-region-search-size) (point-min))
+                                        breg))
+      (if (>= (- (point) (point-min)) bookmark-search-size)
+          (buffer-substring-no-properties (point) (- (point) bookmark-search-size))
+          nil)))
 
-(defun bookmark-get-fcrs (breg regionp)
+(defun bookmark-record-front-context-region-string (breg ereg regionp)
   "Create the `bookmark-alist' entry `front-context-region-string'.
-This string is just before the region beginning."
+This string is the `bookmark-region-search-size' last characters of region.
+\(i.e The end part of region\)."
   (when regionp
-    (goto-char breg)
-    (re-search-backward ".[^ ]" nil t)
-    (buffer-substring-no-properties (max (- (point) bookmark-region-search-size) (point-min))
-                                    breg)))
+    (buffer-substring-no-properties
+     ereg (- ereg (min bookmark-region-search-size (- ereg breg))))))
 
-(defun bookmark-get-ecrs (ereg regionp)
-  "Create the `bookmark-alist' entry `rear-context-region-string'.
+(defun bookmark-record-end-context-region-string (ereg regionp)
+  "Create the `bookmark-alist' entry `end-context-region-string'.
 This string is just after the region end."
   (when regionp
     (goto-char ereg)
@@ -741,6 +740,7 @@ This string is just after the region end."
     (beginning-of-line)
     (buffer-substring-no-properties ereg (+ (point) (min bookmark-region-search-size
                                                          (- (point-max) (point)))))))
+
 
 (defun bookmark-retrieve-region-strict (bmk region-retrieved-p forward-str behind-str str-bef str-aft pos end-pos)
   (unless (and (string= forward-str (buffer-substring-no-properties
@@ -776,10 +776,10 @@ This string is just after the region end."
              (setq region-retrieved-p  nil)))
       ;; If beg and end have been retrieved may be save the new location.
       (when (and region-retrieved-p bookmark-save-new-location-flag)
-        (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs pos end-pos t))
-        (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs pos end-pos t))
-        (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs pos t))
-        (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end-pos t))
+        (bookmark-prop-set bmk 'front-context-string (bookmark-record-front-context-string pos end-pos t))
+        (bookmark-prop-set bmk 'rear-context-string (bookmark-record-rear-context-string pos t))
+        (bookmark-prop-set bmk 'front-context-region-string (bookmark-record-front-context-region-string pos end-pos t))
+        (bookmark-prop-set bmk 'rear-context-region-string (bookmark-record-end-context-region-string end-pos t))
         (bookmark-prop-set bmk 'position pos)
         (bookmark-prop-set bmk 'end-position end-pos))))
   ;; Finally if region have been retrieved activate it. 
@@ -837,10 +837,10 @@ This string is just after the region end."
             ((and (not beg) end) (setq end-pos  end))
             (t (setq region-retrieved-p  nil)))
       (when (and region-retrieved-p bookmark-save-new-location-flag)
-        (bookmark-prop-set bmk 'front-context-string (bookmark-get-fcs pos end-pos t))
-        (bookmark-prop-set bmk 'rear-context-string (bookmark-get-ecs pos end-pos t))
-        (bookmark-prop-set bmk 'front-context-region-string (bookmark-get-fcrs pos t))
-        (bookmark-prop-set bmk 'rear-context-region-string (bookmark-get-ecrs end-pos t))
+        (bookmark-prop-set bmk 'front-context-string (bookmark-record-front-context-string pos end-pos t))
+        (bookmark-prop-set bmk 'rear-context-string (bookmark-record-rear-context-string pos t))
+        (bookmark-prop-set bmk 'front-context-region-string (bookmark-record-front-context-region-string pos end-pos t))
+        (bookmark-prop-set bmk 'rear-context-region-string (bookmark-record-end-context-region-string end-pos t))
         (bookmark-prop-set bmk 'position pos)
         (bookmark-prop-set bmk 'end-position end-pos))))
 
@@ -1004,18 +1004,18 @@ record that pertains to the location within the buffer."
   (let* ((isregion (and transient-mark-mode
                         mark-active
                         (not (eq (mark) (point)))))
-         (isdired (car (rassq (current-buffer) dired-buffers)))
-         (beg (if isregion
-                  (region-beginning)
-                  (point)))
-         (end (if isregion
-                  (region-end)
-                  (point)))
-         (buf (buffer-name))
-         (fcs (bookmark-get-fcs beg end isregion))
-         (ecs (bookmark-get-ecs beg end isregion))
-         (fcrs (bookmark-get-fcrs beg isregion))
-         (ecrs (bookmark-get-ecrs end isregion)))
+         (isdired  (car (rassq (current-buffer) dired-buffers)))
+         (beg      (if isregion
+                       (region-beginning)
+                       (point)))
+         (end      (if isregion
+                       (region-end)
+                       (point)))
+         (buf      (buffer-name))
+         (fcs      (bookmark-record-front-context-string beg end isregion))
+         (rcs      (bookmark-record-rear-context-string beg isregion))
+         (fcrs     (bookmark-record-front-context-region-string beg end isregion))
+         (ecrs     (bookmark-record-end-context-region-string end isregion)))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
@@ -1023,7 +1023,7 @@ record that pertains to the location within the buffer."
                                                  nil)))))
         (buffer-name . ,buf)
         (front-context-string . ,fcs)
-        (rear-context-string . ,ecs)
+        (rear-context-string . ,rcs)
         (front-context-region-string . ,fcrs)
         (rear-context-region-string . ,ecrs)
         (position . ,beg)
@@ -1046,10 +1046,10 @@ Changes current buffer and point."
   (let* ((file                   (bookmark-get-filename bmk))
          (buf                    (bookmark-prop-get bmk 'buffer))
          (bufname                (bookmark-prop-get bmk 'buffer-name))
-         (forward-str            (bookmark-get-front-context-string bmk))
-         (behind-str             (bookmark-get-rear-context-string bmk))
-         (str-bef                (bookmark-prop-get bmk 'front-context-region-string))
-         (str-aft                (bookmark-prop-get bmk 'rear-context-region-string))
+         (str-bef-reg            (bookmark-get-rear-context-string bmk))
+         (str-at-bor             (bookmark-get-front-context-string bmk))
+         (str-at-eor             (bookmark-prop-get bmk 'front-context-region-string))
+         (str-aft-reg            (bookmark-prop-get bmk 'rear-context-region-string))
          (pos                    (bookmark-get-position bmk))
          (end-pos                (bookmark-prop-get bmk 'end-position))
          (region-retrieved-p     t))
@@ -1075,14 +1075,14 @@ Changes current buffer and point."
            
            ;; Relocate region if it has moved.
            (if (eq bookmark-retrieve-region-method-is 'lax)
-               (bookmark-retrieve-region-lax bmk region-retrieved-p bufname forward-str
-                                             behind-str str-bef str-aft pos end-pos)
-               (bookmark-retrieve-region-strict bmk region-retrieved-p forward-str
-                                                behind-str str-bef str-aft pos end-pos)))
+               (bookmark-retrieve-region-lax bmk region-retrieved-p bufname str-at-bor
+                                             str-at-eor str-bef-reg str-aft-reg pos end-pos)
+               (bookmark-retrieve-region-strict bmk region-retrieved-p bufname str-at-bor
+                                                str-at-eor str-bef-reg str-aft-reg pos end-pos)))
 
           ;; Single-position bookmark (no region).  Go to it.
           (t
-           (bookmark-simple-retrieve-position file buf bufname pos forward-str behind-str)))))
+           (bookmark-simple-retrieve-position file buf bufname pos str-at-bor str-bef-reg)))))
 
 ;;;###autoload
 (when (< emacs-major-version 23)
