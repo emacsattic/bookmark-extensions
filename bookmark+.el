@@ -742,48 +742,48 @@ This string is just after the region end."
                                                          (- (point-max) (point)))))))
 
 
-(defun bookmark-retrieve-region-strict (bmk region-retrieved-p forward-str behind-str str-bef str-aft pos end-pos)
-  (unless (and (string= forward-str (buffer-substring-no-properties
-                                     (point) (+ (point) (length forward-str))))
+(defun bookmark-retrieve-region-strict (bmk-obj reg-retrieved-flag bor-str eor-str br-str ar-str pos end-pos)
+  (unless (and (string= bor-str (buffer-substring-no-properties
+                                     (point) (+ (point) (length bor-str))))
                (save-excursion
                  (goto-char end-pos)
-                 (string= behind-str (buffer-substring-no-properties
-                                      (point) (- (point) (length forward-str))))))
+                 (string= eor-str (buffer-substring-no-properties
+                                      (point) (- (point) (length bor-str))))))
     (let (beg end)
       (goto-char (point-min))
       ;; Search end
       (save-excursion
-        (when (search-forward behind-str (point-max) t) ; Find END, using `behind-str'.
+        (when (search-forward eor-str (point-max) t) ; Find END, using `eor-str'.
           (setq end (point)) 
           (goto-char end))
-        (unless (search-forward str-bef (point-max) t) ; In case region have moved BEFORE his context.
-          (when (search-forward str-aft (point-max) t) ; Find END, using `str-aft'.
+        (unless (search-forward br-str (point-max) t) ; In case region have moved BEFORE his context.
+          (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
             (setq end  (match-beginning 0)))))
       ;; Search beg
-      (when (search-forward forward-str (point-max) t) ; Find BEG, using `forward-str'.
+      (when (search-forward bor-str (point-max) t) ; Find BEG, using `bor-str'.
         (setq beg (match-beginning 0)) 
         (goto-char beg))
       ;; We should be now at beg of region; verify.
       ;; if beg has not been found try to set it here.
       (unless beg (goto-char (or end (point-max)))) ; Be sure we are not back to point-min.
-      (unless (search-backward str-aft (point-min) t) ; In case region have moved AFTER his context.
-        (when (search-backward str-bef (point-min) t) ; Find BEG, using `str-bef'.
+      (unless (search-backward ar-str (point-min) t) ; In case region have moved AFTER his context.
+        (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
           (setq beg (match-end 0))))
       (cond ((and beg end)
              (setq pos     beg
                    end-pos end))
             (t
-             (setq region-retrieved-p  nil)))
+             (setq reg-retrieved-flag  nil)))
       ;; If beg and end have been retrieved may be save the new location.
-      (when (and region-retrieved-p bookmark-save-new-location-flag)
-        (bookmark-prop-set bmk 'front-context-string (bookmark-record-front-context-string pos end-pos t))
-        (bookmark-prop-set bmk 'rear-context-string (bookmark-record-rear-context-string pos t))
-        (bookmark-prop-set bmk 'front-context-region-string (bookmark-record-front-context-region-string pos end-pos t))
-        (bookmark-prop-set bmk 'rear-context-region-string (bookmark-record-end-context-region-string end-pos t))
-        (bookmark-prop-set bmk 'position pos)
-        (bookmark-prop-set bmk 'end-position end-pos))))
+      (when (and reg-retrieved-flag bookmark-save-new-location-flag)
+        (bookmark-prop-set bmk-obj 'front-context-string (bookmark-record-front-context-string pos end-pos t))
+        (bookmark-prop-set bmk-obj 'rear-context-string (bookmark-record-rear-context-string pos t))
+        (bookmark-prop-set bmk-obj 'front-context-region-string (bookmark-record-front-context-region-string pos end-pos t))
+        (bookmark-prop-set bmk-obj 'rear-context-region-string (bookmark-record-end-context-region-string end-pos t))
+        (bookmark-prop-set bmk-obj 'position pos)
+        (bookmark-prop-set bmk-obj 'end-position end-pos))))
   ;; Finally if region have been retrieved activate it. 
-  (cond (region-retrieved-p
+  (cond (reg-retrieved-flag
          (goto-char pos)
          (push-mark end-pos 'nomsg 'activate)
          (setq deactivate-mark  nil)
@@ -792,22 +792,22 @@ This string is just after the region end."
          (goto-char pos) (beginning-of-line)
          (message "No region from %d to %d" pos end-pos))))
 
-(defun bookmark-retrieve-region-lax (bmk region-retrieved-p forward-str behind-str str-bef str-aft pos end-pos)
-  (unless (and (string= forward-str (buffer-substring-no-properties
-                                     (point) (+ (point) (length forward-str))))
+(defun bookmark-retrieve-region-lax (bmk-obj reg-retrieved-flag bor-str eor-str br-str ar-str pos end-pos)
+  (unless (and (string= bor-str (buffer-substring-no-properties
+                                     (point) (+ (point) (length bor-str))))
                (save-excursion
                  (goto-char end-pos)
-                 (string= behind-str (buffer-substring-no-properties
-                                      (point) (- (point) (length forward-str))))))
+                 (string= eor-str (buffer-substring-no-properties
+                                      (point) (- (point) (length bor-str))))))
     (goto-char (point-min))    ; Start at bob and search forward.
     (let (beg end)
-      (if (search-forward behind-str (point-max) t) ; Find END, using `behind-str'.
+      (if (search-forward eor-str (point-max) t) ; Find END, using `eor-str'.
           (setq end  (point))
-          (when (search-forward str-aft (point-max) t) ; Find END, using `str-aft'.
+          (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
             (setq end  (match-beginning 0))
             (when end
               (goto-char end)
-              ;; If `str-aft' moved, then look for END one or more lines back.
+              ;; If `ar-str' moved, then look for END one or more lines back.
               (while (and (not (bobp))
                           (not (save-excursion ; This is `looking-back', for older Emacs.
                                  (and (re-search-backward "\\(.[^ \n]\\)\\=" nil t)
@@ -816,13 +816,13 @@ This string is just after the region end."
               (setq end  (point)))))
       ;; If failed to find END, go to eob and search backward from there.
       (unless end (goto-char (point-max)))
-      (if (search-backward forward-str (point-min) t) ; Find BEG, using `forward-str'.
+      (if (search-backward bor-str (point-min) t) ; Find BEG, using `bor-str'.
           (setq beg  (point))
-          (when (search-backward str-bef (point-min) t) ; Find BEG, using `str-bef'.
+          (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
             (setq beg (match-end 0))
             (when beg
               (goto-char beg)
-              ;; If `str-bef' moved, then look for BEG one or more lines forward.
+              ;; If `br-str' moved, then look for BEG one or more lines forward.
               (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
               (setq beg (point)))))
 
@@ -835,16 +835,16 @@ This string is just after the region end."
                                  end-pos  end))
             ((and beg (not end)) (setq pos  beg))
             ((and (not beg) end) (setq end-pos  end))
-            (t (setq region-retrieved-p  nil)))
-      (when (and region-retrieved-p bookmark-save-new-location-flag)
-        (bookmark-prop-set bmk 'front-context-string (bookmark-record-front-context-string pos end-pos t))
-        (bookmark-prop-set bmk 'rear-context-string (bookmark-record-rear-context-string pos t))
-        (bookmark-prop-set bmk 'front-context-region-string (bookmark-record-front-context-region-string pos end-pos t))
-        (bookmark-prop-set bmk 'rear-context-region-string (bookmark-record-end-context-region-string end-pos t))
-        (bookmark-prop-set bmk 'position pos)
-        (bookmark-prop-set bmk 'end-position end-pos))))
+            (t (setq reg-retrieved-flag  nil)))
+      (when (and reg-retrieved-flag bookmark-save-new-location-flag)
+        (bookmark-prop-set bmk-obj 'front-context-string (bookmark-record-front-context-string pos end-pos t))
+        (bookmark-prop-set bmk-obj 'rear-context-string (bookmark-record-rear-context-string pos t))
+        (bookmark-prop-set bmk-obj 'front-context-region-string (bookmark-record-front-context-region-string pos end-pos t))
+        (bookmark-prop-set bmk-obj 'rear-context-region-string (bookmark-record-end-context-region-string end-pos t))
+        (bookmark-prop-set bmk-obj 'position pos)
+        (bookmark-prop-set bmk-obj 'end-position end-pos))))
 
-  (cond (region-retrieved-p
+  (cond (reg-retrieved-flag
          (goto-char pos)
          (push-mark end-pos 'nomsg 'activate)
          (setq deactivate-mark  nil)
