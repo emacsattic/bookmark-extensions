@@ -792,7 +792,7 @@ This string is just after the region end."
          (goto-char pos) (beginning-of-line)
          (message "No region from %d to %d" pos end-pos))))
 
-(defun bookmark-retrieve-region-lax (bmk region-retrieved-p bufname forward-str behind-str str-bef str-aft pos end-pos)
+(defun bookmark-retrieve-region-lax (bmk region-retrieved-p forward-str behind-str str-bef str-aft pos end-pos)
   (unless (and (string= forward-str (buffer-substring-no-properties
                                      (point) (+ (point) (length forward-str))))
                (save-excursion
@@ -1075,9 +1075,9 @@ Changes current buffer and point."
            
            ;; Relocate region if it has moved.
            (if (eq bookmark-retrieve-region-method-is 'lax)
-               (bookmark-retrieve-region-lax bmk region-retrieved-p bufname str-at-bor
+               (bookmark-retrieve-region-lax bmk region-retrieved-p str-at-bor
                                              str-at-eor str-bef-reg str-aft-reg pos end-pos)
-               (bookmark-retrieve-region-strict bmk region-retrieved-p bufname str-at-bor
+               (bookmark-retrieve-region-strict bmk region-retrieved-p str-at-bor
                                                 str-at-eor str-bef-reg str-aft-reg pos end-pos)))
 
           ;; Single-position bookmark (no region).  Go to it.
