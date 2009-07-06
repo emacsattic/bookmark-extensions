@@ -606,36 +606,36 @@ deletion, or > if it is flagged for displaying."
             ;;         My impression is you could start with the ISTRAMP and Info clauses,
             ;;         then maybe a NOT ISFILE clause, and such reordering would simplify
             ;;         the conditions used (and so help readability).
-            (cond ((and isfile (not istramp) (file-directory-p isfile)) ; Local directory
+            (cond ((or (eq ishandler 'Info-bookmark-jump) ; Info buffer
+                       (string= isbuf "*info*"))
+                   '(mouse-face highlight follow-link t face 'bookmark-info-node
+                     help-echo "mouse-2: go to this info buffer"))
+                  (isgnus               ; Gnus
+                   '(mouse-face highlight
+                     follow-link t face 'bookmark-gnus
+                     help-echo "mouse-2: Go to this gnus buffer"))
+                  ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; w3m url
+                   '(mouse-face highlight follow-link t face 'bookmark-w3m-url
+                     help-echo "mouse-2: go to this w3m url"))
+                  (istramp              ; Remote file
+                   '(mouse-face highlight follow-link t face 'bookmark-remote-file
+                     help-echo "mouse-2: go to this tramp buffer"))
+                  ((and isfile (file-directory-p isfile)) ; Local directory
                    '(mouse-face highlight
                      follow-link t face 'bookmark-directory
                      help-echo "mouse-2: go to this dired buffer in other window"))
-                  ((and isfile (not istramp) (not (file-directory-p isfile))
+                  ((and isfile (not (file-directory-p isfile))
                         (file-exists-p isfile) isregion) ; Local file with region
                    '(mouse-face highlight follow-link t
                      face 'bookmark-file-region
                      help-echo "mouse-2: go to this file with region"))
-                  ((and isfile (not istramp) (not (file-directory-p isfile))
+                  ((and isfile (not (file-directory-p isfile))
                         (file-exists-p isfile)) ; Local file without region
                    '(mouse-face highlight follow-link t face 'bookmark-file
                      help-echo "mouse-2: go to this file in other window"))
-                  (isgnus ; Gnus
-                   '(mouse-face highlight
-                     follow-link t face 'bookmark-gnus
-                     help-echo "mouse-2: Go to this gnus buffer"))
                   ((and isbuf (not isfile)) ; Buffer without a file
                    '(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
-                     help-echo "mouse-2: go to this non--buffer-filename"))
-                  ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; w3m url
-                   '(mouse-face highlight follow-link t face 'bookmark-w3m-url
-                     help-echo "mouse-2: go to this w3m url"))
-                  ((or (eq ishandler 'Info-bookmark-jump) ; Info buffer
-                       (and (string= isbuf "*info*") (and isfile (not (file-exists-p isfile)))))
-                   '(mouse-face highlight follow-link t face 'bookmark-info-node
-                     help-echo "mouse-2: go to this info buffer"))
-                  (istramp              ; Remote file
-                   '(mouse-face highlight follow-link t face 'bookmark-remote-file
-                     help-echo "mouse-2: go to this tramp buffer"))))
+                     help-echo "mouse-2: go to this non--buffer-filename"))))
            (insert "\n"))))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
