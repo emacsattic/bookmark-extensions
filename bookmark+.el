@@ -157,7 +157,7 @@
 (defvar w3m-current-url)                ; Defined in `w3m.el'. @@@@@@@ Correct? yes
 (when (< emacs-major-version 22) (defvar tramp-file-name-regexp)) ; Defined `tramp.el'.
 
-(defconst bookmark+version-number "1.5.15")
+(defconst bookmark+version-number "1.6.0")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
