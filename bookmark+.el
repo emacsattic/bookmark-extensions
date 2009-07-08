@@ -714,20 +714,22 @@ deletion, or > if it is flagged for displaying."
 ;; whether a region is needed.
 ;; @@@Thierry:APPLIED!
 
-;; TODO write docstring for the next 4 fns
 (defun bookmark-region-record-front-context-string (breg ereg)
+  "Return the `bookmark-region-search-size' chars at beginning of region.
+This function is called only when region is active."
   (buffer-substring-no-properties
    breg
    (+ breg (min bookmark-region-search-size (- ereg breg)))))
 
 (defun bookmark-record-front-context-string (breg)
-  (if (>= (- (point-max) breg) bookmark-search-size)
-      (buffer-substring-no-properties
-       breg
-       (+ breg bookmark-search-size))
-      nil))
-  
+  "Return the `bookmark-search-size' chars at beginning of region.
+This function is called only when no active region is found."
+  (when (>= (- (point-max) breg) bookmark-search-size)
+    (buffer-substring-no-properties breg (+ breg bookmark-search-size))))
+      
 (defun bookmark-region-record-rear-context-string (breg)
+  "Return the `bookmark-region-search-size' chars behind region.
+This function is called only when region is active."
   (goto-char breg)
   ;; FIXME not sure that is needed now.
   (re-search-backward ".[^ ]" nil t)
@@ -735,16 +737,20 @@ deletion, or > if it is flagged for displaying."
                                   breg))
 
 (defun bookmark-record-rear-context-string (breg)
-  (if (> bookmark-search-size (- breg (point-min)))
-      nil
-      (buffer-substring-no-properties breg (- breg bookmark-search-size))))
-  
+  "Return the `bookmark-search-size' chars behind region.
+This function is called only when no active region is found."
+  (when (>= (- breg (point-min)) bookmark-search-size)
+    (buffer-substring-no-properties breg (- breg bookmark-search-size))))
   
 (defun bookmark-record-front-context-region-string (breg ereg)
+  "Return the `bookmark-region-search-size' chars before end of region.
+This function is called only when region is active."
   (buffer-substring-no-properties
    ereg (- ereg (min bookmark-region-search-size (- ereg breg)))))
 
 (defun bookmark-record-end-context-region-string (ereg)
+  "Return the `bookmark-region-search-size' after end of region.
+This function is called only when region is active."
   (goto-char ereg)
   ;; FIXME not sure that is needed now.
   (re-search-forward "^.*[^ \n]" nil t)
