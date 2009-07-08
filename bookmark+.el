@@ -796,7 +796,7 @@ Relocate the region beginning and end points independently."
                   end-pos  end)
             (setq reg-retrieved-p  nil))
         ;; If region beginning and end have been found, maybe save the new location.
-        (bookmark-save-relocated-position bmk-obj)))
+        (bookmark-save-relocated-position bmk-obj pos end-pos relocated-saved)))
     ;; Finally if region was found, activate it. 
     (cond (reg-retrieved-p
            (goto-char pos)
@@ -809,20 +809,20 @@ Relocate the region beginning and end points independently."
            (goto-char pos) (beginning-of-line)
            (message "No region from %d to %d" pos end-pos)))))
 
-(defun bookmark-save-relocated-position (bmk-obj)
+(defun bookmark-save-relocated-position (bmk-obj beg end state)
   (when bookmark-save-new-location-flag
     (when (y-or-n-p "Region have changed: Do you want to save new relocated position?")
       (bookmark-prop-set bmk-obj 'front-context-string
-                         (bookmark-region-record-front-context-string pos end-pos))
+                         (bookmark-region-record-front-context-string beg end))
       (bookmark-prop-set bmk-obj 'rear-context-string
-                         (bookmark-region-record-rear-context-string pos))
+                         (bookmark-region-record-rear-context-string beg))
       (bookmark-prop-set bmk-obj 'front-context-region-string
-                         (bookmark-record-front-context-region-string pos end-pos))
+                         (bookmark-record-front-context-region-string beg end))
       (bookmark-prop-set bmk-obj 'rear-context-region-string
-                         (bookmark-record-end-context-region-string end-pos))
-      (bookmark-prop-set bmk-obj 'position pos)
-      (bookmark-prop-set bmk-obj 'end-position end-pos)
-      (setq relocated-saved t))))
+                         (bookmark-record-end-context-region-string end))
+      (bookmark-prop-set bmk-obj 'position beg)
+      (bookmark-prop-set bmk-obj 'end-position end)
+      (setq state t))))
     
 
 (defun bookmark-relocate-region-lax (bmk-obj reg-retrieved-p bor-str eor-str br-str ar-str pos end-pos)
@@ -870,7 +870,7 @@ Relocate the region beginning and end points independently."
               ((and beg (not end)) (setq pos  beg))
               ((and (not beg) end) (setq end-pos  end))
               (t (setq reg-retrieved-p  nil)))
-        (bookmark-save-relocated-position bmk-obj)))
+        (bookmark-save-relocated-position bmk-obj pos end-pos relocated-saved)))
     (cond (reg-retrieved-p
            (goto-char pos)
            (push-mark end-pos 'nomsg 'activate)
