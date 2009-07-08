@@ -164,7 +164,7 @@
 (defvar gnus-article-current)           ; Defined in `gnus-sum.el'.
 (when (< emacs-major-version 22) (defvar tramp-file-name-regexp)) ; Defined in `tramp.el'.
 
-(defconst bookmark+version-number "1.6.0")
+(defconst bookmark+version-number "1.6.6")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
