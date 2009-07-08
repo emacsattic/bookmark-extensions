@@ -757,7 +757,7 @@ deletion, or > if it is flagged for displaying."
 (defun bookmark-relocate-region-strict (bmk-obj reg-retrieved-p bor-str eor-str
                                         br-str ar-str pos end-pos)
   "Relocate the region bookmark BMK-OBJ, by relocating the region limits.
-Relocate the region beginning and end points independently.
+Relocate the region beginning and end points independently."
 
 (defun bookmark-retrieve-region-strict (bmk-obj reg-retrieved-flag bor-str eor-str br-str ar-str pos end-pos)
   (unless (and (string= bor-str (buffer-substring-no-properties
