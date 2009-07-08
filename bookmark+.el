@@ -712,85 +712,46 @@ deletion, or > if it is flagged for displaying."
 ;; two separate functions should be used instead - there is really no
 ;; relation between them.  IOW, use two different fns, depending on
 ;; whether a region is needed.
+;; @@@Thierry:APPLIED!
 
-(defun bookmark-record-front-context-string (breg ereg regionp)
-  "Create the `bookmark-alist' entry `front-context-string'.
-Return the string of text immediately following point or BREG.
-BREG and EREG are ignored if REGIONP is nil.
-REGIONP non-nil means the bookmark has a region.  In that case,
-BREP is the region beginning, and EREG is the region end.
+;; TODO write docstring for the next 4 fns
+(defun bookmark-region-record-front-context-string (breg ereg)
+  (buffer-substring-no-properties
+   breg
+   (+ breg (min bookmark-region-search-size (- ereg breg)))))
 
-The string returned has length:
- `bookmark-region-search-size', if REGIONP
- `bookmark-search-size', if not REGIONP
-
-If REGIONP is nil and there are fewer than `bookmark-search-size'
-characters after point, then return nil, not a string."
-  (if regionp
+(defun bookmark-record-front-context-string (breg)
+  (if (>= (- (point-max) breg) bookmark-search-size)
       (buffer-substring-no-properties
        breg
-       (+ breg (min bookmark-region-search-size (- ereg breg))))
-    (if (>= (- (point-max) (point)) bookmark-search-size)
-        (buffer-substring-no-properties
-         (point)
-         (+ (point) bookmark-search-size))
+       (+ breg bookmark-search-size))
       nil)))
+  
+(defun bookmark-region-record-rear-context-string (breg)
+  (goto-char breg)
+  ;; FIXME not sure that is needed now.
+  (re-search-backward ".[^ ]" nil t)
+  (buffer-substring-no-properties (max (- (point) bookmark-region-search-size) (point-min))
+                                  breg))
 
+(defun bookmark-record-rear-context-string (breg)
+  (if (> bookmark-search-size (- breg (point-min)))
+      nil
+      (buffer-substring-no-properties breg (- breg bookmark-search-size))))
+  
+  
+(defun bookmark-record-front-context-region-string (breg ereg)
+  (buffer-substring-no-properties
+   ereg (- ereg (min bookmark-region-search-size (- ereg breg)))))
 
-(defun bookmark-record-rear-context-string (breg regionp)
-  "Create the `bookmark-alist' entry `rear-context-string'.
-Return the string of text immediately preceding point or BREG.
-BREG and EREG are ignored if REGIONP is nil.
-REGIONP non-nil means the bookmark has a region.  In that case,
-BREP is the region beginning, and EREG is the region end.
-
-The string returned has length:
- `bookmark-region-search-size', if REGIONP
- `bookmark-search-size', if not REGIONP
-
-If REGIONP is nil and there are fewer than `bookmark-search-size'
-characters before point, then return nil, not a string."
-  (if (not regionp)
-      (if (> bookmark-search-size (- (point) (point-min)))
-          nil
-        (buffer-substring-no-properties (point) (- (point) bookmark-search-size)))
-    ;; @@@@ Why this difference from `bookmark-record-front-context-string'?
-    ;; Seems like they should be symmetric.  I don't understand what this does or is for.
-    (goto-char breg)
-    (re-search-backward ".[^ ]" nil t)
-    (buffer-substring-no-properties (max (- (point) bookmark-region-search-size) (point-min))
-                                    breg)))
-
-;; @@@@@@@@ These functions do nothing if REGIONP is nil.  That makes
-;; little sense, a priori.  Instead, test for the region before
-;; calling the functions: call them only if there is a region.
-
-(defun bookmark-record-front-context-region-string (breg ereg regionp)
-  "Create the `bookmark-alist' entry `front-context-region-string'.
-BREG and EREG are the start and end points of the bookmarked region.
-Return the last `bookmark-region-search-size' characters of the
-region, as a string.
-@@@@@@@@
-Do nothing if REGIONP is nil."
-  (when regionp
-    (buffer-substring-no-properties
-     ereg (- ereg (min bookmark-region-search-size (- ereg breg))))))
-
-;; @@@@@@ The returned string has certain properties (determined by
-;; the search you do), which aren't described in the doc string.
-;; Describe it.
-(defun bookmark-record-end-context-region-string (ereg regionp)
-  "Create the `bookmark-alist' entry `end-context-region-string'.
-Return the string that immediately follows the region end, EREG.
-Return at most `bookmark-region-search-size' characters.
-
-@@@@@@@ DESCRIBE the string: what is excluded etc."
-  (when regionp
-    (goto-char ereg)
-    (re-search-forward "^.*[^ \n]" nil t)
-    (beginning-of-line)
-    (buffer-substring-no-properties ereg (+ (point) (min bookmark-region-search-size
-                                                         (- (point-max) (point)))))))
+(defun bookmark-record-end-context-region-string (ereg)
+  (goto-char ereg)
+  ;; FIXME not sure that is needed now.
+  (re-search-forward "^.*[^ \n]" nil t)
+  (beginning-of-line)
+  (buffer-substring-no-properties ereg (+ (point) (min bookmark-region-search-size
+                                                       (- (point-max) (point))))))
+  
 
 ;; @@@@@ MAYBE RENAME THIS FUNCTION - lax and strict don't mean much here.
 (defun bookmark-relocate-region-strict (bmk-obj reg-retrieved-p bor-str eor-str
@@ -1083,10 +1044,14 @@ record that pertains to the location within the buffer."
                        (region-end)
                        (point)))
          (buf      (buffer-name))
-         (fcs      (bookmark-record-front-context-string beg end isregion))
-         (rcs      (bookmark-record-rear-context-string beg isregion)) ; @@@ Had an END before
-         (fcrs     (bookmark-record-front-context-region-string beg end isregion)); @@ No END before
-         (ecrs     (bookmark-record-end-context-region-string end isregion)))
+         (fcs      (if isregion
+                       (bookmark-region-record-front-context-string beg end)
+                       (bookmark-record-front-context-string beg)))
+         (rcs      (if isregion
+                       (bookmark-region-record-rear-context-string beg)
+                       (bookmark-record-rear-context-string beg)))
+         (fcrs     (when isregion (bookmark-record-front-context-region-string beg end)))
+         (ecrs     (when isregion (bookmark-record-end-context-region-string end))))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
