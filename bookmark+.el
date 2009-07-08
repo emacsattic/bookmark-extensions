@@ -799,13 +799,13 @@ Relocate the region beginning and end points independently."
       ;; If region beginning and end have been found, maybe save the new location.
       (when (and reg-retrieved-p bookmark-save-new-location-flag)
         (bookmark-prop-set bmk-obj 'front-context-string
-                           (bookmark-record-front-context-string pos end-pos t))
+                           (bookmark-region-record-front-context-string pos end-pos))
         (bookmark-prop-set bmk-obj 'rear-context-string
-                           (bookmark-record-rear-context-string pos t))
+                           (bookmark-region-record-rear-context-string pos))
         (bookmark-prop-set bmk-obj 'front-context-region-string
-                           (bookmark-record-front-context-region-string pos end-pos t))
+                           (bookmark-record-front-context-region-string pos end-pos))
         (bookmark-prop-set bmk-obj 'rear-context-region-string
-                           (bookmark-record-end-context-region-string end-pos t))
+                           (bookmark-record-end-context-region-string end-pos))
         (bookmark-prop-set bmk-obj 'position pos)
         (bookmark-prop-set bmk-obj 'end-position end-pos))))
   ;; Finally if region was found, activate it. 
@@ -818,7 +818,7 @@ Relocate the region beginning and end points independently."
          (goto-char pos) (beginning-of-line)
          (message "No region from %d to %d" pos end-pos))))
 
-(defun bookmark-relocate-region-lax (bmk-obj reg-retrieved-flag bor-str eor-str br-str ar-str pos end-pos)
+(defun bookmark-relocate-region-lax (bmk-obj reg-retrieved-p bor-str eor-str br-str ar-str pos end-pos)
   (unless (and (string= bor-str (buffer-substring-no-properties
                                  (point) (+ (point) (length bor-str))))
                (save-excursion
@@ -864,16 +864,15 @@ Relocate the region beginning and end points independently."
             (t (setq reg-retrieved-p  nil)))
       (when (and reg-retrieved-p bookmark-save-new-location-flag)
         (bookmark-prop-set bmk-obj 'front-context-string
-                           (bookmark-record-front-context-string pos end-pos t))
+                           (bookmark-region-record-front-context-string pos end-pos))
         (bookmark-prop-set bmk-obj 'rear-context-string
-                           (bookmark-record-rear-context-string pos t))
+                           (bookmark-region-record-rear-context-string pos))
         (bookmark-prop-set bmk-obj 'front-context-region-string
-                           (bookmark-record-front-context-region-string pos end-pos t))
+                           (bookmark-record-front-context-region-string pos end-pos))
         (bookmark-prop-set bmk-obj 'rear-context-region-string
-                           (bookmark-record-end-context-region-string end-pos t))
+                           (bookmark-record-end-context-region-string end-pos))
         (bookmark-prop-set bmk-obj 'position pos)
         (bookmark-prop-set bmk-obj 'end-position end-pos))))
-
   (cond (reg-retrieved-p
          (goto-char pos)
          (push-mark end-pos 'nomsg 'activate)
