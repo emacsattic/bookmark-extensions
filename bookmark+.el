@@ -758,8 +758,6 @@ deletion, or > if it is flagged for displaying."
                                         br-str ar-str pos end-pos)
   "Relocate the region bookmark BMK-OBJ, by relocating the region limits.
 Relocate the region beginning and end points independently."
-
-(defun bookmark-retrieve-region-strict (bmk-obj reg-retrieved-flag bor-str eor-str br-str ar-str pos end-pos)
   (unless (and (string= bor-str (buffer-substring-no-properties
                                      (point) (+ (point) (length bor-str))))
                (save-excursion
@@ -814,7 +812,7 @@ Relocate the region beginning and end points independently."
          (goto-char pos) (beginning-of-line)
          (message "No region from %d to %d" pos end-pos))))
 
-(defun bookmark-retrieve-region-lax (bmk-obj reg-retrieved-flag bor-str eor-str br-str ar-str pos end-pos)
+(defun bookmark-relocate-region-lax (bmk-obj reg-retrieved-flag bor-str eor-str br-str ar-str pos end-pos)
   (unless (and (string= bor-str (buffer-substring-no-properties
                                  (point) (+ (point) (length bor-str))))
                (save-excursion
@@ -1097,26 +1095,26 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
         ;; Single-position bookmark (no region).  Go to it.
         (bookmark-goto-position file buf bufname pos str-at-bor str-bef-reg)
 
-      ;; Bookmark with a region.  Go to it and select region.
+        ;; Bookmark with a region.  Go to it and select region.
 
-      ;; Get buffer.
-      (if (and file (file-readable-p file) (not (buffer-live-p buf)))
-          (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
-        ;; No file found.  If no buffer either, then signal that file doesn't exist.
-        (unless (or (and buf (get-buffer buf))
-                    (and bufname (get-buffer bufname) (not (string= buf bufname))))
-          (signal 'file-error `("Jumping to bookmark" "No such file or directory"
-                                (bookmark-get-filename bmk)))))
-      (pop-to-buffer (or buf bufname))
-      (raise-frame)
-      (goto-char (min pos (point-max)))
-      (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
-      ;; Relocate region if it has moved.
-      (if (eq bookmark-relocate-region-method 'lax)
-          (bookmark-relocate-region-lax bmk region-retrieved-p str-at-bor str-at-eor
-                                        str-bef-reg str-aft-reg pos end-pos)
-        (bookmark-relocate-region-strict bmk region-retrieved-p str-at-bor str-at-eor
-                                         str-bef-reg str-aft-reg pos end-pos)))))
+        ;; Get buffer.
+        (if (and file (file-readable-p file) (not (buffer-live-p buf)))
+            (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
+            ;; No file found.  If no buffer either, then signal that file doesn't exist.
+            (unless (or (and buf (get-buffer buf))
+                        (and bufname (get-buffer bufname) (not (string= buf bufname))))
+              (signal 'file-error `("Jumping to bookmark" "No such file or directory"
+                                                          (bookmark-get-filename bmk)))))
+        (pop-to-buffer (or buf bufname))
+        (raise-frame)
+        (goto-char (min pos (point-max)))
+        (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
+        ;; Relocate region if it has moved.
+        (if (eq bookmark-relocate-region-method 'lax)
+            (bookmark-relocate-region-lax bmk region-retrieved-p str-at-bor str-at-eor
+                                          str-bef-reg str-aft-reg pos end-pos)
+            (bookmark-relocate-region-strict bmk region-retrieved-p str-at-bor str-at-eor
+                                             str-bef-reg str-aft-reg pos end-pos)))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
