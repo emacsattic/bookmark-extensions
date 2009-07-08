@@ -725,7 +725,7 @@ deletion, or > if it is flagged for displaying."
       (buffer-substring-no-properties
        breg
        (+ breg bookmark-search-size))
-      nil)))
+      nil))
   
 (defun bookmark-region-record-rear-context-string (breg)
   (goto-char breg)
