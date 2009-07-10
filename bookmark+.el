@@ -773,9 +773,11 @@ Return at most `bookmark-region-search-size' chars."
   (buffer-substring-no-properties
    ereg (+ (point) (min bookmark-region-search-size (- (point-max) (point))))))
 
-;; bi-direction
+;; Search from pos backward and forward
+;; The name strict mean nothing, it's just facility to switch function
+;; whithout changing code for the moment.
 (defun bookmark-relocate-region-strict (bmk-obj reg-retrieved-p bor-str eor-str
-                                              br-str ar-str pos end-pos)
+                                        br-str ar-str pos end-pos)
   "Relocate the region bookmark BMK-OBJ, by relocating the region limits.
 Relocate the region beginning and end points independently.
 
@@ -803,6 +805,11 @@ Relocate the region beginning and end points independently.
                 (setq beg (match-beginning 0))
                 (when (search-forward br-str (point-max) t)
                   (setq beg (point))))))
+        (when beg
+          (goto-char beg)
+          ;; If `br-str' moved, then look for BEG one or more lines forward.
+          (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
+          (setq beg (point)))
         ;; We are now at POS
         ;; At this point we should have beg
         ;; If not, search in both direction for END
@@ -823,10 +830,24 @@ Relocate the region beginning and end points independently.
                     (setq end (point))
                     (when (search-forward ar-str (point-max) t)
                       (setq end (match-beginning 0)))))))
-        (if (and beg end)
-            (setq pos      beg
-                  end-pos  end)
-            (setq reg-retrieved-p  nil))
+        (when end
+          (goto-char end)
+          ;; If `ar-str' moved, then look for END one or more lines back.
+          (while (and (not (bobp))
+                      (not (save-excursion ; This is `looking-back', for older Emacs.
+                             (and (re-search-backward "\\(.[^ \n]\\)\\=" nil t)
+                                  (point)))))
+            (forward-char -1))
+          (setq end (point)))
+        (cond ((and beg end) (setq pos      beg
+                                   end-pos  end))
+              ((and beg (not end)) (setq pos      beg))
+              ((and (not beg) end) (setq end-pos  end))
+              (t (setq reg-retrieved-p  nil)))
+        ;; (if (and beg end)
+        ;;     (setq pos      beg
+        ;;           end-pos  end)
+        ;;     (setq reg-retrieved-p  nil))
         (bookmark-save-relocated-position bmk-obj pos end-pos relocated-saved)))
     ;; Finally if region was found, activate it. 
     (cond (reg-retrieved-p
@@ -842,58 +863,58 @@ Relocate the region beginning and end points independently.
 
 
 ;; @@@@@ MAYBE RENAME THIS FUNCTION - lax and strict don't mean much here.
-(defun bookmark-relocate-region-strict (bmk-obj reg-retrieved-p bor-str eor-str
-                                        br-str ar-str pos end-pos)
-  "Relocate the region bookmark BMK-OBJ, by relocating the region limits.
-Relocate the region beginning and end points independently.
+;; (defun bookmark-relocate-region-strict (bmk-obj reg-retrieved-p bor-str eor-str
+;;                                         br-str ar-str pos end-pos)
+;;   "Relocate the region bookmark BMK-OBJ, by relocating the region limits.
+;; Relocate the region beginning and end points independently.
 
-@@@ DESCRIBE the function, including *each* of the args."
-  (let (relocated-saved)
-    (unless (and (string= bor-str (buffer-substring-no-properties
-                                   (point) (+ (point) (length bor-str))))
-                 (save-excursion
-                   (goto-char end-pos)
-                   (string= eor-str (buffer-substring-no-properties
-                                     (point) (- (point) (length bor-str))))))
-      (let ((beg  nil)
-            (end  nil))                   ; @@@ Explicit initializations, since the values matter.
-        ;; @@@@@@ I still have the question why the caller moves to POS, just before we move to bob.
-        (goto-char (point-min))
-        ;; Relocate region end.
-        (save-excursion
-          (when (search-forward eor-str (point-max) t) ; Find END, using `eor-str'.
-            (setq end (point)) 
-            (goto-char end))
-          (unless (search-forward br-str (point-max) t) ; In case region have moved BEFORE his context.
-            (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
-              (setq end  (match-beginning 0)))))
-        ;; Relocate region beginning.
-        (when (search-forward bor-str (point-max) t) ; Find BEG, using `bor-str'.
-          (setq beg (match-beginning 0)) 
-          (goto-char beg))
-        ;; We should be now at beg of region; verify.
-        ;; if beg has not been found try to set it here.
-        (unless beg (goto-char (or end (point-max)))) ; Be sure we are not back to point-min.
-        (unless (search-backward ar-str (point-min) t) ; In case region have moved AFTER his context.
-          (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
-            (setq beg (match-end 0))))
-        (if (and beg end)
-            (setq pos      beg
-                  end-pos  end)
-            (setq reg-retrieved-p  nil))
-        ;; If region beginning and end have been found, maybe save the new location.
-        (bookmark-save-relocated-position bmk-obj pos end-pos relocated-saved)))
-    ;; Finally if region was found, activate it. 
-    (cond (reg-retrieved-p
-           (goto-char pos)
-           (push-mark end-pos 'nomsg 'activate)
-           (setq deactivate-mark  nil)
-           (if relocated-saved
-               (message "Saved relocated region (from %d to %d)" pos end-pos)
-               (message "Region is from %d to %d" pos end-pos)))
-          (t
-           (goto-char pos) (beginning-of-line)
-           (message "No region from %d to %d" pos end-pos)))))
+;; @@@ DESCRIBE the function, including *each* of the args."
+;;   (let (relocated-saved)
+;;     (unless (and (string= bor-str (buffer-substring-no-properties
+;;                                    (point) (+ (point) (length bor-str))))
+;;                  (save-excursion
+;;                    (goto-char end-pos)
+;;                    (string= eor-str (buffer-substring-no-properties
+;;                                      (point) (- (point) (length bor-str))))))
+;;       (let ((beg  nil)
+;;             (end  nil))                   ; @@@ Explicit initializations, since the values matter.
+;;         ;; @@@@@@ I still have the question why the caller moves to POS, just before we move to bob.
+;;         (goto-char (point-min))
+;;         ;; Relocate region end.
+;;         (save-excursion
+;;           (when (search-forward eor-str (point-max) t) ; Find END, using `eor-str'.
+;;             (setq end (point)) 
+;;             (goto-char end))
+;;           (unless (search-forward br-str (point-max) t) ; In case region have moved BEFORE his context.
+;;             (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
+;;               (setq end  (match-beginning 0)))))
+;;         ;; Relocate region beginning.
+;;         (when (search-forward bor-str (point-max) t) ; Find BEG, using `bor-str'.
+;;           (setq beg (match-beginning 0)) 
+;;           (goto-char beg))
+;;         ;; We should be now at beg of region; verify.
+;;         ;; if beg has not been found try to set it here.
+;;         (unless beg (goto-char (or end (point-max)))) ; Be sure we are not back to point-min.
+;;         (unless (search-backward ar-str (point-min) t) ; In case region have moved AFTER his context.
+;;           (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
+;;             (setq beg (match-end 0))))
+;;         (if (and beg end)
+;;             (setq pos      beg
+;;                   end-pos  end)
+;;             (setq reg-retrieved-p  nil))
+;;         ;; If region beginning and end have been found, maybe save the new location.
+;;         (bookmark-save-relocated-position bmk-obj pos end-pos relocated-saved)))
+;;     ;; Finally if region was found, activate it. 
+;;     (cond (reg-retrieved-p
+;;            (goto-char pos)
+;;            (push-mark end-pos 'nomsg 'activate)
+;;            (setq deactivate-mark  nil)
+;;            (if relocated-saved
+;;                (message "Saved relocated region (from %d to %d)" pos end-pos)
+;;                (message "Region is from %d to %d" pos end-pos)))
+;;           (t
+;;            (goto-char pos) (beginning-of-line)
+;;            (message "No region from %d to %d" pos end-pos)))))
 
 (defun bookmark-save-relocated-position (bmk-obj beg end state)
   (when bookmark-save-new-location-flag
