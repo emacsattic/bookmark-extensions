@@ -703,67 +703,76 @@ deletion, or > if it is flagged for displaying."
       (bookmark-get-buffer-name bookmark)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
-;; @@@@@@@@ I don't understand this.  If REGIONP, then you do
-;; something using BREG and EREG, else you do something using (point).
-;; Why is (point) used if there is no region, instead of, for example,
-;; passing (point) as BREG and using that?  I rewrote the doc strings,
-;; but if you read them you will see that this function is not a
-;; natural one.  Chimeric behavior like this typically indicates that
-;; two separate functions should be used instead - there is really no
-;; relation between them.  IOW, use two different fns, depending on
-;; whether a region is needed.
-;; @@@Thierry:APPLIED!
+;; &&&Thierry:APPLIED!
+
+;; @@@@@@@ Thanks, but we still do nothing in some cases for
+;; `bookmark-record-(front|rear)-context-string'.  It is better to
+;; move the condition (`when') to the caller function.
+;;
+;; @@@@@@@ For now, we return nil in some cases, so the return value
+;; is presumably important. In that case, it's better to use `and' or
+;; `if' than `when'.
+;;
+;; @@@@@@@ Doc strings shouldn't talk about when or where the function
+;; is called. That's not modular. They should describe only what the
+;; function itself does and returns (and its args)
+;;
+;; @@@@@@@ These names are all too similar.  It's too easy to get lost.
 
 (defun bookmark-region-record-front-context-string (breg ereg)
-  "Return the `bookmark-region-search-size' chars at beginning of region.
-This function is called only when region is active."
+  "Return the region prefix, at BREG.
+Return at most `bookmark-region-search-size' or (- EREG BREG) chars."
   (buffer-substring-no-properties
-   breg
-   (+ breg (min bookmark-region-search-size (- ereg breg)))))
+   breg (+ breg (min bookmark-region-search-size (- ereg breg)))))
 
 (defun bookmark-record-front-context-string (breg)
-  "Return the `bookmark-search-size' chars at beginning of region.
-This function is called only when no active region is found."
-  (when (>= (- (point-max) breg) bookmark-search-size)
-    (buffer-substring-no-properties breg (+ breg bookmark-search-size))))
+  "Return `bookmark-search-size' chars at position BREG.
+Return nil if there are not that many chars."
+  (and (>= (- (point-max) breg) bookmark-search-size)
+       (buffer-substring-no-properties breg (+ breg bookmark-search-size))))
       
 (defun bookmark-region-record-rear-context-string (breg)
-  "Return the `bookmark-region-search-size' chars behind region.
-This function is called only when region is active."
-  (goto-char breg)
+  "Return the text preceding the region beginning, BREG.
+Return at most `bookmark-region-search-size' chars."
+  (goto-char breg)                      ; @@@ SHOULD THIS goto be in the caller?
   ;; FIXME not sure that is needed now.
   (re-search-backward ".[^ ]" nil t)
-  (buffer-substring-no-properties (max (- (point) bookmark-region-search-size) (point-min))
-                                  breg))
+  (buffer-substring-no-properties
+   (max (- (point) bookmark-region-search-size) (point-min))
+   breg))
 
 (defun bookmark-record-rear-context-string (breg)
-  "Return the `bookmark-search-size' chars behind region.
-This function is called only when no active region is found."
-  (when (>= (- breg (point-min)) bookmark-search-size)
-    (buffer-substring-no-properties breg (- breg bookmark-search-size))))
+  "Return `bookmark-search-size' chars preceding BREG (inclusive).
+Return nil if there are not that many chars."
+  (and (>= (- breg (point-min)) bookmark-search-size)
+       (buffer-substring-no-properties breg (- breg bookmark-search-size))))
   
 (defun bookmark-record-front-context-region-string (breg ereg)
-  "Return the `bookmark-region-search-size' chars before end of region.
-This function is called only when region is active."
+  "Return the region suffix, ending at EREG.
+Return at most `bookmark-region-search-size' or (- EREG BREG) chars."
   (buffer-substring-no-properties
-   ereg (- ereg (min bookmark-region-search-size (- ereg breg)))))
+   ;; @@@@@@@ It's clearer to swap the args: smaller first.
+   (- ereg (min bookmark-region-search-size (- ereg breg)))
+   ereg))
 
 (defun bookmark-record-end-context-region-string (ereg)
-  "Return the `bookmark-region-search-size' after end of region.
-This function is called only when region is active."
-  (goto-char ereg)
+  "Return the text following the region end, EREG.
+Return at most `bookmark-region-search-size' chars."
+  (goto-char ereg)                      ; @@@ SHOULD THIS goto be in the caller?
   ;; FIXME not sure that is needed now.
   (re-search-forward "^.*[^ \n]" nil t)
   (beginning-of-line)
-  (buffer-substring-no-properties ereg (+ (point) (min bookmark-region-search-size
-                                                       (- (point-max) (point))))))
+  (buffer-substring-no-properties
+   ereg (+ (point) (min bookmark-region-search-size (- (point-max) (point))))))
   
 
 ;; @@@@@ MAYBE RENAME THIS FUNCTION - lax and strict don't mean much here.
 (defun bookmark-relocate-region-strict (bmk-obj reg-retrieved-p bor-str eor-str
                                         br-str ar-str pos end-pos)
   "Relocate the region bookmark BMK-OBJ, by relocating the region limits.
-Relocate the region beginning and end points independently."
+Relocate the region beginning and end points independently.
+
+@@@ DESCRIBE the function, including *each* of the args."
   (let (relocated-saved)
     (unless (and (string= bor-str (buffer-substring-no-properties
                                    (point) (+ (point) (length bor-str))))
@@ -771,7 +780,9 @@ Relocate the region beginning and end points independently."
                    (goto-char end-pos)
                    (string= eor-str (buffer-substring-no-properties
                                      (point) (- (point) (length bor-str))))))
-      (let (beg end)
+      (let ((beg  nil)
+            (end  nil))                   ; @@@ Explicit initializations, since the values matter.
+        ;; @@@@@@ I still have the question why the caller moves to POS, just before we move to bob.
         (goto-char (point-min))
         ;; Relocate region end.
         (save-excursion
@@ -803,7 +814,7 @@ Relocate the region beginning and end points independently."
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
            (if relocated-saved
-               (message "Relocated Region from %d to %d Saved" pos end-pos)
+               (message "Saved relocated region (from %d to %d)" pos end-pos)
                (message "Region is from %d to %d" pos end-pos)))
           (t
            (goto-char pos) (beginning-of-line)
@@ -833,32 +844,33 @@ Relocate the region beginning and end points independently."
                    (goto-char end-pos)
                    (string= eor-str (buffer-substring-no-properties
                                      (point) (- (point) (length bor-str))))))
-      (goto-char (point-min))    ; Start at bob and search forward.
-      (let (beg end)
+      (goto-char (point-min))           ; Start at bob and search forward.
+      (let ((beg  nil)
+            (end  nil))                 ; @@@ Explicit initializations, since the values matter.
         (if (search-forward eor-str (point-max) t) ; Find END, using `eor-str'.
             (setq end  (point))
-            (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
-              (setq end  (match-beginning 0))
-              (when end
-                (goto-char end)
-                ;; If `ar-str' moved, then look for END one or more lines back.
-                (while (and (not (bobp))
-                            (not (save-excursion ; This is `looking-back', for older Emacs.
-                                   (and (re-search-backward "\\(.[^ \n]\\)\\=" nil t)
-                                        (point)))))
-                  (forward-char -1))
-                (setq end  (point)))))
+          (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
+            (setq end  (match-beginning 0))
+            (when end
+              (goto-char end)
+              ;; If `ar-str' moved, then look for END one or more lines back.
+              (while (and (not (bobp))
+                          (not (save-excursion ; This is `looking-back', for older Emacs.
+                                 (and (re-search-backward "\\(.[^ \n]\\)\\=" nil t)
+                                      (point)))))
+                (forward-char -1))
+              (setq end  (point)))))
         ;; If failed to find END, go to eob and search backward from there.
         (unless end (goto-char (point-max)))
         (if (search-backward bor-str (point-min) t) ; Find BEG, using `bor-str'.
             (setq beg  (point))
-            (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
-              (setq beg (match-end 0))
-              (when beg
-                (goto-char beg)
-                ;; If `br-str' moved, then look for BEG one or more lines forward.
-                (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
-                (setq beg (point)))))
+          (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
+            (setq beg (match-end 0))
+            (when beg
+              (goto-char beg)
+              ;; If `br-str' moved, then look for BEG one or more lines forward.
+              (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
+              (setq beg (point)))))
 
         ;; @@@ FIXME: Should we save new context string if only one position was relocated?
 
@@ -876,8 +888,8 @@ Relocate the region beginning and end points independently."
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
            (if relocated-saved
-               (message "Relocated Region from %d to %d Saved" pos end-pos)
-               (message "Region is from %d to %d" pos end-pos)))
+               (message "Saved relocated region (from %d to %d)" pos end-pos)
+             (message "Region is from %d to %d" pos end-pos)))
           (t
            ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
            (goto-char pos) (beginning-of-line)
@@ -1040,33 +1052,30 @@ record that pertains to the location within the buffer."
                         mark-active
                         (not (eq (mark) (point)))))
          (isdired  (car (rassq (current-buffer) dired-buffers)))
-         (beg      (if isregion
-                       (region-beginning)
-                       (point)))
-         (end      (if isregion
-                       (region-end)
-                       (point)))
+         (beg      (if isregion (region-beginning) (point)))
+         (end      (if isregion (region-end) (point)))
          (buf      (buffer-name))
          (fcs      (if isregion
                        (bookmark-region-record-front-context-string beg end)
-                       (bookmark-record-front-context-string beg)))
-         (rcs      (if isregion
+                     (bookmark-record-front-context-string beg)))
+         (rcs      (if isregion ; @@@@@ Had an END before (please check)
                        (bookmark-region-record-rear-context-string beg)
-                       (bookmark-record-rear-context-string beg)))
-         (fcrs     (when isregion (bookmark-record-front-context-region-string beg end)))
+                     (bookmark-record-rear-context-string beg)))
+         (fcrs     (when isregion       ; @@@@@ Had no END before (check)
+                     (bookmark-record-front-context-region-string beg end)))
          (ecrs     (when isregion (bookmark-record-end-context-region-string end))))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
                                                 (t
                                                  nil)))))
-        (buffer-name . ,buf)
-        (front-context-string . ,fcs)
-        (rear-context-string . ,rcs)
-        (front-context-region-string . ,fcrs)
-        (rear-context-region-string . ,ecrs)
-        (position . ,beg)
-        (end-position . ,end))))
+      (buffer-name . ,buf)
+      (front-context-string . ,fcs)
+      (rear-context-string . ,rcs)
+      (front-context-region-string . ,fcrs)
+      (rear-context-region-string . ,ecrs)
+      (position . ,beg)
+      (end-position . ,end))))
 
 ;; @@@@@@ FIXME LATER
 ;;        Don't add stuff that has a nil value to the bookmark record (it is not used).
@@ -1112,6 +1121,7 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
                                                           (bookmark-get-filename bmk)))))
         (pop-to-buffer (or buf bufname))
         (raise-frame)
+        ;; @@@@@@@ Why do we move here, if the relocate function moves elsewhere as its first action?
         (goto-char (min pos (point-max)))
         (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
         ;; Relocate region if it has moved.
