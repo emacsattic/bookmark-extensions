@@ -708,16 +708,24 @@ deletion, or > if it is flagged for displaying."
 ;; @@@@@@@ Thanks, but we still do nothing in some cases for
 ;; `bookmark-record-(front|rear)-context-string'.  It is better to
 ;; move the condition (`when') to the caller function.
-;;
+
+;; @@@Thierry: Ok
+
 ;; @@@@@@@ For now, we return nil in some cases, so the return value
 ;; is presumably important. In that case, it's better to use `and' or
 ;; `if' than `when'.
-;;
+
+;; @@@Thierry: Ok
+
 ;; @@@@@@@ Doc strings shouldn't talk about when or where the function
 ;; is called. That's not modular. They should describe only what the
 ;; function itself does and returns (and its args)
-;;
+
+;; @@@Thierry: Ok
+
 ;; @@@@@@@ These names are all too similar.  It's too easy to get lost.
+
+;; @@@Thierry: Ok propose new names, i will make the changes.
 
 (defun bookmark-region-record-front-context-string (breg ereg)
   "Return the region prefix, at BREG.
@@ -751,7 +759,7 @@ Return nil if there are not that many chars."
   "Return the region suffix, ending at EREG.
 Return at most `bookmark-region-search-size' or (- EREG BREG) chars."
   (buffer-substring-no-properties
-   ;; @@@@@@@ It's clearer to swap the args: smaller first.
+   ;; @@@@@@@ It's clearer to swap(échanger, intervertir) the args: smaller first.
    (- ereg (min bookmark-region-search-size (- ereg breg)))
    ereg))
 
@@ -871,9 +879,6 @@ Relocate the region beginning and end points independently.
               ;; If `br-str' moved, then look for BEG one or more lines forward.
               (while (and (not (eobp)) (not (looking-at ".[^ \n]"))) (forward-char 1))
               (setq beg (point)))))
-
-        ;; @@@ FIXME: Should we save new context string if only one position was relocated?
-
         ;; Save new location to `bookmark-alist' only if BEG or END was found.
         ;; If only one of them was found, the located region is only approximate.
         ;; If both were found, it is exact.
@@ -896,7 +901,7 @@ Relocate the region beginning and end points independently.
            (message "No region from %d to %d" pos end-pos)))))
 
 (defun bookmark-goto-position (file buf bufname pos forward-str behind-str)
-  "@@@@@@@@@ NEED doc string"
+  "Retrieve a bookmark with no region just like vanilla bookmark was doing."
   (if (and file (file-readable-p file) (not (buffer-live-p buf)))
       (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
     ;; No file found.  See if a non-file buffer exists for this.  If not, raise error.
@@ -918,7 +923,7 @@ Relocate the region beginning and end points independently.
   (when (and behind-str (search-backward behind-str (point-min) t))
     (goto-char (match-end 0)))
   nil)                                  ; @@@@@@@@ NEED COMMENT as to why we return nil.
-
+                                        ; @@@Thierry:Don't know that's the vanilla bookmark code. 
 
 ;;;###autoload
 (when (< emacs-major-version 23)
@@ -1058,10 +1063,10 @@ record that pertains to the location within the buffer."
          (fcs      (if isregion
                        (bookmark-region-record-front-context-string beg end)
                      (bookmark-record-front-context-string beg)))
-         (rcs      (if isregion ; @@@@@ Had an END before (please check)
+         (rcs      (if isregion ; @@@@@ Had an END before (please check) @@@Thierry:It's ok like that
                        (bookmark-region-record-rear-context-string beg)
                      (bookmark-record-rear-context-string beg)))
-         (fcrs     (when isregion       ; @@@@@ Had no END before (check)
+         (fcrs     (when isregion       ; @@@@@ Had no END before (check) @@@Thierry:Same comment
                      (bookmark-record-front-context-region-string beg end)))
          (ecrs     (when isregion (bookmark-record-end-context-region-string end))))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
@@ -1081,7 +1086,8 @@ record that pertains to the location within the buffer."
 ;;        Don't add stuff that has a nil value to the bookmark record (it is not used).
 ;;        For example, don't add the buffer name if the file name is present.
 ;;        This is not critical and can be done later.
-
+;; @@@Thierry: That will affect predicates in `bookmark-bmenu-list' and may be in other places.
+;; Is it a big problem to have sometimes empty entries?
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
