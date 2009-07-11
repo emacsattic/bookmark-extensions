@@ -205,13 +205,13 @@ If nil, then the new bookmark location is visited, but it is not saved
 as part of the bookmark definition."
   :type 'boolean :group 'bookmark)
 
-(defcustom bookmark-relocate-region-method 'lax
+(defcustom bookmark-relocate-region-method 'from-pos
   "Method to use to relocate a bookmarked region.
 `strict' means relocate each region endpoint independently.
 `lax'    means @@@@@@@???????????"
   :type '(choice
-          (const :tag "Privilege region content when trying to relocate"     lax)
-          (const :tag "Privilege region end points when trying to relocate"  strict))
+          (const :tag "Privilege region content when trying to relocate"     from-bob)
+          (const :tag "Privilege region end points when trying to relocate"  from-pos))
   :group 'bookmark)
 
 ;;; Faces
@@ -749,7 +749,7 @@ Return at most `bookmark-region-search-size' chars."
 
 ;; Search from POS backward and forward.
 ;; @@@@@ FIXME LATER: Change the name "strict".
-(defun bookmark-relocate-region-strict (bmk-obj reg-retrieved-p bor-str eor-str
+(defun bookmark-relocate-region-from-pos (bmk-obj reg-retrieved-p bor-str eor-str
                                         br-str ar-str pos end-pos)
   "Relocate the region bookmark BMK-OBJ, by relocating the region limits.
 Relocate the region beginning and end points independently.
@@ -823,6 +823,7 @@ Relocate the region beginning and end points independently.
                     (setq end  (match-beginning 0))
                     (look-back-empty-zone end))))
           ;; TODO: in case of only one pos setup beg and end with the approximate lenght of region
+          ;; I thought i have already done this!
           (setq reg-retrieved-p  (or beg end))
           (when beg (setq pos  beg))
           (when end (setq end-pos  end))
@@ -855,7 +856,7 @@ Relocate the region beginning and end points independently.
       (setq state t))))
     
 
-(defun bookmark-relocate-region-lax (bmk-obj reg-retrieved-p bor-str eor-str
+(defun bookmark-relocate-region-from-bob (bmk-obj reg-retrieved-p bor-str eor-str
                                      br-str ar-str pos end-pos)
   (let (relocated-saved)
     (unless (and (string= bor-str (buffer-substring-no-properties
@@ -1135,11 +1136,11 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
       (goto-char (min pos (point-max)))
       (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
       ;; Relocate region if it has moved.
-      (if (eq bookmark-relocate-region-method 'lax)
-          (bookmark-relocate-region-lax bmk region-retrieved-p str-at-bor str-at-eor
-                                        str-bef-reg str-aft-reg pos end-pos)
-        (bookmark-relocate-region-strict bmk region-retrieved-p str-at-bor str-at-eor
-                                         str-bef-reg str-aft-reg pos end-pos)))))
+      (if (eq bookmark-relocate-region-method 'from-bob)
+          (bookmark-relocate-region-from-bob bmk region-retrieved-p str-at-bor str-at-eor
+                                             str-bef-reg str-aft-reg pos end-pos)
+        (bookmark-relocate-region-from-pos bmk region-retrieved-p str-at-bor str-at-eor
+                                           str-bef-reg str-aft-reg pos end-pos)))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
