@@ -165,7 +165,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "1.6.6")
+(defconst bookmark+version-number "1.7.0")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -924,10 +924,10 @@ Args:
         ;; If both were found, it is exact.
         (cond ((and beg end) (setq pos      beg
                                    end-pos  end))
-              (beg (setq pos beg)
-                   (setq end (+ pos (- end-pos pos))))
+              (beg (setq pos     beg)
+                   (setq end     (+ pos (- end-pos pos))))
               (end (setq end-pos end)
-                   (setq pos (- end (- end-pos pos))))
+                   (setq pos     (- end (- end-pos pos))))
               (t (setq reg-retrieved-p  nil)))
         (setq relocated-saved (or beg end))))
     ;; Finally if region was found, activate it. 
@@ -944,23 +944,6 @@ Args:
            (goto-char pos) (beginning-of-line)
            (message "No region from %d to %d" pos end-pos)))))
         
-    ;;     (cond ((and beg end) (setq pos      beg
-    ;;                                end-pos  end))
-    ;;           ((and beg (not end)) (setq pos  beg))
-    ;;           ((and (not beg) end) (setq end-pos  end))
-    ;;           (t (setq reg-retrieved-p  nil)))
-    ;;     (bookmark-save-relocated-position bmk-obj pos end-pos relocated-saved)))
-    ;; (cond (reg-retrieved-p
-    ;;        (goto-char pos)
-    ;;        (push-mark end-pos 'nomsg 'activate)
-    ;;        (setq deactivate-mark  nil)
-    ;;        (if relocated-saved
-    ;;            (message "Saved relocated region (from %d to %d)" pos end-pos)
-    ;;            (message "Region is from %d to %d" pos end-pos)))
-    ;;       (t
-    ;;        ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
-    ;;        (goto-char pos) (beginning-of-line)
-    ;;        (message "No region from %d to %d" pos end-pos)))))
 
 (defun bookmark-goto-position (file buf bufname pos forward-str behind-str)
   "Go to a bookmark that has no region."
