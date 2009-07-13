@@ -906,16 +906,17 @@ the buffer."
         (goto-char (point-min))
         (if (search-forward eor-str (point-max) t) ; Find END, using `eor-str'.
             (setq end  (point))
-          (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
-            (setq end  (match-beginning 0)
-                  end  (and end (bookmark-position-before-whitespace end)))))
+            (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
+              (setq end  (match-beginning 0)
+                    end  (and end (bookmark-position-before-whitespace end)))))
         ;; If failed to find END, go to eob and search backward for BEG.
         (unless end (goto-char (point-max)))
         (if (search-backward bor-str (point-min) t) ; Find BEG, using `bor-str'.
             (setq beg  (point))
-          (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
-            (setq beg (match-end 0)
-                  beg  (and beg (bookmark-position-after-whitespace beg)))))
+            (unless (search-backward ar-str (point-min) t)
+              (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
+                (setq beg (match-end 0)
+                      beg  (and beg (bookmark-position-after-whitespace beg))))))
         ;; Save new location to `bookmark-alist' if BEG or END was found.
         ;; If only one of them was found, the located region is only approximate.
         ;; If both were found, it is exact.
