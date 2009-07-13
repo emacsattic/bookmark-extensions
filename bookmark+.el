@@ -717,11 +717,8 @@ Return nil if there are not that many chars."
 (defun bookmark-region-record-rear-context-string (breg)
   "Return the text preceding the region beginning, BREG.
 Return at most `bookmark-region-search-size' chars."
-  (goto-char breg)                      ; @@@@@ SHOULD THIS goto be in the caller instead?
-  ;; FIXME not sure that is needed now.  @@@@ Which is not needed, the goto or the search?
-  (re-search-backward ".[^ ]" nil t)
   (buffer-substring-no-properties
-   (max (- (point) bookmark-region-search-size) (point-min))
+   (max (- breg bookmark-region-search-size) (point-min))
    breg))
 
 (defun bookmark-record-rear-context-string (breg)
@@ -740,12 +737,8 @@ Return at most `bookmark-region-search-size' or (- EREG BREG) chars."
 (defun bookmark-record-end-context-region-string (ereg)
   "Return the text following the region end, EREG.
 Return at most `bookmark-region-search-size' chars."
-  (goto-char ereg)                      ; @@@ SHOULD THIS goto be in the caller?
-  ;; FIXME not sure that is needed now.  @@@@ Which is not needed, the goto or the search?
-  (re-search-forward "^.*[^ \n]" nil t)
-  (forward-line 0)
   (buffer-substring-no-properties
-   ereg (+ (point) (min bookmark-region-search-size (- (point-max) (point))))))
+   ereg (+ ereg (min bookmark-region-search-size (- (point-max) (point))))))
 
 (defun bookmark-position-after-whitespace (position)
   "Move forward from POSITION, skipping over whitespace.  Return point."
