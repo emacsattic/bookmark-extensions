@@ -771,7 +771,8 @@ Relocate by searching from region limits recorded in BMK-OBJ."
         (ar-str           (bookmark-get-rear-context-string bmk-obj))
         (pos              (bookmark-get-position bmk-obj))
         (end-pos          (bookmark-prop-get bmk-obj 'end-position))
-        (reg-retrieved-p  t))
+        (reg-retrieved-p  t)
+        (reg-relocated-p  nil))
     (unless (and (string= bor-str (buffer-substring-no-properties
                                    (point) (+ (point) (length bor-str))))
                  (save-excursion
@@ -785,59 +786,80 @@ Relocate by searching from region limits recorded in BMK-OBJ."
         (save-excursion
           (if (search-backward bor-str (point-min) t)
               (setq beg  (point))
-            (when (search-backward br-str (point-min) t)
-              (setq beg  (match-end 0)
-                    beg  (and beg (bookmark-position-after-whitespace beg)))))
+              (when (search-backward br-str (point-min) t)
+                (setq beg  (match-end 0)
+                      beg  (and beg (bookmark-position-after-whitespace beg)))))
           ;; If we didn't find BEG, we are back to POS.  Search again, but forward now.
           (unless beg
             (if (search-forward bor-str (point-max) t)
                 (setq beg  (match-beginning 0))
-              (when (search-forward br-str (point-max) t)
-                (setq beg  (point)
-                      beg  (and beg (bookmark-position-after-whitespace beg)))))))
+                (when (search-forward br-str (point-max) t)
+                  (setq beg  (point)
+                        beg  (and beg (bookmark-position-after-whitespace beg)))))))
         ;; We are now back at POS.  We should have found BEG.
         ;; If not, search for END position in both directions.
         ;; If we have BEG, only search forward END from BEG.
 
         ;; @@@@@@@@ NO, we should search for END in both directions
         ;; regardless of whether we found BEG.  They are unrelated.
-        (if (not beg)
+        ;; NO! of course they are related!!!!!
+        ;; If we know where is BEG, we know for sure END will be after BEG
+        ;; and not before.
+        ;; So no need to search in both directions unless we haven't found BEG.
+        (if (not beg) ; ==> We didn't find BEG so we search END in both directions from POS.
             ;; @@@@@@@@@@@@@ NO, we should go to END, not BEG, to search for new END.
+            ;; @@@Thierry: NO i think you mean END-POS because we do not know already END
+            ;; It's non--sense to search END from END-POS, just another complication
+            ;; that will give the same result; searching from POS is in off.
             (save-excursion
               (if (search-backward eor-str (point-min) t)
                   (setq end  (match end 0))
-                (when (search-backward ar-str (point-min) t)
-                  (setq end  (point)
-                        end  (and end (bookmark-position-before-whitespace end)))))
+                  (when (search-backward ar-str (point-min) t)
+                    (setq end  (point)
+                          end  (and end (bookmark-position-before-whitespace end)))))
               (unless end
                 (if (search-forward eor-str (point-max) t)
                     (setq end  (point))
-                  (when (search-forward ar-str (point-max) t)
-                    (setq end  (match-beginning 0)
-                          end  (and end (bookmark-position-before-whitespace end)))))))
-          ;; As we have BEG no need to search in both directions.
-          ;; @@@@@@@@@@@@@ NO, we should go to END, not BEG, to search for new END.
-          (goto-char beg)
-          (if (search-forward eor-str (point-max) t)
-              (setq end  (point))
-            (when (search-forward ar-str (point-max) t)
-              (setq end  (match-beginning 0)
-                    end  (and end (bookmark-position-before-whitespace end))))))
+                    (when (search-forward ar-str (point-max) t)
+                      (setq end  (match-beginning 0)
+                            end  (and end (bookmark-position-before-whitespace end)))))))
+            ;; As we have BEG no need to search in both directions.
+            ;; @@@@@@@@@@@@@ NO, we should go to END, not BEG, to search for new END.
+            
+            (goto-char beg) ; ==> We have found BEG so we search ONLY in ONE DIRECTION for END.
+            (if (search-forward eor-str (point-max) t)
+                (setq end  (point))
+                (when (search-forward ar-str (point-max) t)
+                  (setq end  (match-beginning 0)
+                        end  (and end (bookmark-position-before-whitespace end))))))
         ;; Save new location to `bookmark-alist' if BEG or END was found.
         ;; If only one of them was found, the located region is only approximate.
         ;; If both were found, it is exact.
-        (setq reg-retrieved-p  (or beg end))
-        (setq pos      (or beg  (and end (- end (- end-pos pos)))  pos)
-              end-pos  (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
-
+        (cond ((and beg end) (setq pos      beg
+                                   end-pos  end))
+              (beg (setq pos      beg)
+                   (setq end-pos  (+ pos (- end-pos pos))))
+              (end (setq end-pos  end)
+                   (setq pos      (- end (- end-pos pos))))
+              (t (setq reg-retrieved-p  nil)))
+        (setq reg-relocated-p (or beg end))))
+    ;; reg-retrieved-p mean the region is retrieved regardless we have made a search or not
+    ;; If nothing have changed in buffer and we didn't execute the precedent block of code
+    ;; reg-retrieved-p value is true.
+    ;; But reg-relocated-p is true only if a search have occur.(i.e the precedent block of code
+    ;; have been executed)
+    ;; that's mean if we use only reg-retrieved-p as you did, we will be prompt by the (y-or-n-p)
+    ;; even if the region have not moved.
     ;; If region was found, activate it and maybe save it.
-    (cond (reg-retrieved-p
+    (cond (reg-retrieved-p ; Region have been retrieved may be after a search.
            (goto-char pos)
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
-           (if (bookmark-save-new-region-location bmk-obj pos end-pos)
-               (message "Saved relocated region (from %d to %d)" pos end-pos)
-             (message "Region is from %d to %d" pos end-pos)))
+           (when reg-relocated-p ; Region have moved. May be save new location.
+             (save-excursion
+               (if (bookmark-save-relocated-position bmk-obj pos end-pos)
+                   (message "Saved relocated region (from %d to %d)" pos end-pos)
+                   (message "Region is from %d to %d" pos end-pos)))))
           ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
           (t
            (goto-char pos) (forward-line 0)
@@ -896,22 +918,52 @@ the buffer."
         ;; Save new location to `bookmark-alist' if BEG or END was found.
         ;; If only one of them was found, the located region is only approximate.
         ;; If both were found, it is exact.
-        (setq reg-retrieved-p  (or beg end))
-        (setq pos      (or beg  (and end (- end (- end-pos pos)))  pos)
-              end-pos  (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
-
-    ;; If region was found, activate it and maybe save it. 
-    (cond (reg-retrieved-p
+        (cond ((and beg end) (setq pos      beg
+                                   end-pos  end))
+              (beg (setq pos      beg)
+                   (setq end-pos  (+ pos (- end-pos pos))))
+              (end (setq end-pos  end)
+                   (setq pos      (- end (- end-pos pos))))
+              (t (setq reg-retrieved-p  nil)))
+        (setq reg-relocated-p (or beg end))))
+    ;; reg-retrieved-p mean the region is retrieved regardless we have made a search or not
+    ;; If nothing have changed in buffer and we didn't execute the precedent block of code
+    ;; reg-retrieved-p value is true.
+    ;; But reg-relocated-p is true only if a search have occur.(i.e the precedent block of code
+    ;; have been executed)
+    ;; that's mean if we use only reg-retrieved-p as you did, we will be prompt by the (y-or-n-p)
+    ;; even if the region have not moved.
+    ;; If region was found, activate it and maybe save it.
+    (cond (reg-retrieved-p ; Region have been retrieved may be after a search.
            (goto-char pos)
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
-           (if (bookmark-save-new-region-location bmk-obj pos end-pos)
-               (message "Saved relocated region (from %d to %d)" pos end-pos)
-             (message "Region is from %d to %d" pos end-pos)))
+           (when reg-relocated-p ; Region have moved. May be save new location.
+             (save-excursion
+               (if (bookmark-save-relocated-position bmk-obj pos end-pos)
+                   (message "Saved relocated region (from %d to %d)" pos end-pos)
+                   (message "Region is from %d to %d" pos end-pos)))))
+          ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
           (t
-           ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
+
+    ;;     (setq reg-retrieved-p  (or beg end))
+    ;;     (setq pos      (or beg  (and end (- end (- end-pos pos)))  pos)
+    ;;           end-pos  (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
+
+    ;; ;; If region was found, activate it and maybe save it. 
+    ;; (cond (reg-retrieved-p
+    ;;        (goto-char pos)
+    ;;        (push-mark end-pos 'nomsg 'activate)
+    ;;        (setq deactivate-mark  nil)
+    ;;        (if (bookmark-save-new-region-location bmk-obj pos end-pos)
+    ;;            (message "Saved relocated region (from %d to %d)" pos end-pos)
+    ;;          (message "Region is from %d to %d" pos end-pos)))
+    ;;       (t
+    ;;        ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
+    ;;        (goto-char pos) (forward-line 0)
+    ;;        (message "No region from %d to %d" pos end-pos)))))
 
 (defun bookmark-goto-position (file buf bufname pos forward-str behind-str)
   "Go to a bookmark that has no region."
