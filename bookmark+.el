@@ -855,18 +855,18 @@ Relocate by searching from region limits recorded in BMK-OBJ."
            (goto-char pos)
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
-           (when reg-relocated-p ; Region have moved. May be save new location.
-             (save-excursion
-               (if (bookmark-save-relocated-position bmk-obj pos end-pos)
-                   (message "Saved relocated region (from %d to %d)" pos end-pos)
-                   (message "Region is from %d to %d" pos end-pos)))))
-          ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
+           (if reg-relocated-p ; Region have moved. May be save new location.
+               (save-excursion
+                 (if (bookmark-save-new-region-location bmk-obj pos end-pos)
+                     (message "Saved relocated region (from %d to %d)" pos end-pos)
+                     (message "Region is from %d to %d" pos end-pos)))
+               (message "Region is from %d to %d" pos end-pos)))
           (t
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
 
 (defun bookmark-save-new-region-location (bmk-obj beg end)
-  "@@@@@@@@@@ NEED DOC STRING"
+  "Update `bookmark-alist' after relocating a region."
   (and bookmark-save-new-location-flag
        (y-or-n-p "Region relocated: Do you want to save new region limits?")
        (progn
@@ -892,7 +892,8 @@ the buffer."
         (ar-str           (bookmark-get-rear-context-string bmk-obj))
         (pos              (bookmark-get-position bmk-obj))
         (end-pos          (bookmark-prop-get bmk-obj 'end-position))
-        (reg-retrieved-p  t))
+        (reg-retrieved-p  t)
+        (reg-relocated-p  nil))
     (unless (and (string= bor-str (buffer-substring-no-properties
                                    (point) (+ (point) (length bor-str))))
                  (save-excursion
@@ -926,44 +927,33 @@ the buffer."
                    (setq pos      (- end (- end-pos pos))))
               (t (setq reg-retrieved-p  nil)))
         (setq reg-relocated-p (or beg end))))
-    ;; reg-retrieved-p mean the region is retrieved regardless we have made a search or not
+    
+    ;; @@@Thierry:
+    ;; `reg-retrieved-p' mean the region is retrieved regardless we have made a search or not.
     ;; If nothing have changed in buffer and we didn't execute the precedent block of code
-    ;; reg-retrieved-p value is true.
-    ;; But reg-relocated-p is true only if a search have occur.(i.e the precedent block of code
-    ;; have been executed)
-    ;; that's mean if we use only reg-retrieved-p as you did, we will be prompt by the (y-or-n-p)
+    ;; `reg-retrieved-p' value is true.
+    ;; But `reg-relocated-p' is true only if a search have occur.(i.e the precedent block of code
+    ;; have been executed).
+    ;; That's mean if we use only `reg-retrieved-p' as you did, we will be prompt by the (y-or-n-p)
     ;; even if the region have not moved.
-    ;; If region was found, activate it and maybe save it.
+    ;; @@@
+    
+    ;; If region didn't move or have been relocated, activate it and maybe save it.
     (cond (reg-retrieved-p ; Region have been retrieved may be after a search.
            (goto-char pos)
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
-           (when reg-relocated-p ; Region have moved. May be save new location.
-             (save-excursion
-               (if (bookmark-save-relocated-position bmk-obj pos end-pos)
-                   (message "Saved relocated region (from %d to %d)" pos end-pos)
-                   (message "Region is from %d to %d" pos end-pos)))))
+           (if reg-relocated-p ; Region have moved. May be save new location.
+               (save-excursion
+                 (if (bookmark-save-new-region-location bmk-obj pos end-pos)
+                     (message "Saved relocated region (from %d to %d)" pos end-pos)
+                     (message "Region is from %d to %d" pos end-pos)))
+               (message "Region is from %d to %d" pos end-pos)))
           ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
           (t
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
 
-    ;;     (setq reg-retrieved-p  (or beg end))
-    ;;     (setq pos      (or beg  (and end (- end (- end-pos pos)))  pos)
-    ;;           end-pos  (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
-
-    ;; ;; If region was found, activate it and maybe save it. 
-    ;; (cond (reg-retrieved-p
-    ;;        (goto-char pos)
-    ;;        (push-mark end-pos 'nomsg 'activate)
-    ;;        (setq deactivate-mark  nil)
-    ;;        (if (bookmark-save-new-region-location bmk-obj pos end-pos)
-    ;;            (message "Saved relocated region (from %d to %d)" pos end-pos)
-    ;;          (message "Region is from %d to %d" pos end-pos)))
-    ;;       (t
-    ;;        ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
-    ;;        (goto-char pos) (forward-line 0)
-    ;;        (message "No region from %d to %d" pos end-pos)))))
 
 (defun bookmark-goto-position (file buf bufname pos forward-str behind-str)
   "Go to a bookmark that has no region."
