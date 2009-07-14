@@ -168,7 +168,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "1.8.0")
+(defconst bookmark+version-number "1.8.1")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -210,9 +210,8 @@ as part of the bookmark definition."
 
 (defcustom bookmark-relocate-region-function
   'bookmark-relocate-region-default
-  "Default function to retrieve regions."
-  :type 'function
-  :group 'bookmark)
+  "Default function to relocate bookmarked region."
+  :type 'function :group 'bookmark)
 
 ;;; Faces
 
@@ -636,11 +635,9 @@ deletion, or > if it is flagged for displaying."
                   ((and isfile (file-directory-p isfile)) ; Local directory
                    '(mouse-face highlight follow-link t face 'bookmark-directory
                      help-echo "mouse-2: Go to this local directory (Dired)"))
-                  ;; @@@@@@ No need to test directory here, since you just tested it.
                   ((and isfile (file-exists-p isfile) isregion) ; Local file with region
                    '(mouse-face highlight follow-link t face 'bookmark-file-region
                      help-echo "mouse-2: Go to bookmarked region in this local file"))
-                  ;; @@@@@@ No need to test directory here, since you tested it above.
                   ((and isfile (file-exists-p isfile)) ; Local file without region
                    '(mouse-face highlight follow-link t face 'bookmark-file
                      help-echo "mouse-2: Go to this local file (no region)"))
@@ -753,7 +750,7 @@ Return at most `bookmark-region-search-size' chars."
   (point))
 
 (defun bookmark-save-new-region-location (bmk-obj beg end)
-  "Update `bookmark-alist' after relocating a region."
+  "Update and save `bookmark-alist' after relocating a region."
   (and bookmark-save-new-location-flag
        (y-or-n-p "Region relocated: Do you want to save new region limits?")
        (progn
@@ -771,7 +768,7 @@ Return at most `bookmark-region-search-size' chars."
 
 (defun bookmark-relocate-region-default (bmk-obj)
   "Relocate the region bookmark BMK-OBJ, by relocating the region limits.
-Relocate by searching from the beginning and (and possibly the end) of
+Relocate by searching from the beginning (and possibly the end) of
 the buffer."
   (let ((bor-str          (bookmark-get-front-context-string bmk-obj))
         (eor-str          (bookmark-prop-get bmk-obj 'front-context-region-string))
@@ -793,55 +790,35 @@ the buffer."
         (goto-char (point-min))
         (if (search-forward eor-str (point-max) t) ; Find END, using `eor-str'.
             (setq end  (point))
-            (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
-              (setq end  (match-beginning 0)
-                    end  (and end (bookmark-position-before-whitespace end)))))
+            (unless (search-forward br-str (point-max) t) ; Verify if region is not before context.
+              (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
+                (setq end  (match-beginning 0)
+                      end  (and end (bookmark-position-before-whitespace end))))))
         ;; If failed to find END, go to eob and search backward for BEG.
         (unless end (goto-char (point-max)))
         (if (search-backward bor-str (point-min) t) ; Find BEG, using `bor-str'.
             (setq beg  (point))
-            (unless (search-backward ar-str (point-min) t)
+            (unless (search-backward ar-str (point-min) t) ; Verify if region is not after context.
               (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
                 (setq beg (match-end 0)
                       beg  (and beg (bookmark-position-after-whitespace beg))))))
-        ;; Save new location to `bookmark-alist' if BEG or END was found.
-        ;; If only one of them was found, the located region is only approximate.
-        ;; If both were found, it is exact.
-        (cond ((and beg end) (setq pos      beg
-                                   end-pos  end))
-              (beg (setq pos      beg)
-                   (setq end-pos  (+ pos (- end-pos pos))))
-              (end (setq end-pos  end)
-                   (setq pos      (- end (- end-pos pos))))
-              (t (setq reg-retrieved-p  nil)))
-        (setq reg-relocated-p (or beg end))))
-    
-    ;; @@@Thierry:
-    ;; `reg-retrieved-p' mean the region is retrieved regardless we have made a search or not.
-    ;; If nothing have changed in buffer and we didn't execute the precedent block of code
-    ;; `reg-retrieved-p' value is true.
-    ;; But `reg-relocated-p' is true only if a search have occur.(i.e the precedent block of code
-    ;; have been executed).
-    ;; That's mean if we use only `reg-retrieved-p' as you did, we will be prompt by the (y-or-n-p)
-    ;; even if the region have not moved.
-    ;; @@@
-    
-    ;; If region didn't move or have been relocated, activate it and maybe save it.
-    (cond (reg-retrieved-p ; Region have been retrieved may be after a search.
+        (setq reg-retrieved-p  (or beg end)
+              reg-relocated-p  reg-retrieved-p
+              ;; If only one of BEG or END was found, the relocated region is only
+              ;; approximate (keep the same length).  If both were found, it is exact.
+              pos              (or beg  (and end (- end (- end-pos pos)))  pos)
+              end-pos          (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
+
+    (cond (reg-retrieved-p              ; Region is available. Activate it and maybe save it.
            (goto-char pos)
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
-           (if reg-relocated-p ; Region have moved. May be save new location.
-               (save-excursion
-                 (if (bookmark-save-new-region-location bmk-obj pos end-pos)
-                     (message "Saved relocated region (from %d to %d)" pos end-pos)
-                     (message "Region is from %d to %d" pos end-pos)))
+           (if (and reg-relocated-p (bookmark-save-new-region-location bmk-obj pos end-pos))
+               (message "Saved relocated region (from %d to %d)" pos end-pos)
                (message "Region is from %d to %d" pos end-pos)))
-          ;; Region doesn't exist anymore.  Go to old start position.  Don't push-mark.
-          (t
+          (t                            ; No region.  Go to old start.  Don't push-mark.
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
-
 
 (defun bookmark-goto-position (file buf bufname pos forward-str behind-str)
   "Go to a bookmark that has no region."
