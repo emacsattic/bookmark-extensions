@@ -192,8 +192,11 @@
 ;;;###autoload
 (define-key bookmark-map "W" 'bookmark-bmenu-list-only-w3m-entries)
 ;;;###autoload
-(define-key bookmark-map "T" 'bookmark-bmenu-list)
-
+(define-key bookmark-map "A" 'bookmark-bmenu-list)
+;;;###autoload
+(define-key bookmark-map "F" 'bookmark-bmenu-list-only-files-entries)
+;;;###autoload
+(define-key bookmark-map "I" 'bookmark-bmenu-list-only-info-entries)
 
 
 ;;; User variables
@@ -663,6 +666,7 @@ deletion, or > if it is flagged for displaying."
   "Return the end-position of REGION in BOOKMARK."
   (bookmark-prop-get bookmark 'end-position))
 
+;;; Filter functions
 (defun bookmark-region-alist-only ()
   "Create an alist with only bookmarks with region."
   (loop for i in bookmark-alist
@@ -683,16 +687,47 @@ deletion, or > if it is flagged for displaying."
      if (eq (bookmark-get-handler i) 'bookmark-jump-w3m)
      collect i))  
 
+(defun bookmark-info-alist-only ()
+  "Return an alist with only info entries."
+  (loop for i in bookmark-alist
+     if (eq (bookmark-get-handler i) 'Info-bookmark-jump)
+     collect i))  
+
+(defun bookmark-vanilla-alist-only ()
+  "Return an alist with only files and directories."
+  (loop
+     with r = (bookmark-region-alist-only)
+     with g = (bookmark-gnus-alist-only)
+     with w = (bookmark-w3m-alist-only)
+     with d = (bookmark-info-alist-only)
+     for i in bookmark-alist
+     unless (or (member i r) (member i g) (member i w) (member i d))
+     collect i))
+
+;;;###autoload
+(defun bookmark-bmenu-list-only-files-entries ()
+  "Return only files and directories entries of `bookmark-alist'."
+  (interactive)
+  (let ((bookmark-alist (bookmark-vanilla-alist-only)))
+    (call-interactively #'bookmark-bmenu-list)))
+
+;;;###autoload
+(defun bookmark-bmenu-list-only-info-entries ()
+  "Return only Info entries of `bookmark-alist'."
+  (interactive)
+  (let ((bookmark-alist (bookmark-info-alist-only)))
+    (call-interactively #'bookmark-bmenu-list)))
+
 ;;;###autoload
 (defun bookmark-bmenu-list-only-w3m-entries ()
-  "Return only the elements of `bookmark-alist' that have a recorded region."
+  "Return only w3m entries of `bookmark-alist'."
   (interactive)
   (let ((bookmark-alist (bookmark-w3m-alist-only)))
     (call-interactively #'bookmark-bmenu-list)))
 
 ;;;###autoload
 (defun bookmark-bmenu-list-only-gnus-entries ()
-  "Return only the elements of `bookmark-alist' that have a recorded region."
+  "Return only gnus entries of `bookmark-alist'."
   (interactive)
   (let ((bookmark-alist (bookmark-gnus-alist-only)))
     (call-interactively #'bookmark-bmenu-list)))
