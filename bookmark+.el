@@ -584,7 +584,7 @@ The return value has the form (BUFFER . POINT)."
 ;; Handles region bookmarks and buffer (non-file) bookmarks.
 ;;
 ;;;###autoload
-(defun bookmark-bmenu-list ()
+(defun bookmark-bmenu-list (&optional title)
   "Display a list of existing bookmarks.
 The list is displayed in a buffer named `*Bookmark List*'.
 The leftmost column displays a D if the bookmark is flagged for
@@ -594,9 +594,10 @@ deletion, or > if it is flagged for displaying."
   (if (interactive-p)
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
     (set-buffer (get-buffer-create "*Bookmark List*")))
-  (let ((inhibit-read-only t))
+  (let ((inhibit-read-only t)
+        (alternate-title (if title title "% Bookmark+")))
     (erase-buffer)
-    (insert "% Bookmark+\n- --------\n")
+    (insert (format "%s\n- --------\n" alternate-title))
     (add-text-properties (point-min) (point)
                          '(font-lock-face bookmark-menu-heading))
     (mapc
@@ -709,36 +710,45 @@ deletion, or > if it is flagged for displaying."
   "Return only files and directories entries of `bookmark-alist'."
   (interactive)
   (let ((bookmark-alist (bookmark-vanilla-alist-only)))
-    (call-interactively #'bookmark-bmenu-list)))
+    (call-interactively #'(lambda ()
+                            (interactive)
+                            (bookmark-bmenu-list "% Bookmark+ Files&Directories")))))
 
 ;;;###autoload
 (defun bookmark-bmenu-list-only-info-entries ()
   "Return only Info entries of `bookmark-alist'."
   (interactive)
   (let ((bookmark-alist (bookmark-info-alist-only)))
-    (call-interactively #'bookmark-bmenu-list)))
+    (call-interactively #'(lambda ()
+                            (interactive)
+                            (bookmark-bmenu-list "% Bookmark+ Info")))))
 
 ;;;###autoload
 (defun bookmark-bmenu-list-only-w3m-entries ()
   "Return only w3m entries of `bookmark-alist'."
   (interactive)
   (let ((bookmark-alist (bookmark-w3m-alist-only)))
-    (call-interactively #'bookmark-bmenu-list)))
+    (call-interactively #'(lambda ()
+                            (interactive)
+                            (bookmark-bmenu-list "% Bookmark+ W3m")))))
 
 ;;;###autoload
 (defun bookmark-bmenu-list-only-gnus-entries ()
   "Return only gnus entries of `bookmark-alist'."
   (interactive)
   (let ((bookmark-alist (bookmark-gnus-alist-only)))
-    (call-interactively #'bookmark-bmenu-list)))
+    (call-interactively #'(lambda ()
+                            (interactive)
+                            (bookmark-bmenu-list "% Bookmark+ Gnus")))))
 
 ;;;###autoload
 (defun bookmark-bmenu-list-only-regions ()
   "Return only the elements of `bookmark-alist' that have a recorded region."
   (interactive)
   (let ((bookmark-alist (bookmark-region-alist-only)))
-    (call-interactively #'bookmark-bmenu-list)))
-
+    (call-interactively #'(lambda ()
+                            (interactive)
+                            (bookmark-bmenu-list "% Bookmark+ Regions")))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
