@@ -186,16 +186,19 @@
 ;;;###autoload
 (define-key ctl-x-map "pj" 'bookmark-jump-other-window)
 ;;;###autoload
-(define-key bookmark-map "T" 'bookmark-toggle-use-only-regions)
+(define-key bookmark-map "R" 'bookmark-bmenu-list-only-regions)
+;;;###autoload
+(define-key bookmark-map "G" 'bookmark-bmenu-list-only-gnus-entries)
+;;;###autoload
+(define-key bookmark-map "W" 'bookmark-bmenu-list-only-w3m-entries)
+;;;###autoload
+(define-key bookmark-map "T" 'bookmark-bmenu-list)
+
 
 
 ;;; User variables
 (defcustom bookmark-use-region-flag t
   "*Non-nil means jumping to bookmark activates bookmarked region, if any."
-  :type 'boolean :group 'bookmark)
-
-(defcustom bookmark-list-only-regions-flag t
-  "*Non-nil means bookmark commands use only bookmarks with regions."
   :type 'boolean :group 'bookmark)
 
 (defcustom bookmark-region-search-size 40
@@ -666,22 +669,40 @@ deletion, or > if it is flagged for displaying."
      for b = (and (bookmark-get-end-position i)
                   (/= (bookmark-get-position i)
                       (bookmark-get-end-position i)))
-     if b
-     collect i))
+     if b collect i))
 
-(defun bookmark-list-only-regions ()
+(defun bookmark-gnus-alist-only ()
+  "Return an alist with only gnus entries."
+  (loop for i in bookmark-alist
+     if (eq (bookmark-get-handler i) 'bookmark-jump-gnus)
+     collect i))  
+
+(defun bookmark-w3m-alist-only ()
+  "Return an alist with only w3m entries."
+  (loop for i in bookmark-alist
+     if (eq (bookmark-get-handler i) 'bookmark-jump-w3m)
+     collect i))  
+
+;;;###autoload
+(defun bookmark-bmenu-list-only-w3m-entries ()
   "Return only the elements of `bookmark-alist' that have a recorded region."
-  (let ((bookmark-alist (bookmark-region-alist-only)))
+  (interactive)
+  (let ((bookmark-alist (bookmark-w3m-alist-only)))
     (call-interactively #'bookmark-bmenu-list)))
 
 ;;;###autoload
-(defun bookmark-toggle-use-only-regions ()
-  "Toggle `bookmark-list-only-regions-flag', and redisplay bookmark list."
+(defun bookmark-bmenu-list-only-gnus-entries ()
+  "Return only the elements of `bookmark-alist' that have a recorded region."
   (interactive)
-  (setq bookmark-list-only-regions-flag (not bookmark-list-only-regions-flag))
-  (if bookmark-list-only-regions-flag
-      (bookmark-list-only-regions)
-      (call-interactively #'bookmark-bmenu-list)))
+  (let ((bookmark-alist (bookmark-gnus-alist-only)))
+    (call-interactively #'bookmark-bmenu-list)))
+
+;;;###autoload
+(defun bookmark-bmenu-list-only-regions ()
+  "Return only the elements of `bookmark-alist' that have a recorded region."
+  (interactive)
+  (let ((bookmark-alist (bookmark-region-alist-only)))
+    (call-interactively #'bookmark-bmenu-list)))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
