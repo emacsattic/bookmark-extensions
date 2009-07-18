@@ -694,22 +694,34 @@ deletion, or > if it is flagged for displaying."
      if (eq (bookmark-get-handler i) 'Info-bookmark-jump)
      collect i))  
 
-(defun bookmark-vanilla-alist-only ()
+(defun bookmark-remote-alist-only ()
+  "Return an alist with only tramp entries."
+  (loop for i in bookmark-alist
+     for a = (bookmark-get-filename i)
+     for b = (and a (boundp 'tramp-file-name-regexp)
+                  (save-match-data
+                    (string-match tramp-file-name-regexp a)))
+     if b collect i))
+
+(defun bookmark-vanilla-alist-only (&optional hide-remote)
   "Return an alist with only files and directories."
   (loop
      with r = (bookmark-region-alist-only)
      with g = (bookmark-gnus-alist-only)
      with w = (bookmark-w3m-alist-only)
      with d = (bookmark-info-alist-only)
+     with rem = (bookmark-remote-alist-only)
      for i in bookmark-alist
-     unless (or (member i r) (member i g) (member i w) (member i d))
-     collect i))
+     for pred = (if hide-remote
+                    (or (member i r) (member i g) (member i w) (member i d) (member i rem))
+                    (or (member i r) (member i g) (member i w) (member i d)))
+     unless pred collect i))
 
 ;;;###autoload
 (defun bookmark-bmenu-list-only-files-entries ()
   "Return only files and directories entries of `bookmark-alist'."
   (interactive)
-  (let ((bookmark-alist (bookmark-vanilla-alist-only)))
+  (let ((bookmark-alist (bookmark-vanilla-alist-only current-prefix-arg)))
     (call-interactively #'(lambda ()
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Files&Directories")))))
