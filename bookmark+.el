@@ -263,7 +263,12 @@ as part of the bookmark definition."
 
 (defface bookmark-remote-file
     '((t (:foreground "pink")))
-  "*Face used for a bookmarked local file (without a region)."
+  "*Face used for a bookmarked tramp remote file (/ssh:)."
+  :group 'bookmark)
+
+(defface bookmark-su-or-sudo
+    '((t (:foreground "red")))
+  "*Face used for a bookmarked tramp file (/su: or /sudo:)."
   :group 'bookmark)
 
 
@@ -649,8 +654,8 @@ deletion, or > if it is flagged for displaying."
                   (isssh              ; Remote file
                    '(mouse-face highlight follow-link t face 'bookmark-remote-file
                      help-echo "mouse-2: Go to this remote file"))
-                  ((and issu (not (root-or-sudo-logged-p)))
-                   '(mouse-face highlight follow-link t face 'traverse-match-face
+                  ((and issu (not (root-or-sudo-logged-p))) ; Root or sudo bookmarks
+                   '(mouse-face highlight follow-link t face 'bookmark-su-or-sudo
                      help-echo "mouse-2: Go to this remote file"))
                   ((and isfile (file-directory-p isfile)) ; Local directory
                    '(mouse-face highlight follow-link t face 'bookmark-directory
