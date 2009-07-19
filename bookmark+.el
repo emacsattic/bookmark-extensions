@@ -219,6 +219,11 @@ as part of the bookmark definition."
   "Default function to relocate bookmarked region."
   :type 'function :group 'bookmark)
 
+(defcustom bookmark-su-or-sudo-regexp
+  "\\(/su:\\|/sudo:\\)"
+  "Regexp to recognize su or sudo Tramp bookmarks."
+  :type 'regexp :group 'bookmark)
+
 ;;; Faces
 
 (defface bookmark-nonfile-buffer
@@ -613,6 +618,10 @@ deletion, or > if it is flagged for displaying."
                 (istramp       (and isfile (boundp 'tramp-file-name-regexp)
                                     (save-match-data
                                       (string-match tramp-file-name-regexp isfile))))
+                (isssh         (and istramp
+                                    (string-match "/ssh:" isfile)))
+                (issu          (and istramp
+                                    (string-match bookmark-su-or-sudo-regexp isfile)))
                 (isregion      (and (bookmark-get-end-position name)
                                     (/= (bookmark-get-position name)
                                         (bookmark-get-end-position name))))
@@ -637,8 +646,11 @@ deletion, or > if it is flagged for displaying."
                   ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; W3m URL
                    '(mouse-face highlight follow-link t face 'bookmark-w3m-url
                      help-echo "mouse-2: Go to this W3m URL"))
-                  (istramp              ; Remote file
+                  (isssh              ; Remote file
                    '(mouse-face highlight follow-link t face 'bookmark-remote-file
+                     help-echo "mouse-2: Go to this remote file"))
+                  ((and issu (not (root-or-sudo-logged-p)))
+                   '(mouse-face highlight follow-link t face 'traverse-match-face
                      help-echo "mouse-2: Go to this remote file"))
                   ((and isfile (file-directory-p isfile)) ; Local directory
                    '(mouse-face highlight follow-link t face 'bookmark-directory
@@ -667,6 +679,13 @@ deletion, or > if it is flagged for displaying."
 (defun bookmark-get-end-position (bookmark)
   "Return the end-position of REGION in BOOKMARK."
   (bookmark-prop-get bookmark 'end-position))
+
+(defun root-or-sudo-logged-p ()
+  (let ((su-or-sudo-regex "\\(su\\|sudo\\)"))
+    (catch 'break
+      (dolist (i (mapcar #'buffer-name (buffer-list)))
+        (when (string-match (format "*tramp/%s ." su-or-sudo-regex) i)
+          (throw 'break t))))))
 
 ;;; Filter functions
 (defun bookmark-region-alist-only ()
