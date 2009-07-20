@@ -15,7 +15,8 @@
 ;; X-URL: http://mercurial.intuxication.org/hg/bookmark-icicle-region/
 
 ;; Keywords: bookmarks, placeholders, annotations, search
-;; Compatibility: GNU Emacs 20.x, GNU Emacs 21.x, GNU Emacs 22.x
+;; Compatibility: GNU Emacs 20.x, GNU Emacs 21.x, GNU Emacs 22.x,
+;; GNU Emacs 23.x
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -179,7 +180,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "1.8.10")
+(defconst bookmark+version-number "2.0.0")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
