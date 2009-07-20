@@ -1,17 +1,38 @@
 ;;; bookmark+.el --- Extensions to `bookmark.el'.
-;;
+
 ;; Filename: bookmark+.el
 ;; Description: Extensions to `bookmark.el'.
+
 ;; Author: Drew Adams
+;;         Thierry Volpiatto
 ;; Maintainer: Drew Adams
+;;             Thierry Volpiatto
 ;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
+;; Copyright (C) 2009, Thierry Volpiatto, all rights reserved.
 ;; Created: Fri Sep 15 07:58:41 2000
-;; Version: 21.0
 
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki/bookmark+.el
+;; X-URL: http://mercurial.intuxication.org/hg/bookmark-icicle-region/
+
 ;; Keywords: bookmarks, placeholders, annotations, search
 ;; Compatibility: GNU Emacs 20.x, GNU Emacs 21.x, GNU Emacs 22.x
-;;
+
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
+;; Floor, Boston, MA 02110-1301, USA.
+
 ;; Features that might be required by this library:
 ;;
 ;;   None
@@ -21,24 +42,28 @@
 ;;; Commentary:
 ;;
 ;;  Extensions to `bookmark.el'.
-;;
+
 ;;  Commands defined here:
 ;;
-;;   `bookmark-toggle-use-only-regions', `bookmark+version-number'.
-;;
+;;   `bookmark-bmenu-list-only-regions',
+;;   `bookmark-bmenu-list-only-gnus-entries',
+;;   `bookmark-bmenu-list-only-w3m-entries',
+;;   `bookmark-bmenu-list-only-info-entries',
+;;   `bookmark-bmenu-list-only-files-entries',
+;;   `bookmark+version-number'.
+
 ;;  * User options defined here:
 ;;
-;;    `bookmark-list-only-regions-flag',
-;;    `bookmark-relocate-region-method',
+;;    `bookmark-relocate-region-function',
 ;;    `bookmark-save-new-location-flag', `bookmark-use-region-flag'.
-;;
+
 ;;  * Faces defined here:
 ;;
 ;;    `bookmark-directory', `bookmark-file', `bookmark-file-region',
 ;;    `bookmark-gnus', `bookmark-info-node',
 ;;    `bookmark-nonfile-buffer', `bookmark-remote-file',
-;;    `bookmark-w3m-url'.
-;;
+;;    `bookmark-w3m-url', `bookmark-su-or-sudo' .
+
 ;;  * Non-interactive functions defined here:
 ;;
 ;;    `bookmark-get-buffer-name', `bookmark-get-ecrs',
@@ -58,12 +83,12 @@
 ;;    `bookmark-relocate-region-lax',
 ;;    `bookmark-relocate-region-strict',
 ;;    `bookmark-save-new-region-location', `bookmark+version'.
-;;
+
 ;;  * Internal variables defined here:
 ;;
 ;;    `bookmark-region-search-size', `bookmark+-version-number'.
 ;;
-;;
+
 ;;  ***** NOTE: The following functions defined in `bookmark.el'
 ;;              have been REDEFINED HERE:
 ;;
@@ -80,7 +105,7 @@
 ;;   21), `bookmark-prop-set' (Emacs 20, 21), `bookmark-relocate',
 ;;   `bookmark-rename', `bookmark-set', `bookmark-store'.
 ;;
-;;
+
 ;;  ***** NOTE: The following functions defined in `info.el'
 ;;              have been REDEFINED HERE (Emacs 20-22):
 ;;
@@ -114,6 +139,9 @@
 ;;
 ;;; Change log:
 ;;
+;; See Change log at:
+;; http://mercurial.intuxication.org/hg/bookmark-icicle-region/
+;;
 ;; 2009/05/25 dadams
 ;;     Added redefinition of bookmark-get-bookmark-record.
 ;; 2008/10/16 dadams
@@ -138,24 +166,7 @@
 ;;     Only define bookmark-menu-jump-other-window if < Emacs 22.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
 
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-;; Floor, Boston, MA 02110-1301, USA.
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 ;;; Code:
 
 (require 'bookmark)
@@ -168,7 +179,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "1.8.1")
+(defconst bookmark+version-number "1.8.10")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -637,11 +648,6 @@ deletion, or > if it is flagged for displaying."
 	   (insert name)
 	   (add-text-properties
             start  (save-excursion (re-search-backward "[^ \t]") (1+ (point)))
-            ;; @@@@@@@ FIXME LATER? I removed a few redundant tests.
-            ;;         It still seems like it could be improved.
-            ;;         E.g., What happens if isfile but not (file-exists-p isfile)
-            ;;               and not Info, Gnus, W3m?  Should we do more than nothing in
-            ;;               such a case - message? error?
             (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
                    '(mouse-face highlight follow-link t face 'bookmark-info-node
                      help-echo "mouse-2: Go to this Info buffer"))
@@ -666,7 +672,6 @@ deletion, or > if it is flagged for displaying."
                   ((and isfile (file-exists-p isfile)) ; Local file without region
                    '(mouse-face highlight follow-link t face 'bookmark-file
                      help-echo "mouse-2: Go to this local file (no region)"))
-                  ;; @@@@@@ Do we really need `(not isfile)' here? Why?
                   ((and isbuf (not isfile)) ; Buffer without a file
                    '(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
                      help-echo "mouse-2: Go to this non-file buffer"))))
@@ -686,6 +691,8 @@ deletion, or > if it is flagged for displaying."
   (bookmark-prop-get bookmark 'end-position))
 
 (defun root-or-sudo-logged-p ()
+  "Return t if User is logged as root or sudo with Tramp.
+Otherwise nil."
   (let ((su-or-sudo-regex "\\(su\\|sudo\\)"))
     (catch 'break
       (dolist (i (mapcar #'buffer-name (buffer-list)))
@@ -1094,13 +1101,6 @@ record that pertains to the location within the buffer."
         (position . ,beg)
         (end-position . ,end))))
 
-;; @@@@@@ FIXME LATER
-;;        Don't add stuff that has a nil value to the bookmark record (it is not used).
-;;        For example, don't add the buffer name if the file name is present.
-;;        This is not critical and can be done later.
-;; &&&& Thierry: That will affect predicates in `bookmark-bmenu-list' and maybe in other
-;;      places. Is it a big problem to have sometimes empty entries?
-;; @@@@ DREW: No, not necessarily, but we should look into it later.
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1133,8 +1133,6 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
                                                       (bookmark-get-filename bmk)))))
       (pop-to-buffer (or buf bufname))
       (raise-frame)
-      ;; @@@@@@@ Why do we move here, if the relocate function moves elsewhere
-      ;;         as its first action?
       (goto-char (min pos (point-max)))
       (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
       ;; Relocate region if it has moved.
