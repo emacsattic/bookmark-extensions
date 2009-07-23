@@ -656,26 +656,26 @@ deletion, or > if it is flagged for displaying."
                    '(mouse-face highlight follow-link t face 'bookmark-gnus
                      help-echo "mouse-2: Go to this Gnus buffer"))
                   ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; W3m URL
-                   '(mouse-face highlight follow-link t face 'bookmark-w3m-url
-                     help-echo "mouse-2: Go to this W3m URL"))
+                   `(mouse-face highlight follow-link t face 'bookmark-w3m-url
+                     help-echo (format "mouse-2 Goto URL: %s",isfile)))
                   (isssh              ; Remote file
-                   '(mouse-face highlight follow-link t face 'bookmark-remote-file
-                     help-echo "mouse-2: Go to this remote file"))
+                   `(mouse-face highlight follow-link t face 'bookmark-remote-file
+                     help-echo (format "mouse-2 Goto remote file: %s",isfile)))
                   ((and issu (not (root-or-sudo-logged-p))) ; Root or sudo bookmarks
-                   '(mouse-face highlight follow-link t face 'bookmark-su-or-sudo
-                     help-echo "mouse-2: Go to this remote file"))
+                   `(mouse-face highlight follow-link t face 'bookmark-su-or-sudo
+                     help-echo (format "mouse-2 Goto file: %s",isfile)))
                   ((and isfile (file-directory-p isfile)) ; Local directory
-                   '(mouse-face highlight follow-link t face 'bookmark-directory
-                     help-echo "mouse-2: Go to this local directory (Dired)"))
+                   `(mouse-face highlight follow-link t face 'bookmark-directory
+                     help-echo (format "mouse-2 Goto dired: %s",isfile)))
                   ((and isfile (file-exists-p isfile) isregion) ; Local file with region
-                   '(mouse-face highlight follow-link t face 'bookmark-file-region
-                     help-echo "mouse-2: Go to bookmarked region in this local file"))
+                   `(mouse-face highlight follow-link t face 'bookmark-file-region
+                     help-echo (format "mouse-2 Find region in file: %s",isfile)))
                   ((and isfile (file-exists-p isfile)) ; Local file without region
-                   '(mouse-face highlight follow-link t face 'bookmark-file
-                     help-echo "mouse-2: Go to this local file (no region)"))
+                   `(mouse-face highlight follow-link t face 'bookmark-file
+                     help-echo (format "mouse-2 Goto file: %s",isfile)))
                   ((and isbuf (not isfile)) ; Buffer without a file
-                   '(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
-                     help-echo "mouse-2: Go to this non-file buffer"))))
+                   `(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
+                     help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
            (insert "\n"))))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
