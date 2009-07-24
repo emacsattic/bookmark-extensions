@@ -180,7 +180,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "2.0.0")
+(defconst bookmark+version-number "2.0.2")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -209,6 +209,15 @@
 (define-key bookmark-map "F" 'bookmark-bmenu-list-only-files-entries)
 ;;;###autoload
 (define-key bookmark-map "I" 'bookmark-bmenu-list-only-info-entries)
+
+(defun bookmark-bmenu-list-set-extra-keys ()
+  "Define extras keys in the `bookmark-bmenu-mode-map' space."
+  (define-key bookmark-bmenu-mode-map "W" 'bookmark-bmenu-list-only-w3m-entries)
+  (define-key bookmark-bmenu-mode-map "I" 'bookmark-bmenu-list-only-info-entries)
+  (define-key bookmark-bmenu-mode-map "G" 'bookmark-bmenu-list-only-gnus-entries)
+  (define-key bookmark-bmenu-mode-map "F" 'bookmark-bmenu-list-only-files-entries)
+  (define-key bookmark-bmenu-mode-map "R" 'bookmark-bmenu-list-only-regions))
+(add-hook 'bookmark-bmenu-mode-hook 'bookmark-bmenu-list-set-extra-keys) 
 
 
 ;;; User variables
