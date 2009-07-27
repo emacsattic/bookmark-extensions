@@ -245,6 +245,10 @@ as part of the bookmark definition."
   "Regexp to recognize su or sudo Tramp bookmarks."
   :type 'regexp :group 'bookmark)
 
+(defcustom bookmark-w3m-allow-multi-tabs t
+  "*Non-nil means jump to w3m bookmark in a new session."
+  :type 'boolean :group 'bookmark)
+
 ;;; Faces
 
 (defface bookmark-nonfile-buffer
@@ -1189,8 +1193,31 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
               (set (make-local-variable 'bookmark-make-record-function)
                    'bookmark-make-w3m-record)))
 
-(defun bookmark-jump-w3m (bmk)
-  ;; Handler function for record returned by `bookmark-make-w3m-record'.
+(defun bookmark-w3m-set-new-buffer-name ()
+  "Set the w3m buffer name according to the number of w3m buffers already open."
+  (let ((len (length (w3m-list-buffers 'nosort))))
+    (if (eq len 0)
+        "*w3m*"
+        (format "*w3m*<%d>" (1+ len)))))
+
+(defun bookmark-jump-w3m-new-session (bmk)
+  "Jump to bookmark in w3m setting a new tab."
+  (let ((file (bookmark-prop-get bmk 'filename))
+        (buf  (bookmark-w3m-set-new-buffer-name)))
+    (w3m-browse-url file 'newsession)
+    ;; Be sure we have our w3m buffer.
+    (while (not (get-buffer buf))
+      (sit-for 1))
+    (with-current-buffer buf
+      (goto-char (point-min))
+      ;; Wait data arrive in buffer to set region.
+      (while (eq (point-at-bol) (point-at-eol)) (sit-for 1)))
+    (bookmark-default-handler
+     (list* "" `(buffer . ,buf)
+            (bookmark-get-bookmark-record bmk)))))
+
+(defun bookmark-jump-w3m-only-one-tab (bmk)
+  "Close all w3m sessions and jump to bookmark `bmk' in new w3m buffer."
   (let ((file  (bookmark-prop-get bmk 'filename)))
     (w3m-quit 'force) ; Be sure we start on an empty w3m buffer. 
     (w3m-browse-url file)
@@ -1198,6 +1225,13 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
     (bookmark-default-handler
      (list* "" `(buffer . ,(buffer-name (current-buffer)))
             (bookmark-get-bookmark-record bmk)))))
+
+(defun bookmark-jump-w3m (bmk)
+  "Handler function for record returned by `bookmark-make-w3m-record'.
+Use multi tabs in w3m according if `bookmark-w3m-allow-multi-tabs' is non--nil."
+  (if bookmark-w3m-allow-multi-tabs
+      (bookmark-jump-w3m-new-session bmk)
+      (bookmark-jump-w3m-only-one-tab bmk)))
 
 ;; GNUS support.  Does not handle regions.
 (defun bookmark-make-gnus-record ()
