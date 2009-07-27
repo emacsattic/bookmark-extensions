@@ -1192,6 +1192,7 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
 (defun bookmark-jump-w3m (bmk)
   ;; Handler function for record returned by `bookmark-make-w3m-record'.
   (let ((file  (bookmark-prop-get bmk 'filename)))
+    (w3m-quit 'force) ; Be sure we start on an empty w3m buffer. 
     (w3m-browse-url file)
     (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
     (bookmark-default-handler
