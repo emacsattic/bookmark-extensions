@@ -1030,11 +1030,14 @@ old one."
       (or (featurep 'xemacs)
           ;; XEmacs's `set-text-properties' doesn't work on free-standing strings.
           (set-text-properties 0 (length stripped-name) nil stripped-name))
-      (if (and (not no-overwrite) (bookmark-get-bookmark stripped-name 'no-error))
+      (if (and (not no-overwrite)
+               (condition-case nil
+                   (bookmark-get-bookmark stripped-name)
+                 (error nil)))
           ;; Existing bookmark under that name and no prefix arg means just overwrite old.
           ;; Use the new (NAME . ALIST) format.
           (setcdr (bookmark-get-bookmark stripped-name) alist)
-        (push (cons stripped-name alist) bookmark-alist))
+          (push (cons stripped-name alist) bookmark-alist))
       (setq bookmark-current-bookmark          stripped-name
             bookmark-alist-modification-count  (1+ bookmark-alist-modification-count))
       (when (bookmark-time-to-save-p) (bookmark-save))
