@@ -180,7 +180,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "2.0.4")
+(defconst bookmark+version-number "2.0.5")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
