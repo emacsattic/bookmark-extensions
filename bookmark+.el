@@ -1208,7 +1208,7 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
     (with-current-buffer buf
       (goto-char (point-min))
       ;; Wait data arrive in buffer to set region.
-      (while (eq (point-at-bol) (point-at-eol)) (sit-for 1)))
+      (while (eq (line-beginning-position) (line-end-position)) (sit-for 1)))
     (bookmark-default-handler
      (list* "" `(buffer . ,buf)
             (bookmark-get-bookmark-record bmk)))))
