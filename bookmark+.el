@@ -180,7 +180,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "2.0.5")
+(defconst bookmark+version-number "2.0.6")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -517,7 +517,7 @@ candidate."
   (bookmark-maybe-historicize-string bookmark)
   (let ((bookmark-use-region-flag  (if use-region-p
                                        (not bookmark-use-region-flag)
-                                     bookmark-use-region-flag)))
+                                       bookmark-use-region-flag)))
     (bookmark--jump-via bookmark 'switch-to-buffer)))
 
 
@@ -537,7 +537,7 @@ See `bookmark-jump'."
   (bookmark-maybe-historicize-string bookmark)
   (let ((bookmark-use-region-flag  (if use-region-p
                                        (not bookmark-use-region-flag)
-                                     bookmark-use-region-flag)))
+                                       bookmark-use-region-flag)))
     (bookmark--jump-via bookmark 'switch-to-buffer-other-window)))
 
 ;;;###autoload
@@ -819,10 +819,7 @@ Otherwise nil."
       (bookmark-get-buffer-name bookmark)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
-;; @@@@@@@ These names are all too similar.  It's too easy to get lost.
-
-;; &&&& Thierry: Ok propose new names, i will make the changes.
-
+;; Record functions
 (defun bookmark-region-record-front-context-string (breg ereg)
   "Return the region prefix, at BREG.
 Return at most `bookmark-region-search-size' or (- EREG BREG) chars."
@@ -952,7 +949,7 @@ the buffer."
     (unless (or (and buf (get-buffer buf))
                 (and bufname (get-buffer bufname) (not (string= buf bufname))))
       (signal 'file-error `("Jumping to bookmark" "No such file or directory" file))))
-  (pop-to-buffer (or buf bufname))
+  (set-buffer (or buf bufname))
   (setq deactivate-mark  t)
   (raise-frame)
   (goto-char pos)
@@ -1132,28 +1129,25 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
          (pos                    (bookmark-get-position bmk))
          (end-pos                (bookmark-prop-get bmk 'end-position)))
     (if (not (and bookmark-use-region-flag end-pos (/= pos end-pos)))
-
         ;; Single-position bookmark (no region).  Go to it.
         (bookmark-goto-position file buf bufname pos
                                 (bookmark-get-front-context-string bmk)
                                 (bookmark-get-rear-context-string bmk))
-
-      ;; Bookmark with a region.  Go to it and select region.
-
-      ;; Get buffer.
-      (if (and file (file-readable-p file) (not (buffer-live-p buf)))
-          (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
-        ;; No file found.  If no buffer either, then signal that file doesn't exist.
-        (unless (or (and buf (get-buffer buf))
-                    (and bufname (get-buffer bufname) (not (string= buf bufname))))
-          (signal 'file-error `("Jumping to bookmark" "No such file or directory"
-                                                      (bookmark-get-filename bmk)))))
-      (pop-to-buffer (or buf bufname))
-      (raise-frame)
-      (goto-char (min pos (point-max)))
-      (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
-      ;; Relocate region if it has moved.
-      (funcall bookmark-relocate-region-function bmk))))
+        ;; Bookmark with a region.  Go to it and select region.
+        ;; Get buffer.
+        (if (and file (file-readable-p file) (not (buffer-live-p buf)))
+            (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
+            ;; No file found.  If no buffer either, then signal that file doesn't exist.
+            (unless (or (and buf (get-buffer buf))
+                        (and bufname (get-buffer bufname) (not (string= buf bufname))))
+              (signal 'file-error `("Jumping to bookmark" "No such file or directory"
+                                                          (bookmark-get-filename bmk)))))
+        (set-buffer (or buf bufname))
+        (raise-frame)
+        (goto-char (min pos (point-max)))
+        (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
+        ;; Relocate region if it has moved.
+        (funcall bookmark-relocate-region-function bmk))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
