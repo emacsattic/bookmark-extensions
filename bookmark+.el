@@ -180,7 +180,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "2.0.7")
+(defconst bookmark+version-number "2.0.8")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -1076,6 +1076,11 @@ equivalently just return ALIST without NAME.")
         (setcar record  (or bookmark-current-bookmark (bookmark-buffer-name)))
         record))))
 
+;; Document new feature of `bookmark-set'.
+(defadvice bookmark-set (before add-docstring () activate)
+  "If `transient-mark-mode' is active, `mark' is set and
+region is not empty, `bookmark-set' will record the
+start and end positions of active region in the bookmark data.")
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
