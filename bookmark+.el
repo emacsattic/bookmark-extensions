@@ -180,7 +180,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "2.0.8")
+(defconst bookmark+version-number "2.0.9")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -218,6 +218,10 @@
   (define-key bookmark-bmenu-mode-map "F" 'bookmark-bmenu-list-only-files-entries)
   (define-key bookmark-bmenu-mode-map "R" 'bookmark-bmenu-list-only-regions))
 (add-hook 'bookmark-bmenu-mode-hook 'bookmark-bmenu-list-set-extra-keys) 
+
+;; Show up keymap when using C-h m from bookmark list.
+(defadvice bookmark-bmenu-mode (before add-keymap () activate)
+  "\\{bookmark-bmenu-mode-map}")
 
 
 ;;; User variables
@@ -1078,8 +1082,8 @@ equivalently just return ALIST without NAME.")
 
 ;; Document new feature of `bookmark-set'.
 (defadvice bookmark-set (before add-docstring () activate)
-  "If `transient-mark-mode' is active, `mark' is set and
-region is not empty, `bookmark-set' will record the
+  "The region is only active for `transient-mark-mode', and if the region is active
+then the mark is set and `bookmark-set' will record the
 start and end positions of active region in the bookmark data.")
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
