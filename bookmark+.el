@@ -180,7 +180,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "2.0.10")
+(defconst bookmark+version-number "2.0.11")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -1003,7 +1003,7 @@ Use \\[bookmark-delete] to remove bookmarks \(you give it a name,
 and it removes only the first instance of a bookmark with that name from
 the list of bookmarks.\)
 
-When the region is active (`transient-mark-mode'), `bookmark-set' will
+When the region is active \(`transient-mark-mode'\), `bookmark-set' will
 record the start and end positions of the region in the bookmark."
     (interactive (list nil current-prefix-arg))
     (let* ((record   (bookmark-make-record))
