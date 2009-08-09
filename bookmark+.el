@@ -210,18 +210,23 @@
 ;;;###autoload
 (define-key bookmark-map "I" 'bookmark-bmenu-list-only-info-entries)
 
-(defun bookmark-bmenu-list-set-extra-keys ()
-  "Define extras keys in the `bookmark-bmenu-mode-map' space."
-  (define-key bookmark-bmenu-mode-map "W" 'bookmark-bmenu-list-only-w3m-entries)
-  (define-key bookmark-bmenu-mode-map "I" 'bookmark-bmenu-list-only-info-entries)
-  (define-key bookmark-bmenu-mode-map "G" 'bookmark-bmenu-list-only-gnus-entries)
-  (define-key bookmark-bmenu-mode-map "F" 'bookmark-bmenu-list-only-files-entries)
-  (define-key bookmark-bmenu-mode-map "R" 'bookmark-bmenu-list-only-regions))
-(add-hook 'bookmark-bmenu-mode-hook 'bookmark-bmenu-list-set-extra-keys) 
+;; Define extras keys in the `bookmark-bmenu-mode-map' space."
+;;
+(define-key bookmark-bmenu-mode-map "W" 'bookmark-bmenu-list-only-w3m-entries) 
+(define-key bookmark-bmenu-mode-map "I" 'bookmark-bmenu-list-only-info-entries)
+(define-key bookmark-bmenu-mode-map "G" 'bookmark-bmenu-list-only-gnus-entries)
+(define-key bookmark-bmenu-mode-map "F" 'bookmark-bmenu-list-only-files-entries)
+(define-key bookmark-bmenu-mode-map "R" 'bookmark-bmenu-list-only-regions)     
 
-;; Show up keymap when using C-h m from bookmark list.
-(defadvice bookmark-bmenu-mode (before add-keymap () activate)
-  "\\{bookmark-bmenu-mode-map}")
+;; Add the news keys to `bookmark-bmenu-mode' docstring.
+;;
+(defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
+  "Extras keys added by bookmark+:
+W -- bookmark-bmenu-list-only-w3m-entries 
+I -- bookmark-bmenu-list-only-info-entries
+G -- bookmark-bmenu-list-only-gnus-entries
+F -- bookmark-bmenu-list-only-files-entries: (C-u) to remove remote files.
+R -- bookmark-bmenu-list-only-regions")
 
 
 ;;; User variables
@@ -996,7 +1001,11 @@ name of the file being visited.
 
 Use \\[bookmark-delete] to remove bookmarks \(you give it a name,
 and it removes only the first instance of a bookmark with that name from
-the list of bookmarks.\)"
+the list of bookmarks.\)
+
+The region is only active for `transient-mark-mode', and if the region is active
+then the mark is set and `bookmark-set' will record the
+start and end positions of active region in the bookmark data."
     (interactive (list nil current-prefix-arg))
     (let* ((record   (bookmark-make-record))
            (default  (car record)))
@@ -1080,11 +1089,13 @@ equivalently just return ALIST without NAME.")
         (setcar record  (or bookmark-current-bookmark (bookmark-buffer-name)))
         record))))
 
-;; Document new feature of `bookmark-set'.
-(defadvice bookmark-set (before add-docstring () activate)
-  "The region is only active for `transient-mark-mode', and if the region is active
+;; Document new feature of `bookmark-set' in emacs22+.
+;;
+(when (> emacs-major-version 22)
+  (defadvice bookmark-set (before bookmark+-add-docstring () activate)
+    "The region is only active for `transient-mark-mode', and if the region is active
 then the mark is set and `bookmark-set' will record the
-start and end positions of active region in the bookmark data.")
+start and end positions of active region in the bookmark data."))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
