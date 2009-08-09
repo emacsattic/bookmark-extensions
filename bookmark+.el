@@ -1003,9 +1003,8 @@ Use \\[bookmark-delete] to remove bookmarks \(you give it a name,
 and it removes only the first instance of a bookmark with that name from
 the list of bookmarks.\)
 
-The region is only active for `transient-mark-mode', and if the region is active
-then the mark is set and `bookmark-set' will record the
-start and end positions of active region in the bookmark data."
+When the region is active (`transient-mark-mode'), `bookmark-set' will
+record the start and end positions of the region in the bookmark."
     (interactive (list nil current-prefix-arg))
     (let* ((record   (bookmark-make-record))
            (default  (car record)))
@@ -1089,13 +1088,12 @@ equivalently just return ALIST without NAME.")
         (setcar record  (or bookmark-current-bookmark (bookmark-buffer-name)))
         record))))
 
-;; Document new feature of `bookmark-set' in emacs22+.
+;; Document new feature of `bookmark-set' in emacs23+.
 ;;
 (when (> emacs-major-version 22)
   (defadvice bookmark-set (before bookmark+-add-docstring () activate)
-    "The region is only active for `transient-mark-mode', and if the region is active
-then the mark is set and `bookmark-set' will record the
-start and end positions of active region in the bookmark data."))
+    "When the region is active (`transient-mark-mode'), `bookmark-set' will
+record the start and end positions of the region in the bookmark."))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
