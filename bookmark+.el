@@ -180,7 +180,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmark+version-number "2.0.0")
+(defconst bookmark+version-number "2.0.11")
 
 (defun bookmark+version ()
   "Show version number of bookmark+.el"
@@ -210,6 +210,24 @@
 ;;;###autoload
 (define-key bookmark-map "I" 'bookmark-bmenu-list-only-info-entries)
 
+;; Define extras keys in the `bookmark-bmenu-mode-map' space."
+;;
+(define-key bookmark-bmenu-mode-map "W" 'bookmark-bmenu-list-only-w3m-entries) 
+(define-key bookmark-bmenu-mode-map "I" 'bookmark-bmenu-list-only-info-entries)
+(define-key bookmark-bmenu-mode-map "G" 'bookmark-bmenu-list-only-gnus-entries)
+(define-key bookmark-bmenu-mode-map "F" 'bookmark-bmenu-list-only-files-entries)
+(define-key bookmark-bmenu-mode-map "R" 'bookmark-bmenu-list-only-regions)     
+
+;; Add the news keys to `bookmark-bmenu-mode' docstring.
+;;
+(defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
+  "Extras keys added by bookmark+:
+W -- bookmark-bmenu-list-only-w3m-entries 
+I -- bookmark-bmenu-list-only-info-entries
+G -- bookmark-bmenu-list-only-gnus-entries
+F -- bookmark-bmenu-list-only-files-entries: (C-u) to remove remote files.
+R -- bookmark-bmenu-list-only-regions")
+
 
 ;;; User variables
 (defcustom bookmark-use-region-flag t
@@ -235,6 +253,10 @@ as part of the bookmark definition."
   "\\(/su:\\|/sudo:\\)"
   "Regexp to recognize su or sudo Tramp bookmarks."
   :type 'regexp :group 'bookmark)
+
+(defcustom bookmark-w3m-allow-multi-tabs t
+  "*Non-nil means jump to w3m bookmark in a new session."
+  :type 'boolean :group 'bookmark)
 
 ;;; Faces
 
@@ -504,7 +526,7 @@ candidate."
   (bookmark-maybe-historicize-string bookmark)
   (let ((bookmark-use-region-flag  (if use-region-p
                                        (not bookmark-use-region-flag)
-                                     bookmark-use-region-flag)))
+                                       bookmark-use-region-flag)))
     (bookmark--jump-via bookmark 'switch-to-buffer)))
 
 
@@ -524,7 +546,7 @@ See `bookmark-jump'."
   (bookmark-maybe-historicize-string bookmark)
   (let ((bookmark-use-region-flag  (if use-region-p
                                        (not bookmark-use-region-flag)
-                                     bookmark-use-region-flag)))
+                                       bookmark-use-region-flag)))
     (bookmark--jump-via bookmark 'switch-to-buffer-other-window)))
 
 ;;;###autoload
@@ -656,26 +678,26 @@ deletion, or > if it is flagged for displaying."
                    '(mouse-face highlight follow-link t face 'bookmark-gnus
                      help-echo "mouse-2: Go to this Gnus buffer"))
                   ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; W3m URL
-                   '(mouse-face highlight follow-link t face 'bookmark-w3m-url
-                     help-echo "mouse-2: Go to this W3m URL"))
+                   `(mouse-face highlight follow-link t face 'bookmark-w3m-url
+                     help-echo (format "mouse-2 Goto URL: %s",isfile)))
                   (isssh              ; Remote file
-                   '(mouse-face highlight follow-link t face 'bookmark-remote-file
-                     help-echo "mouse-2: Go to this remote file"))
+                   `(mouse-face highlight follow-link t face 'bookmark-remote-file
+                     help-echo (format "mouse-2 Goto remote file: %s",isfile)))
                   ((and issu (not (root-or-sudo-logged-p))) ; Root or sudo bookmarks
-                   '(mouse-face highlight follow-link t face 'bookmark-su-or-sudo
-                     help-echo "mouse-2: Go to this remote file"))
+                   `(mouse-face highlight follow-link t face 'bookmark-su-or-sudo
+                     help-echo (format "mouse-2 Goto file: %s",isfile)))
                   ((and isfile (file-directory-p isfile)) ; Local directory
-                   '(mouse-face highlight follow-link t face 'bookmark-directory
-                     help-echo "mouse-2: Go to this local directory (Dired)"))
+                   `(mouse-face highlight follow-link t face 'bookmark-directory
+                     help-echo (format "mouse-2 Goto dired: %s",isfile)))
                   ((and isfile (file-exists-p isfile) isregion) ; Local file with region
-                   '(mouse-face highlight follow-link t face 'bookmark-file-region
-                     help-echo "mouse-2: Go to bookmarked region in this local file"))
+                   `(mouse-face highlight follow-link t face 'bookmark-file-region
+                     help-echo (format "mouse-2 Find region in file: %s",isfile)))
                   ((and isfile (file-exists-p isfile)) ; Local file without region
-                   '(mouse-face highlight follow-link t face 'bookmark-file
-                     help-echo "mouse-2: Go to this local file (no region)"))
+                   `(mouse-face highlight follow-link t face 'bookmark-file
+                     help-echo (format "mouse-2 Goto file: %s",isfile)))
                   ((and isbuf (not isfile)) ; Buffer without a file
-                   '(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
-                     help-echo "mouse-2: Go to this non-file buffer"))))
+                   `(mouse-face highlight follow-link t face 'bookmark-nonfile-buffer 
+                     help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
            (insert "\n"))))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
@@ -806,10 +828,7 @@ Otherwise nil."
       (bookmark-get-buffer-name bookmark)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
-;; @@@@@@@ These names are all too similar.  It's too easy to get lost.
-
-;; &&&& Thierry: Ok propose new names, i will make the changes.
-
+;; Record functions
 (defun bookmark-region-record-front-context-string (breg ereg)
   "Return the region prefix, at BREG.
 Return at most `bookmark-region-search-size' or (- EREG BREG) chars."
@@ -939,7 +958,7 @@ the buffer."
     (unless (or (and buf (get-buffer buf))
                 (and bufname (get-buffer bufname) (not (string= buf bufname))))
       (signal 'file-error `("Jumping to bookmark" "No such file or directory" file))))
-  (pop-to-buffer (or buf bufname))
+  (set-buffer (or buf bufname))
   (setq deactivate-mark  t)
   (raise-frame)
   (goto-char pos)
@@ -982,7 +1001,10 @@ name of the file being visited.
 
 Use \\[bookmark-delete] to remove bookmarks \(you give it a name,
 and it removes only the first instance of a bookmark with that name from
-the list of bookmarks.\)"
+the list of bookmarks.\)
+
+When the region is active \(`transient-mark-mode'\), `bookmark-set' will
+record the start and end positions of the region in the bookmark."
     (interactive (list nil current-prefix-arg))
     (let* ((record   (bookmark-make-record))
            (default  (car record)))
@@ -1017,11 +1039,14 @@ old one."
       (or (featurep 'xemacs)
           ;; XEmacs's `set-text-properties' doesn't work on free-standing strings.
           (set-text-properties 0 (length stripped-name) nil stripped-name))
-      (if (and (not no-overwrite) (bookmark-get-bookmark stripped-name 'no-error))
+      (if (and (not no-overwrite)
+               (condition-case nil
+                   (bookmark-get-bookmark stripped-name)
+                 (error nil)))
           ;; Existing bookmark under that name and no prefix arg means just overwrite old.
           ;; Use the new (NAME . ALIST) format.
           (setcdr (bookmark-get-bookmark stripped-name) alist)
-        (push (cons stripped-name alist) bookmark-alist))
+          (push (cons stripped-name alist) bookmark-alist))
       (setq bookmark-current-bookmark          stripped-name
             bookmark-alist-modification-count  (1+ bookmark-alist-modification-count))
       (when (bookmark-time-to-save-p) (bookmark-save))
@@ -1063,6 +1088,12 @@ equivalently just return ALIST without NAME.")
         (setcar record  (or bookmark-current-bookmark (bookmark-buffer-name)))
         record))))
 
+;; Document new feature of `bookmark-set' in emacs23+.
+;;
+(when (> emacs-major-version 22)
+  (defadvice bookmark-set (before bookmark+-add-docstring () activate)
+    "When the region is active (`transient-mark-mode'), `bookmark-set' will
+record the start and end positions of the region in the bookmark."))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1116,28 +1147,25 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
          (pos                    (bookmark-get-position bmk))
          (end-pos                (bookmark-prop-get bmk 'end-position)))
     (if (not (and bookmark-use-region-flag end-pos (/= pos end-pos)))
-
         ;; Single-position bookmark (no region).  Go to it.
         (bookmark-goto-position file buf bufname pos
                                 (bookmark-get-front-context-string bmk)
                                 (bookmark-get-rear-context-string bmk))
-
-      ;; Bookmark with a region.  Go to it and select region.
-
-      ;; Get buffer.
-      (if (and file (file-readable-p file) (not (buffer-live-p buf)))
-          (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
-        ;; No file found.  If no buffer either, then signal that file doesn't exist.
-        (unless (or (and buf (get-buffer buf))
-                    (and bufname (get-buffer bufname) (not (string= buf bufname))))
-          (signal 'file-error `("Jumping to bookmark" "No such file or directory"
-                                                      (bookmark-get-filename bmk)))))
-      (pop-to-buffer (or buf bufname))
-      (raise-frame)
-      (goto-char (min pos (point-max)))
-      (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
-      ;; Relocate region if it has moved.
-      (funcall bookmark-relocate-region-function bmk))))
+        ;; Bookmark with a region.  Go to it and select region.
+        ;; Get buffer.
+        (if (and file (file-readable-p file) (not (buffer-live-p buf)))
+            (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
+            ;; No file found.  If no buffer either, then signal that file doesn't exist.
+            (unless (or (and buf (get-buffer buf))
+                        (and bufname (get-buffer bufname) (not (string= buf bufname))))
+              (signal 'file-error `("Jumping to bookmark" "No such file or directory"
+                                                          (bookmark-get-filename bmk)))))
+        (set-buffer (or buf bufname))
+        (raise-frame)
+        (goto-char (min pos (point-max)))
+        (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
+        ;; Relocate region if it has moved.
+        (funcall bookmark-relocate-region-function bmk))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
@@ -1180,14 +1208,45 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
               (set (make-local-variable 'bookmark-make-record-function)
                    'bookmark-make-w3m-record)))
 
-(defun bookmark-jump-w3m (bmk)
-  ;; Handler function for record returned by `bookmark-make-w3m-record'.
+(defun bookmark-w3m-set-new-buffer-name ()
+  "Set the w3m buffer name according to the number of w3m buffers already open."
+  (let ((len (length (w3m-list-buffers 'nosort))))
+    (if (eq len 0)
+        "*w3m*"
+        (format "*w3m*<%d>" (1+ len)))))
+
+(defun bookmark-jump-w3m-new-session (bmk)
+  "Jump to bookmark in w3m setting a new tab."
+  (let ((file (bookmark-prop-get bmk 'filename))
+        (buf  (bookmark-w3m-set-new-buffer-name)))
+    (w3m-browse-url file 'newsession)
+    ;; Be sure we have our w3m buffer.
+    (while (not (get-buffer buf))
+      (sit-for 1))
+    (with-current-buffer buf
+      (goto-char (point-min))
+      ;; Wait data arrive in buffer to set region.
+      (while (eq (line-beginning-position) (line-end-position)) (sit-for 1)))
+    (bookmark-default-handler
+     (list* "" `(buffer . ,buf)
+            (bookmark-get-bookmark-record bmk)))))
+
+(defun bookmark-jump-w3m-only-one-tab (bmk)
+  "Close all w3m sessions and jump to bookmark `bmk' in new w3m buffer."
   (let ((file  (bookmark-prop-get bmk 'filename)))
+    (w3m-quit 'force) ; Be sure we start on an empty w3m buffer. 
     (w3m-browse-url file)
     (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
     (bookmark-default-handler
      (list* "" `(buffer . ,(buffer-name (current-buffer)))
             (bookmark-get-bookmark-record bmk)))))
+
+(defun bookmark-jump-w3m (bmk)
+  "Handler function for record returned by `bookmark-make-w3m-record'.
+Use multi tabs in w3m according if `bookmark-w3m-allow-multi-tabs' is non--nil."
+  (if bookmark-w3m-allow-multi-tabs
+      (bookmark-jump-w3m-new-session bmk)
+      (bookmark-jump-w3m-only-one-tab bmk)))
 
 ;; GNUS support.  Does not handle regions.
 (defun bookmark-make-gnus-record ()
