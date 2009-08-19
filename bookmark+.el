@@ -24,7 +24,38 @@
 ;;
 ;;; Commentary:
 ;;
-;;  Extensions to standard library `bookmark.el'.
+;;    Extensions to standard library `bookmark.el'.
+;;
+;;    More description below.
+
+;;(@> "Index")
+;;
+;;  Index
+;;  -----
+;;
+;;  If you have library `linkd.el' and Emacs 22 or later, load
+;;  `linkd.el' and turn on `linkd-mode' now.  It lets you easily
+;;  navigate around the sections of this doc.  Linkd mode will
+;;  highlight this Index, as well as the cross-references and section
+;;  headings throughout this file.  You can get `linkd.el' here:
+;;  http://dto.freeshell.org/notebook/Linkd.html.
+;;
+;;  (@> "Things Defined Here")
+;;  (@> "Documentation")
+;;    (@> "Bookmark+ Features")
+;;    (@> "How To Use Bookmark+")
+;;    (@> "Compatibility with Vanilla Emacs (`bookmark.el')")
+;;    (@> "New Bookmark Structure")
+;;  (@> "Change log")
+;;  (@> "Bookmark Keymaps")
+;;  (@> "User Options")
+;;  (@> "Faces (Customizable)")
+;;  (@> "Other Code")
+
+;;(@* "Things Defined Here")
+;;
+;;  Things Defined Here
+;;  -------------------
 ;;
 ;;  Commands defined here:
 ;;
@@ -105,36 +136,72 @@
 ;;   `Info-bookmark-jump', `Info-bookmark-make-record'.
 ;;
 ;;
-;;  * Features:
+;;  ***** NOTE: The following variables defined in `bookmark.el'
+;;              have been REDEFINED HERE:
 ;;
-;;    - You can bookmark a region of text, not just a position.
-;;      When you jump to the bookmark, the region is activated, by
-;;      default.
+;;   `bookmark-alist' (doc string only).
+
+;;(@* "Documentation")
+;;
+;;  Documentation
+;;  -------------
+;;
+;;(@* "Bookmark+ Features")
+;;  ** Bookmark+ Features **
+;;
+;;  In addition to the kinds of bookmarks provided by vanilla Emacs:
+;;
 ;;    - You can bookmark a buffer that is not associated with a file.
-;;    - You can bookmark a region in a w3m buffer.
 ;;
-;;  * Usage:
-;;    Put this file in your `load-path'.
-;;    Add to .emacs : (require 'bookmark+)
+;;    - You can bookmark a region in a W3m buffer or a Gnus message.
 ;;
-;;    If you do not want bookmarked regions to be activated when you
-;;    jump to them, customize option `bookmarkp-use-region-flag',
-;;    setting it to nil.
+;;    - For any bookmark (except Gnus), you can bookmark a region of
+;;      text, not just a position.  By default, when you jump to a
+;;      bookmark that records a region, the region is activated.  See
+;;      option `bookmarkp-use-region-flag'.  `C-u' reverses the
+;;      behavior specified by the value of the option.
 ;;
-;;    You can temporarily flip the value of option
-;;    `bookmarkp-use-region-flag' by using a prefix arg (`C-u') when
-;;    you jump to a bookmark.
+;;    - Better bookmark relocation, if the contextual text changes.
 ;;
-;;  Some of these functions bind `S-delete', to delete the current
-;;  bookmark candidate during completion in Icicle mode (see Icicles:
-;;  http://www.emacswiki.org/cgi-bin/wiki/Icicles).
+;;(@* "How To Use Bookmark+")
+;;  ** How To Use Bookmark+ **
+;;
+;;  Put this library in your `load-path'.
+;;  Add this to your init file (~/.emacs) : (require 'bookmark+)
+;;
+;;  Some of the commands defined here bind `S-delete', to delete the
+;;  current bookmark candidate during completion in Icicle mode (see
+;;  Icicles: http://www.emacswiki.org/cgi-bin/wiki/Icicles).
+;;
+;;(@* "Compatibility with Vanilla Emacs (`bookmark.el')")
+;;  ** Compatibility with Vanilla Emacs (`bookmark.el') **
+;;
+;;  All bookmarks created by any version of vanilla Emacs (library
+;;  `bookmark.el') continue to work with `bookmark+.el'.
+;;
+;;  Conversely, bookmarks created using `bookmark+.el' will not
+;;  interfere with the behavior of vanilla Emacs - the new bookmark
+;;  types are simply ignored by vanilla Emacs.  For example:
+;;
+;;    - A bookmark with a region is treated like a simple position
+;;      bookmark: the destination is the region start position.
+;;
+;;    - A Gnus bookmark does not work; it is ignored.
+;;
+;;(@* "New Bookmark Structure")
+;;  ** New Bookmark Structure **
+;;
+;;  The bookmark data structure, variable `bookmark-alist', has been
+;;  enhanced to support the new bookmark types.  For a description of
+;;  this enhanced structure, use `C-h v bookmark-alist'.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Change log:
 ;;
-;; See Change log at:
-;; http://mercurial.intuxication.org/hg/bookmark-icicle-region/
+;;(@* "Change log")
+;;
+;; See the change log at: http://mercurial.intuxication.org/hg/bookmark-icicle-region/
 ;;
 ;; 2009/05/25 dadams
 ;;     Added redefinition of bookmark-get-bookmark-record.
@@ -191,7 +258,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmarkp-version-number "2.1.1")
+(defconst bookmarkp-version-number "2.1.2")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -199,6 +266,9 @@
   (message "Bookmark+, version %s" bookmarkp-version-number))
 
 ;;;;;;;;;;;;;;;;;;;;;;
+
+;;(@* "Bookmark Keymaps")
+;;; Bookmark Keymaps -------------------------------------------------
 
 ;;;###autoload
 (define-key bookmark-map "o" 'bookmark-jump-other-window)
@@ -223,24 +293,26 @@
 
 ;; Define extras keys in the `bookmark-bmenu-mode-map' space."
 ;;
-(define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-entries) 
+(define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-entries)
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-entries)
 (define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-entries)
 (define-key bookmark-bmenu-mode-map "F" 'bookmarkp-bmenu-list-only-files-entries)
-(define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-regions)     
+(define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-regions)
+
 
 ;; Add the news keys to `bookmark-bmenu-mode' docstring.
 ;;
 (defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
   "Extras keys added by bookmark+:
-W -- bookmarkp-bmenu-list-only-w3m-entries 
+W -- bookmarkp-bmenu-list-only-w3m-entries
 I -- bookmarkp-bmenu-list-only-info-entries
 G -- bookmarkp-bmenu-list-only-gnus-entries
 F -- bookmarkp-bmenu-list-only-files-entries: (C-u) to remove remote files.
 R -- bookmarkp-bmenu-list-only-regions")
+
+;;(@* "User Options")
+;;; User Options -----------------------------------------------------
 
- 
-;;; User variables
 (defgroup bookmark-plus nil
   "Bookmark enhancements."
   :prefix "bookmarkp-" :group 'bookmark
@@ -282,8 +354,9 @@ as part of the bookmark definition."
 (defcustom bookmarkp-w3m-allow-multi-tabs t
   "*Non-nil means jump to w3m bookmark in a new session."
   :type 'boolean :group 'bookmarkp)
-
-;;; Faces
+
+;;(@* "Faces (Customizable)")
+;;; Faces (Customizable) ---------------------------------------------
 
 (defface bookmarkp-nonfile-buffer
     '((t (:foreground "grey")))
@@ -329,6 +402,87 @@ as part of the bookmark definition."
     '((t (:foreground "red")))
   "*Face used for a bookmarked tramp file (/su: or /sudo:)."
   :group 'bookmarkp)
+
+;;(@* "Other Code")
+;;; Other Code -------------------------------------------------------
+
+
+;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
+;;
+;; Doc string reflects Bookmark+ enhancements.
+;;
+(put 'bookmark-alist 'variable-documentation
+     "Association list of bookmarks and their records.
+Bookmark functions update the value automatically.
+You probably do not want to change the value yourself.
+
+The value is an alist with entries of the form
+ (BOOKMARK-NAME . PARAM-ALIST)
+or the deprecated form (BOOKMARK-NAME PARAM-ALIST).
+
+ BOOKMARK-NAME is the name you provided for the bookmark.
+ PARAM-ALIST is an alist of bookmark information.  The order of the
+  entries in PARAM-ALIST is not important.  The possible entries are
+  described below.
+
+Bookmarks created using vanilla Emacs (`bookmark.el'):
+
+ (filename . FILENAME)
+ (position . POS)
+ (front-context-string . STR-AFTER-POS)
+ (rear-context-string  . STR-BEFORE-POS)
+ (annotation . ANNOTATION)
+ (handler . HANDLER)
+
+ FILENAME names the bookmarked file.
+ POS is the bookmarked buffer position (position in the file).
+ STR-AFTER-POS is buffer text that immediately follows POS.
+ STR-BEFORE-POS is buffer text that immediately precedes POS.
+ ANNOTATION is a string that you can provide to identify the bookmark.
+  See options `bookmark-use-annotations' and
+  `bookmark-automatically-show-annotations'.
+ HANDLER is a function that provides the bookmark-jump behavior
+  for a specific kind of bookmark.  This is the case for Info
+  bookmarks, for instance (starting with Emacs 23).
+
+Bookmarks created using Bookmark+ are the same as for vanilla Emacs,
+except for the following differences.
+
+1. A `filename' entry is missing, or its value is nil, if no file is
+associated with the bookmark.
+
+2. The following additional entries are used.  Their values are
+non-nil when a region is bookmarked; they are nil otherwise.  When a
+region is bookmarked, POS represents the region start position.
+
+ (buffer-name . BUFFER-NAME)
+ (end-position . END-POS)
+ (front-context-region-string . STR-BEFORE-END-POS)
+ (rear-context-region-string . STR-AFTER-END-POS))
+
+ BUFFER-NAME is the name of a bookmarked buffer, which might not be
+  associated with any file (see #1).
+ END-POS is the region end position.
+ STR-BEFORE-END-POS is buffer text that precedes END-POS.
+ STR-AFTER-END-POS is buffer text that follows END-POS.
+
+ NOTE: The relative locations of `front-context-region-string' and
+ `rear-context-region-string' are reversed from those of
+ `front-context-string' and `rear-context-string'.  For example,
+ `front-context-string' is the text that *follows* `position', but
+ `front-context-region-string' that *precedes* `end-position'.
+
+3. The following additional entries are used for a Gnus bookmark.
+
+ (group . GNUS-GROUP-NAME)
+ (article . GNUS-ARTICLE-NUMBER)
+ (message-id . GNUS-MESSAGE-ID)
+
+ GNUS-GROUP-NAME is the name of a Gnus group.
+ GNUS-ARTICLE-NUMBER is the number of a Gnus article.
+ GNUS-MESSAGE-ID is the identifier of a Gnus message.
+
+4. For a W3m bookmark, FILENAME is a W3m URL.")
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -534,7 +688,7 @@ If the file pointed to by BOOKMARK no longer exists, you are asked if
 you wish to give the bookmark a new location.  If so, `bookmark-jump'
 jumps to the new location and saves it.
 
-If the bookmark represents a region, then it is selected if
+If the bookmark represents a region, then the region is activated if
 `bookmarkp-use-region-flag' is not-nil or it is nil and you use a
 prefix argument.  A prefix arg temporarily flips the value of
 `bookmarkp-use-region-flag'.
@@ -691,8 +845,8 @@ deletion, or > if it is flagged for displaying."
                 (ishandler     (bookmark-get-handler name))
                 (isgnus        (assq 'group full-record))
                 (isbuf         (bookmarkp-get-buffer-name name)))
-	   (insert name)
-	   (add-text-properties
+           (insert name)
+           (add-text-properties
             start  (save-excursion (re-search-backward "[^ \t]") (1+ (point)))
             (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
                    '(mouse-face highlight follow-link t face 'bookmarkp-info-node
@@ -719,7 +873,7 @@ deletion, or > if it is flagged for displaying."
                    `(mouse-face highlight follow-link t face 'bookmarkp-file
                      help-echo (format "mouse-2 Goto file: %s",isfile)))
                   ((and isbuf (not isfile)) ; Buffer without a file
-                   `(mouse-face highlight follow-link t face 'bookmarkp-nonfile-buffer 
+                   `(mouse-face highlight follow-link t face 'bookmarkp-nonfile-buffer
                      help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
            (insert "\n"))))
      (bookmark-maybe-sort-alist)))
@@ -870,7 +1024,7 @@ Return at most `bookmarkp-region-search-size' or (- EREG BREG) chars."
 Return nil if there are not that many chars."
   (and (>= (- (point-max) breg) bookmark-search-size)
        (buffer-substring-no-properties breg (+ breg bookmark-search-size))))
-      
+
 (defun bookmarkp-region-record-rear-context-string (breg)
   "Return the text preceding the region beginning, BREG.
 Return at most `bookmarkp-region-search-size' chars."
@@ -883,7 +1037,7 @@ Return at most `bookmarkp-region-search-size' chars."
 Return nil if there are not that many chars."
   (and (>= (- breg (point-min)) bookmark-search-size)
        (buffer-substring-no-properties breg (- breg bookmark-search-size))))
-  
+
 (defun bookmarkp-record-front-context-region-string (breg ereg)
   "Return the region suffix, ending at EREG.
 Return at most `bookmarkp-region-search-size' or (- EREG BREG) chars."
@@ -1008,6 +1162,7 @@ the buffer."
 ;;;###autoload
 (when (< emacs-major-version 23)
 
+
   ;; REPLACES ORIGINAL in `bookmark.el'.
   ;;
   ;; Uses `bookmark-make-record'.
@@ -1127,6 +1282,7 @@ equivalently just return ALIST without NAME.")
   (defadvice bookmark-set (before bookmark+-add-docstring () activate)
     "When the region is active (`transient-mark-mode') and nonempty,
 record the region start and end positions in the bookmark."))
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1264,7 +1420,7 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
 (defun bookmarkp-jump-w3m-only-one-tab (bmk)
   "Close all w3m sessions and jump to bookmark `bmk' in new w3m buffer."
   (let ((file  (bookmark-prop-get bmk 'filename)))
-    (w3m-quit 'force)                   ; Be sure we start on an empty w3m buffer. 
+    (w3m-quit 'force)                   ; Be sure we start on an empty w3m buffer.
     (w3m-browse-url file)
     (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
     (bookmark-default-handler
@@ -1273,14 +1429,14 @@ BMK is a bookmark record.  Return nil or signal `file-error'."
 
 (defun bookmarkp-jump-w3m (bmk)
   "Handler function for record returned by `bookmarkp-make-w3m-record'.
-Use multi-tabs in w3m if `bookmarkp-w3m-allow-multi-tabs' is non-nil."
+Use multi-tabs in W3m if `bookmarkp-w3m-allow-multi-tabs' is non-nil."
   (if bookmarkp-w3m-allow-multi-tabs
       (bookmarkp-jump-w3m-new-session bmk)
     (bookmarkp-jump-w3m-only-one-tab bmk)))
 
 ;; GNUS support.  Does not handle regions.
 (defun bookmarkp-make-gnus-record ()
-  "Make a bookmark entry for gnus buffers."  
+  "Make a bookmark entry for Gnus buffers."
   (require 'gnus)
   (unless (and (eq major-mode 'gnus-summary-mode) gnus-article-current)
     (error "Please retry from the Gnus summary buffer")) ;[1]
