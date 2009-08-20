@@ -257,7 +257,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmarkp-version-number "2.1.5")
+(defconst bookmarkp-version-number "2.1.6")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1341,6 +1341,7 @@ pertains to the location within the buffer."
       (end-position . ,end))))
 
 
+(defvar bookmarkp-region-activated-p nil)
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Support regions and buffer names.
@@ -1359,24 +1360,27 @@ Return nil or signal `file-error'."
          (end-pos  (bookmarkp-get-end-position bmk)))
     (if (not (and bookmarkp-use-region-flag end-pos (/= pos end-pos)))
         ;; Single-position bookmark (no region).  Go to it.
-        (bookmarkp-goto-position file buf bufname pos
-                                 (bookmark-get-front-context-string bmk)
-                                 (bookmark-get-rear-context-string bmk))
-      ;; Bookmark with a region.  Go to it and activate the region.
-      (if (and file (file-readable-p file) (not (buffer-live-p buf)))
-          (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
-        ;; No file found.  If no buffer either, then signal that file doesn't exist.
-        (unless (or (and buf (get-buffer buf))
-                    (and bufname (get-buffer bufname) (not (string= buf bufname))))
-          (signal 'file-error `("Jumping to bookmark" "No such file or directory"
-                                (bookmark-get-filename bmk)))))
-      (set-buffer (or buf bufname))
-      (save-current-buffer (funcall bookmarkp-jump-display-function (current-buffer)))
-      (raise-frame)
-      (goto-char (min pos (point-max)))
-      (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
-      ;; Activate region.  Relocate it if it has moved.  Save relocated bookmark if confirm.
-      (funcall bookmarkp-handle-region-function bmk))))
+        (progn
+          (setq bookmarkp-region-activated-p nil)
+          (bookmarkp-goto-position file buf bufname pos
+                                   (bookmark-get-front-context-string bmk)
+                                   (bookmark-get-rear-context-string bmk)))
+        ;; Bookmark with a region.  Go to it and activate the region.
+        (setq bookmarkp-region-activated-p t)
+        (if (and file (file-readable-p file) (not (buffer-live-p buf)))
+            (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
+            ;; No file found.  If no buffer either, then signal that file doesn't exist.
+            (unless (or (and buf (get-buffer buf))
+                        (and bufname (get-buffer bufname) (not (string= buf bufname))))
+              (signal 'file-error `("Jumping to bookmark" "No such file or directory"
+                                                          (bookmark-get-filename bmk)))))
+        (set-buffer (or buf bufname))
+        (save-current-buffer (funcall bookmarkp-jump-display-function (current-buffer)))
+        (raise-frame)
+        (goto-char (min pos (point-max)))
+        (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
+        ;; Activate region.  Relocate it if it has moved.  Save relocated bookmark if confirm.
+        (funcall bookmarkp-handle-region-function bmk))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
