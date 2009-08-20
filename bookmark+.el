@@ -1085,7 +1085,7 @@ Otherwise, return non-nil if region was relocated."
          (bookmark-prop-set bookmark 'end-position end)
          t)))
 
-(defun bookmarkp-handle-region-default (bookmark buffer)
+(defun bookmarkp-handle-region-default (bookmark)
   "Default function to handle BOOKMARK's region.
 BOOKMARK is a bookmark name or a bookmark record.
 Relocate the region if necessary, then activate it.
@@ -1137,15 +1137,13 @@ If region was relocated, save it if user confirms saving."
               end-pos          (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
     ;; Region is available. Activate it and maybe save it.
     (cond (reg-retrieved-p
-           (save-window-excursion
-             (pop-to-buffer buffer)
-             (goto-char pos)
-             (push-mark end-pos 'nomsg 'activate)
-             (setq deactivate-mark  nil)
-             (if (and reg-relocated-p
-                      (bookmarkp-save-new-region-location bookmark pos end-pos))
-                 (message "Saved relocated region (from %d to %d)" pos end-pos)
-                 (message "Region is from %d to %d" pos end-pos))))
+           (goto-char pos)
+           (push-mark end-pos 'nomsg 'activate)
+           (setq deactivate-mark  nil)
+           (if (and reg-relocated-p
+                    (bookmarkp-save-new-region-location bookmark pos end-pos))
+               (message "Saved relocated region (from %d to %d)" pos end-pos)
+               (message "Region is from %d to %d" pos end-pos)))
           (t                            ; No region.  Go to old start.  Don't push-mark.
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
@@ -1367,7 +1365,7 @@ Return nil or signal `file-error'."
       (goto-char (min pos (point-max)))
       (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
       ;; Activate region.  Relocate it if it has moved.  Save relocated bookmark if confirm.
-      (funcall bookmarkp-handle-region-function bmk (or buf bufname)))))
+      (funcall bookmarkp-handle-region-function bmk))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
