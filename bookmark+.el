@@ -67,8 +67,8 @@
 ;;
 ;;  * User options defined here:
 ;;
+;;    `bookmarkp-handle-region-function',
 ;;    `bookmarkp-region-search-size',
-;;    `bookmarkp-relocate-region-function',
 ;;    `bookmarkp-save-new-location-flag',
 ;;    `bookmarkp-su-or-sudo-regexp', `bookmarkp-use-region-flag',
 ;;    `bookmarkp-w3m-allow-multi-tabs'.
@@ -88,9 +88,9 @@
 ;;    `bookmark-position-before-whitespace', (Emacs 20, 21),
 ;;    `bookmarkp-files-alist-only', `bookmarkp-get-buffer-name',
 ;;    `bookmarkp-get-end-position', `bookmarkp-gnus-alist-only',
-;;    `bookmarkp-goto-position', `bookmarkp-info-alist-only',
-;;    `bookmarkp-jump-gnus', `bookmarkp-jump-w3m',
-;;    `bookmarkp-jump-w3m-new-session',
+;;    `bookmarkp-goto-position', `bookmarkp-handle-region-default',
+;;    `bookmarkp-info-alist-only', `bookmarkp-jump-gnus',
+;;    `bookmarkp-jump-w3m', `bookmarkp-jump-w3m-new-session',
 ;;    `bookmarkp-jump-w3m-only-one-tab', `bookmarkp-make-gnus-record',
 ;;    `bookmarkp-make-w3m-record',
 ;;    `bookmarkp-position-after-whitespace',
@@ -101,7 +101,6 @@
 ;;    `bookmarkp-region-alist-only',
 ;;    `bookmarkp-region-record-front-context-string',
 ;;    `bookmarkp-region-record-rear-context-string',
-;;    `bookmarkp-relocate-region-default',
 ;;    `bookmarkp-remote-alist-only',
 ;;    `bookmarkp-root-or-sudo-logged-p',
 ;;    `bookmarkp-save-new-region-location',
@@ -341,9 +340,8 @@ If nil, then the new bookmark location is visited, but it is not saved
 as part of the bookmark definition."
   :type 'boolean :group 'bookmarkp)
 
-(defcustom bookmarkp-relocate-region-function
-  'bookmarkp-relocate-region-default
-  "*Default function to relocate a bookmarked region."
+(defcustom bookmarkp-handle-region-function 'bookmarkp-handle-region-default
+  "*Function to handle a bookmarked region."
   :type 'function :group 'bookmarkp)
 
 (defcustom bookmarkp-su-or-sudo-regexp "\\(/su:\\|/sudo:\\)"
@@ -837,10 +835,9 @@ deletion, or > if it is flagged for displaying."
                 (istramp       (and isfile (boundp 'tramp-file-name-regexp)
                                     (save-match-data
                                       (string-match tramp-file-name-regexp isfile))))
-                (isssh         (and istramp
-                                    (string-match "/ssh:" isfile)))
-                (issu          (and istramp
-                                    (string-match bookmarkp-su-or-sudo-regexp isfile)))
+                (isssh         (and istramp (string-match "/ssh:" isfile)))
+                (issu          (and istramp (string-match bookmarkp-su-or-sudo-regexp
+                                                          isfile)))
                 (isregion      (and (bookmarkp-get-end-position name)
                                     (/= (bookmark-get-position name)
                                         (bookmarkp-get-end-position name))))
@@ -1013,8 +1010,7 @@ With a prefix argument, do not include remote files or directories."
   "Return the name of the file or buffer associated with BOOKMARK.
 BOOKMARK is a bookmark name or a bookmark record."
   (bookmark-maybe-load-default-file)
-  (or (bookmark-get-filename bookmark)
-      (bookmarkp-get-buffer-name bookmark)
+  (or (bookmark-get-filename bookmark) (bookmarkp-get-buffer-name bookmark)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
 ;; Record functions
@@ -1089,23 +1085,30 @@ Otherwise, return non-nil if region was relocated."
          (bookmark-prop-set bookmark 'end-position end)
          t)))
 
-(defun bookmarkp-relocate-region-default (bookmark buffer)
-  "Relocate the region limits of BOOKMARK, a bookmark with a region."
+(defun bookmarkp-handle-region-default (bookmark)
+  "Default function to handle BOOKMARK's region.
+BOOKMARK is a bookmark name or a bookmark record.
+Relocate the region if necessary, then activate it.
+If region was relocated, save it if user confirms saving."
   ;; Relocate by searching from the beginning (and possibly the end) of the buffer.
-  (let ((bor-str          (bookmark-get-front-context-string bookmark))
-        (eor-str          (bookmark-prop-get bookmark 'front-context-region-string))
-        (br-str           (bookmark-get-rear-context-string bookmark))
-        (ar-str           (bookmark-prop-get bookmark 'rear-context-region-string))
-        (pos              (bookmark-get-position bookmark))
-        (end-pos          (bookmark-prop-get bookmark 'end-position))
-        (reg-retrieved-p  t)
-        (reg-relocated-p  nil))
+  (let* (;; Get bookmark object once and for all.
+         ;; Actually, we know BOOKMARK is a bookmark object (not a name), but play safe.
+         (bmk              (bookmark-get-bookmark bookmark))
+         (bor-str          (bookmark-get-front-context-string bmk))
+         (eor-str          (bookmark-prop-get bmk 'front-context-region-string))
+         (br-str           (bookmark-get-rear-context-string bmk))
+         (ar-str           (bookmark-get-rear-context-string bmk))
+         (pos              (bookmark-get-position bmk))
+         (end-pos          (bookmarkp-get-end-position bmk))
+         (reg-retrieved-p  t)
+         (reg-relocated-p  nil))
     (unless (and (string= bor-str (buffer-substring-no-properties
                                    (point) (+ (point) (length bor-str))))
                  (save-excursion
                    (goto-char end-pos)
                    (string= eor-str (buffer-substring-no-properties
                                      (point) (- (point) (length bor-str))))))
+      ;; Relocate region by searching from beginning (and possibly from end) of buffer.
       (let ((beg  nil)
             (end  nil))
         ;;  Go to bob and search forward for END.
@@ -1133,16 +1136,15 @@ Otherwise, return non-nil if region was relocated."
               pos              (or beg  (and end (- end (- end-pos pos)))  pos)
               end-pos          (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
 
-    (cond (reg-retrieved-p              ; Region is available. Activate it and maybe save it.
-           (save-window-excursion
-             (pop-to-buffer buffer)
-             (goto-char pos)
-             (push-mark end-pos 'nomsg 'activate)
-             (setq deactivate-mark  nil)
-             (if (and reg-relocated-p
-                      (bookmarkp-save-new-region-location bookmark pos end-pos))
-                 (message "Saved relocated region (from %d to %d)" pos end-pos)
-                 (message "Region is from %d to %d" pos end-pos))))
+    ;; Region is available. Activate it and maybe save it.
+    (cond (reg-retrieved-p
+           (goto-char pos)
+           (push-mark end-pos 'nomsg 'activate)
+           (setq deactivate-mark  nil)
+           (if (and reg-relocated-p
+                    (bookmarkp-save-new-region-location bmk pos end-pos))
+               (message "Saved relocated region (from %d to %d)" pos end-pos)
+             (message "Region is from %d to %d" pos end-pos)))
           (t                            ; No region.  Go to old start.  Don't push-mark.
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
@@ -1170,7 +1172,7 @@ position, and the context strings for the position."
     (goto-char (match-beginning 0)))
   (when (and behind-str (search-backward behind-str (point-min) t))
     (goto-char (match-end 0)))
-  nil);; @@@@@@@@ FIXME LATER: Why do we (and vanilla Emacs) return nil?
+  nil);; $$$$$$ FIXME LATER: Why do we (and vanilla Emacs) return nil?
 
 ;;;###autoload
 (when (< emacs-major-version 23)
@@ -1340,32 +1342,31 @@ BOOKMARK is a bookmark name or a bookmark record.
 If BOOKMARK records a nonempty region, and `bookmarkp-use-region-flag'
  is non-nil, then activate the region.
 Return nil or signal `file-error'."
-  (let* ((file     (bookmark-get-filename bookmark))
-         (buf      (bookmark-prop-get bookmark 'buffer))
-         (bufname  (bookmark-prop-get bookmark 'buffer-name))
-         (pos      (bookmark-get-position bookmark))
-         (end-pos  (bookmark-prop-get bookmark 'end-position)))
+  (let* ((bmk      (bookmark-get-bookmark bookmark)) ; Get bookmark object once and for all.
+         (file     (bookmark-get-filename bmk))
+         (buf      (bookmark-prop-get bmk 'buffer))
+         (bufname  (bookmarkp-get-buffer-name bmk))
+         (pos      (bookmark-get-position bmk))
+         (end-pos  (bookmarkp-get-end-position bmk)))
     (if (not (and bookmarkp-use-region-flag end-pos (/= pos end-pos)))
         ;; Single-position bookmark (no region).  Go to it.
         (bookmarkp-goto-position file buf bufname pos
-                                 (bookmark-get-front-context-string bookmark)
-                                 (bookmark-get-rear-context-string bookmark))
-      ;; Bookmark with a region.  Go to it and select region.
-      ;; Get buffer.
+                                 (bookmark-get-front-context-string bmk)
+                                 (bookmark-get-rear-context-string bmk))
+      ;; Bookmark with a region.  Go to it and activate the region.
       (if (and file (file-readable-p file) (not (buffer-live-p buf)))
           (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
         ;; No file found.  If no buffer either, then signal that file doesn't exist.
         (unless (or (and buf (get-buffer buf))
                     (and bufname (get-buffer bufname) (not (string= buf bufname))))
           (signal 'file-error `("Jumping to bookmark" "No such file or directory"
-                                (bookmark-get-filename bookmark)))))
+                                (bookmark-get-filename bmk)))))
       (set-buffer (or buf bufname))
-      ;(pop-to-buffer (or buf bufname))
       (raise-frame)
       (goto-char (min pos (point-max)))
       (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
-      ;; Relocate region if it has moved.
-      (funcall bookmarkp-relocate-region-function bookmark (or buf bufname)))))
+      ;; Activate region.  Relocate it if it has moved.  Save relocated bookmark if confirm.
+      (funcall bookmarkp-handle-region-function bmk))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
