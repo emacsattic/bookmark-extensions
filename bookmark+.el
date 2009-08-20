@@ -109,7 +109,7 @@
 ;;  * Internal variables defined here:
 ;;
 ;;    `bookmark-make-record-function' (Emacs 20-22),
-;;    `bookmarkp-version-number'.
+;;    `bookmarkp-jump-display-function', `bookmarkp-version-number'.
 ;;
 ;;
 ;;  ***** NOTE: The following functions defined in `bookmark.el'
@@ -257,7 +257,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmarkp-version-number "2.1.4")
+(defconst bookmarkp-version-number "2.1.5")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -402,6 +402,9 @@ as part of the bookmark definition."
 
 ;;(@* "Other Code")
 ;;; Other Code -------------------------------------------------------
+
+(defvar bookmarkp-jump-display-function nil
+  "Display function used currently to display a bookmark.")'
 
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
@@ -672,6 +675,26 @@ candidate.  In this way, you can delete multiple bookmarks."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
+;; Save DISPLAY-FUNCTION to `bookmarkp-jump-display-function' before calling
+;; `bookmark-handle-bookmark'.
+;;
+(defun bookmark--jump-via (bookmark display-function)
+  "Helper function for `bookmark-jump(-other-window)'.
+BOOKMARK is a bookmark name or a bookmark record.
+DISPLAY-FUNCTION is the function that displays the bookmark."
+  (setq bookmarkp-jump-display-function  display-function)
+  (bookmark-handle-bookmark bookmark)
+  (let ((win  (get-buffer-window (current-buffer) 0)))
+    (if win (set-window-point win (point))))
+  ;; VANILLA EMACS FIXME: we used to only run `bookmark-after-jump-hook' in
+  ;; `bookmark-jump' itself, but in none of the other commands.
+  (run-hooks 'bookmark-after-jump-hook)
+  (when bookmark-automatically-show-annotations
+    (bookmark-show-annotation bookmark)))
+
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
 ;; 1. Handle also bookmarked regions and non-file buffer locations.
 ;; 2. Add note about Icicles `S-delete' to doc string.
 ;;
@@ -703,24 +726,6 @@ candidate."
                                       bookmarkp-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer)))
 
-(defvar bookmarkp-jump-display-function-flag nil
-  "Store the display-function name we are using to display bookmark.")
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;; Send display-function to `bookmark-handle-bookmark' before calling it.
-;;
-(defun bookmark--jump-via (bookmark display-function)
-  (setq bookmarkp-jump-display-function-flag display-function)
-  (bookmark-handle-bookmark bookmark)
-  (let ((win (get-buffer-window (current-buffer) 0)))
-    (if win (set-window-point win (point))))
-  ;; FIXME: we used to only run bookmark-after-jump-hook in
-  ;; `bookmark-jump' itself, but in none of the other commands.
-  (run-hooks 'bookmark-after-jump-hook)
-  (if bookmark-automatically-show-annotations
-      ;; if there is an annotation for this bookmark,
-      ;; show it in a buffer.
-      (bookmark-show-annotation bookmark)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -764,20 +769,6 @@ BOOKMARK is a bookmark name or a bookmark record."
     "Return the `handler' entry for BOOKMARK.
 BOOKMARK is a bookmark name or a bookmark record."
     (bookmark-prop-get bookmark 'handler))
-
-  ;; Added doc string.
-  (defun bookmark--jump-via (bookmark display-function)
-    "Helper function for `bookmark-jump(-other-window)'.
-BOOKMARK is a bookmark name or a bookmark record.
-DISPLAY-FUNCTION is the function that displays the bookmark."
-    (bookmark-handle-bookmark bookmark)
-    (save-current-buffer (funcall display-function (current-buffer)))
-    (let ((win  (get-buffer-window (current-buffer) 0)))
-      (if win (set-window-point win (point))))
-    ;; VANILLA EMACS FIXME: we used to only run bookmark-after-jump-hook in
-    ;; `bookmark-jump' itself, but in none of the other commands.
-    (run-hooks 'bookmark-after-jump-hook)
-    (when bookmark-automatically-show-annotations (bookmark-show-annotation bookmark)))
 
   (defun bookmark-handle-bookmark (bookmark)
     "Call BOOKMARK's handler, or `bookmark-default-handler' if it has none.
@@ -1089,7 +1080,7 @@ BEG and END are the new region limits for BOOKMARK.
 Do nothing and return nil if `bookmarkp-save-new-location-flag' is nil.
 Otherwise, return non-nil if region was relocated."
   (and bookmarkp-save-new-location-flag
-       (y-or-n-p "Region relocated: Do you want to save new region limits?")
+       (y-or-n-p "Region relocated: Do you want to save new region limits? ")
        (progn
          (bookmark-prop-set bookmark 'front-context-string
                             (bookmarkp-region-record-front-context-string beg end))
@@ -1159,7 +1150,7 @@ If region was relocated, save it if user confirms saving."
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
            (if (and reg-relocated-p
-                    (bookmarkp-save-new-region-location bookmark pos end-pos))
+                    (bookmarkp-save-new-region-location bmk pos end-pos))
                (message "Saved relocated region (from %d to %d)" pos end-pos)
                (message "Region is from %d to %d" pos end-pos)))
           (t                            ; No region.  Go to old start.  Don't push-mark.
@@ -1177,8 +1168,7 @@ position, and the context strings for the position."
                 (and bufname (get-buffer bufname) (not (string= buf bufname))))
       (signal 'file-error `("Jumping to bookmark" "No such file or directory" file))))
   (set-buffer (or buf bufname))
-  (save-current-buffer
-    (funcall bookmarkp-jump-display-function-flag (current-buffer)))
+  (save-current-buffer (funcall bookmarkp-jump-display-function (current-buffer)))
   (setq deactivate-mark  t)
   (raise-frame)
   (goto-char pos)
@@ -1381,8 +1371,7 @@ Return nil or signal `file-error'."
           (signal 'file-error `("Jumping to bookmark" "No such file or directory"
                                 (bookmark-get-filename bmk)))))
       (set-buffer (or buf bufname))
-      (save-current-buffer
-        (funcall bookmarkp-jump-display-function-flag (current-buffer)))
+      (save-current-buffer (funcall bookmarkp-jump-display-function (current-buffer)))
       (raise-frame)
       (goto-char (min pos (point-max)))
       (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
