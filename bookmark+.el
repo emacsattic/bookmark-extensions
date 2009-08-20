@@ -1089,7 +1089,7 @@ Otherwise, return non-nil if region was relocated."
          (bookmark-prop-set bookmark 'end-position end)
          t)))
 
-(defun bookmarkp-relocate-region-default (bookmark)
+(defun bookmarkp-relocate-region-default (bookmark buffer)
   "Relocate the region limits of BOOKMARK, a bookmark with a region."
   ;; Relocate by searching from the beginning (and possibly the end) of the buffer.
   (let ((bor-str          (bookmark-get-front-context-string bookmark))
@@ -1134,13 +1134,15 @@ Otherwise, return non-nil if region was relocated."
               end-pos          (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
 
     (cond (reg-retrieved-p              ; Region is available. Activate it and maybe save it.
-           (goto-char pos)
-           (push-mark end-pos 'nomsg 'activate)
-           (setq deactivate-mark  nil)
-           (if (and reg-relocated-p
-                    (bookmarkp-save-new-region-location bookmark pos end-pos))
-               (message "Saved relocated region (from %d to %d)" pos end-pos)
-             (message "Region is from %d to %d" pos end-pos)))
+           (save-window-excursion
+             (pop-to-buffer buffer)
+             (goto-char pos)
+             (push-mark end-pos 'nomsg 'activate)
+             (setq deactivate-mark  nil)
+             (if (and reg-relocated-p
+                      (bookmarkp-save-new-region-location bookmark pos end-pos))
+                 (message "Saved relocated region (from %d to %d)" pos end-pos)
+                 (message "Region is from %d to %d" pos end-pos))))
           (t                            ; No region.  Go to old start.  Don't push-mark.
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
@@ -1358,11 +1360,12 @@ Return nil or signal `file-error'."
           (signal 'file-error `("Jumping to bookmark" "No such file or directory"
                                 (bookmark-get-filename bookmark)))))
       (set-buffer (or buf bufname))
+      ;(pop-to-buffer (or buf bufname))
       (raise-frame)
       (goto-char (min pos (point-max)))
       (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
       ;; Relocate region if it has moved.
-      (funcall bookmarkp-relocate-region-function bookmark))))
+      (funcall bookmarkp-relocate-region-function bookmark (or buf bufname)))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
