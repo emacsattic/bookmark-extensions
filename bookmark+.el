@@ -1341,7 +1341,7 @@ pertains to the location within the buffer."
       (end-position . ,end))))
 
 
-(defvar bookmarkp-region-activated-p nil)
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Support regions and buffer names.
@@ -1360,13 +1360,10 @@ Return nil or signal `file-error'."
          (end-pos  (bookmarkp-get-end-position bmk)))
     (if (not (and bookmarkp-use-region-flag end-pos (/= pos end-pos)))
         ;; Single-position bookmark (no region).  Go to it.
-        (progn
-          (setq bookmarkp-region-activated-p nil)
-          (bookmarkp-goto-position file buf bufname pos
-                                   (bookmark-get-front-context-string bmk)
-                                   (bookmark-get-rear-context-string bmk)))
+        (bookmarkp-goto-position file buf bufname pos
+                                 (bookmark-get-front-context-string bmk)
+                                 (bookmark-get-rear-context-string bmk))
         ;; Bookmark with a region.  Go to it and activate the region.
-        (setq bookmarkp-region-activated-p t)
         (if (and file (file-readable-p file) (not (buffer-live-p buf)))
             (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
             ;; No file found.  If no buffer either, then signal that file doesn't exist.
