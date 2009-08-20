@@ -1085,7 +1085,7 @@ Otherwise, return non-nil if region was relocated."
          (bookmark-prop-set bookmark 'end-position end)
          t)))
 
-(defun bookmarkp-handle-region-default (bookmark)
+(defun bookmarkp-handle-region-default (bookmark buffer)
   "Default function to handle BOOKMARK's region.
 BOOKMARK is a bookmark name or a bookmark record.
 Relocate the region if necessary, then activate it.
@@ -1097,7 +1097,7 @@ If region was relocated, save it if user confirms saving."
          (bor-str          (bookmark-get-front-context-string bmk))
          (eor-str          (bookmark-prop-get bmk 'front-context-region-string))
          (br-str           (bookmark-get-rear-context-string bmk))
-         (ar-str           (bookmark-get-rear-context-string bmk))
+         (ar-str           (bookmark-prop-get bookmark 'rear-context-region-string))
          (pos              (bookmark-get-position bmk))
          (end-pos          (bookmarkp-get-end-position bmk))
          (reg-retrieved-p  t)
@@ -1135,16 +1135,17 @@ If region was relocated, save it if user confirms saving."
               ;; approximate (keep the same length).  If both were found, it is exact.
               pos              (or beg  (and end (- end (- end-pos pos)))  pos)
               end-pos          (or end  (and beg (+ pos (- end-pos pos)))  end-pos))))
-
     ;; Region is available. Activate it and maybe save it.
     (cond (reg-retrieved-p
-           (goto-char pos)
-           (push-mark end-pos 'nomsg 'activate)
-           (setq deactivate-mark  nil)
-           (if (and reg-relocated-p
-                    (bookmarkp-save-new-region-location bmk pos end-pos))
-               (message "Saved relocated region (from %d to %d)" pos end-pos)
-             (message "Region is from %d to %d" pos end-pos)))
+           (save-window-excursion
+             (pop-to-buffer buffer)
+             (goto-char pos)
+             (push-mark end-pos 'nomsg 'activate)
+             (setq deactivate-mark  nil)
+             (if (and reg-relocated-p
+                      (bookmarkp-save-new-region-location bookmark pos end-pos))
+                 (message "Saved relocated region (from %d to %d)" pos end-pos)
+                 (message "Region is from %d to %d" pos end-pos))))
           (t                            ; No region.  Go to old start.  Don't push-mark.
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
@@ -1366,7 +1367,7 @@ Return nil or signal `file-error'."
       (goto-char (min pos (point-max)))
       (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
       ;; Activate region.  Relocate it if it has moved.  Save relocated bookmark if confirm.
-      (funcall bookmarkp-handle-region-function bmk))))
+      (funcall bookmarkp-handle-region-function bmk (or buf bufname)))))
 
 
 ;; Same as vanilla Emacs 23+ definitions.
