@@ -1095,7 +1095,7 @@ Otherwise, return non-nil if region was relocated."
   (let ((bor-str          (bookmark-get-front-context-string bookmark))
         (eor-str          (bookmark-prop-get bookmark 'front-context-region-string))
         (br-str           (bookmark-get-rear-context-string bookmark))
-        (ar-str           (bookmark-get-rear-context-string bookmark))
+        (ar-str           (bookmark-prop-get bookmark 'rear-context-region-string))
         (pos              (bookmark-get-position bookmark))
         (end-pos          (bookmark-prop-get bookmark 'end-position))
         (reg-retrieved-p  t)
