@@ -257,7 +257,7 @@
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
 
-(defconst bookmarkp-version-number "2.1.3")
+(defconst bookmarkp-version-number "2.1.4")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -703,6 +703,24 @@ candidate."
                                       bookmarkp-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer)))
 
+(defvar bookmarkp-jump-display-function-flag nil
+  "Store the display-function name we are using to display bookmark.")
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Send display-function to `bookmark-handle-bookmark' before calling it.
+;;
+(defun bookmark--jump-via (bookmark display-function)
+  (setq bookmarkp-jump-display-function-flag display-function)
+  (bookmark-handle-bookmark bookmark)
+  (let ((win (get-buffer-window (current-buffer) 0)))
+    (if win (set-window-point win (point))))
+  ;; FIXME: we used to only run bookmark-after-jump-hook in
+  ;; `bookmark-jump' itself, but in none of the other commands.
+  (run-hooks 'bookmark-after-jump-hook)
+  (if bookmark-automatically-show-annotations
+      ;; if there is an annotation for this bookmark,
+      ;; show it in a buffer.
+      (bookmark-show-annotation bookmark)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1159,6 +1177,8 @@ position, and the context strings for the position."
                 (and bufname (get-buffer bufname) (not (string= buf bufname))))
       (signal 'file-error `("Jumping to bookmark" "No such file or directory" file))))
   (set-buffer (or buf bufname))
+  (save-current-buffer
+    (funcall bookmarkp-jump-display-function-flag (current-buffer)))
   (setq deactivate-mark  t)
   (raise-frame)
   (goto-char pos)
@@ -1361,6 +1381,8 @@ Return nil or signal `file-error'."
           (signal 'file-error `("Jumping to bookmark" "No such file or directory"
                                 (bookmark-get-filename bmk)))))
       (set-buffer (or buf bufname))
+      (save-current-buffer
+        (funcall bookmarkp-jump-display-function-flag (current-buffer)))
       (raise-frame)
       (goto-char (min pos (point-max)))
       (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
