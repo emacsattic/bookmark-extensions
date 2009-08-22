@@ -253,10 +253,9 @@
 ;;; Code:
 
 (require 'bookmark)
-(eval-when-compile (require 'cl))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.9")
+(defconst bookmarkp-version-number "2.1.10")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -984,31 +983,30 @@ BOOKMARK is a bookmark name or a bookmark record."
 
 
 ;;; Filter functions
-
 (defun bookmarkp-region-alist-only ()
   "`bookmark-alist', filtered to retain only bookmarks that have regions.
 A new list is returned (no side effects)."
-  (remove-if-not #'bookmarkp-region-bookmark-p bookmark-alist))
+  (bookmarkp-remove-if-not #'bookmarkp-region-bookmark-p bookmark-alist))
 
 (defun bookmarkp-gnus-alist-only ()
   "`bookmark-alist', filtered to retain only Gnus entries.
 A new list is returned (no side effects)."
-  (remove-if-not #'bookmarkp-gnus-bookmark-p bookmark-alist))
+  (bookmarkp-remove-if-not #'bookmarkp-gnus-bookmark-p bookmark-alist))
 
 (defun bookmarkp-w3m-alist-only ()
   "`bookmark-alist', filtered to retain only W3m entries.
 A new list is returned (no side effects)."
-  (remove-if-not #'bookmarkp-w3m-bookmark-p bookmark-alist))
+  (bookmarkp-remove-if-not #'bookmarkp-w3m-bookmark-p bookmark-alist))
 
 (defun bookmarkp-info-alist-only ()
   "`bookmark-alist', filtered to retain only Info entries.
 A new list is returned (no side effects)."
-  (remove-if-not #'bookmarkp-info-bookmark-p bookmark-alist))
+  (bookmarkp-remove-if-not #'bookmarkp-info-bookmark-p bookmark-alist))
 
 (defun bookmarkp-remote-alist-only ()
   "`bookmark-alist', filtered to retain only remote-file entries.
 A new list is returned (no side effects)."
-  (remove-if-not #'bookmarkp-remote-file-bookmark-p bookmark-alist))
+  (bookmarkp-remove-if-not #'bookmarkp-remote-file-bookmark-p bookmark-alist))
 
 (defun bookmarkp-files-alist-only (&optional hide-remote)
   "`bookmark-alist', filtered to retain only file and directory bookmarks.
@@ -1019,14 +1017,14 @@ Non-nil argument HIDE-REMOTE means do not include remote file or
 directory bookmarks.
 
 A new list is returned (no side effects)."
-  (remove-if #'(lambda (x)
-                 (or (bookmarkp-region-bookmark-p x)
-                     (bookmarkp-gnus-bookmark-p x)
-                     (bookmarkp-w3m-bookmark-p x)
-                     (bookmarkp-info-bookmark-p x)
-                     (if hide-remote
-                         (bookmarkp-remote-file-bookmark-p x))))
-             bookmark-alist))
+  (bookmarkp-remove-if (lambda (bookmark)
+                         (or ;(bookmarkp-region-bookmark-p bookmark)
+                             (bookmarkp-gnus-bookmark-p bookmark)
+                             (bookmarkp-w3m-bookmark-p bookmark)
+                             (bookmarkp-info-bookmark-p bookmark)
+                             (and hide-remote (bookmarkp-remote-file-bookmark-p bookmark))))
+                       bookmark-alist))
+
 
 ;;;###autoload
 (defun bookmarkp-bmenu-list-only-files-entries (arg)
@@ -1083,7 +1081,9 @@ With a prefix argument, do not include remote files or directories."
   "Return the name of the file or buffer associated with BOOKMARK.
 BOOKMARK is a bookmark name or a bookmark record."
   (bookmark-maybe-load-default-file)
-  (or (bookmark-get-filename bookmark) (bookmarkp-get-buffer-name bookmark)
+  (or (bookmark-get-filename bookmark)
+      (bookmarkp-get-buffer-name bookmark)
+      (bookmark-prop-get bookmark 'buffer)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
 ;; Record functions
@@ -1570,6 +1570,20 @@ See `bookmark-jump-other-window'."
     (interactive "e")
     (bookmark-popup-menu-and-apply-function 'bookmark-jump-other-window
                                             "Jump to Bookmark (in another window)" event)))
+
+;;; General Utility Functions
+
+(defun bookmarkp-remove-if (pred xs)
+  "A copy of list XS with no elements that satisfy predicate PRED."
+  (let ((result  ()))
+    (dolist (x xs) (unless (funcall pred x) (push x result)))
+    (nreverse result)))
+
+(defun bookmarkp-remove-if-not (pred xs)
+  "A copy of list XS with only elements that satisfy predicate PRED."
+  (let ((result  ()))
+    (dolist (x xs) (when (funcall pred x) (push x result)))
+    (nreverse result)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
