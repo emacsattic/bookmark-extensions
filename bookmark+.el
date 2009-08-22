@@ -256,7 +256,7 @@
 (eval-when-compile (require 'cl))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.8")
+(defconst bookmarkp-version-number "2.1.9")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -359,7 +359,12 @@ as part of the bookmark definition."
 (defcustom bookmarkp-w3m-allow-multi-tabs t
   "*Non-nil means jump to W3m bookmarks in a new session."
   :type 'boolean :group 'bookmarkp)
- 
+
+(defcustom bookmarkp-show-end-of-region t
+  "*Show end of region with `exchange-point-and-mark' when activating a region.
+If nil show only beginning of region."
+  :type 'boolean :group 'bookmarkp)
+
 ;;(@* "Faces (Customizable)")
 ;;; Faces (Customizable) ---------------------------------------------
 
@@ -1208,6 +1213,10 @@ If region was relocated, save it if user confirms saving."
            (goto-char pos)
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
+           (when bookmarkp-show-end-of-region
+             (save-excursion
+               (sit-for 1) (exchange-point-and-mark) (sit-for 1.5)))
+           (recenter 0)
            (if (and reg-relocated-p
                     (bookmarkp-save-new-region-location bmk pos end-pos))
                (message "Saved relocated region (from %d to %d)" pos end-pos)
