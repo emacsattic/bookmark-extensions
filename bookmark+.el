@@ -256,7 +256,7 @@
 (eval-when-compile (require 'cl))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.7")
+(defconst bookmarkp-version-number "2.1.8")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -568,6 +568,19 @@ candidate."
   (interactive (list (bookmark-completing-read "Insert bookmark location")))
   (old-bookmark-insert-location bookmark-name no-history))
 
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Dont fail if bookmark have an empty filename entry.
+;; 
+(defun bookmark-location (bookmark)
+  "Return the name of the file associated with BOOKMARK.
+If filename entry doesn't exists return the buffer name instead."
+  (bookmark-maybe-load-default-file)
+  (let ((fname (bookmark-get-filename bookmark))
+        (buf   (or (bookmark-prop-get bookmark 'buffer)
+                   (bookmarkp-get-buffer-name bookmark))))
+    (if fname fname buf)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
