@@ -861,6 +861,7 @@ if you want to change the appearance.
                                     (save-match-data
                                       (string-match tramp-file-name-regexp isfile))))
                 (isssh         (and istramp (string-match "/ssh:" isfile)))
+                (isftp         (and istramp (string-match "/ftp:" isfile)))
                 (issu          (and istramp (string-match bookmarkp-su-or-sudo-regexp
                                                           isfile)))
                 (isregion      (bookmarkp-region-bookmark-p name))
@@ -880,7 +881,10 @@ if you want to change the appearance.
                   ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; W3m
                    `(mouse-face highlight follow-link t face 'bookmarkp-w3m-url
                      help-echo (format "mouse-2 Goto URL: %s",isfile)))
-                  (isssh                ; Remote file
+                  (isssh                ; Remote SSH file
+                   `(mouse-face highlight follow-link t face 'bookmarkp-remote-file
+                     help-echo (format "mouse-2 Goto remote file: %s",isfile)))
+                  (isftp                ; Remote FTP file
                    `(mouse-face highlight follow-link t face 'bookmarkp-remote-file
                      help-echo (format "mouse-2 Goto remote file: %s",isfile)))
                   ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root or sudo
