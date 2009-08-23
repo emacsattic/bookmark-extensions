@@ -255,7 +255,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.11")
+(defconst bookmarkp-version-number "2.1.12")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1459,7 +1459,7 @@ BOOKMARK is a bookmark name or a bookmark record."
               (Info-find-node file info-node) (current-buffer))))
       ;; Use `bookmark-default-handler' to move to appropriate location within Info node.
       (bookmark-default-handler
-       (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bookmark)))))
+       `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
   (add-hook 'Info-mode-hook (lambda ()
                               (set (make-local-variable 'bookmark-make-record-function)
@@ -1494,7 +1494,7 @@ BOOKMARK is a bookmark name or a bookmark record."
       ;; Wait until data arrives in buffer, before setting region.
       (while (eq (line-beginning-position) (line-end-position)) (sit-for 1)))
     (bookmark-default-handler
-     (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bookmark)))))
+     `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 (defun bookmarkp-jump-w3m-only-one-tab (bookmark)
   "Close all W3m sessions and jump to BOOKMARK in a new W3m buffer."
@@ -1503,8 +1503,8 @@ BOOKMARK is a bookmark name or a bookmark record."
     (w3m-browse-url file)
     (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
     (bookmark-default-handler
-     (list* "" `(buffer . ,(buffer-name (current-buffer)))
-            (bookmark-get-bookmark-record bookmark)))))
+     `("" (buffer . ,(buffer-name (current-buffer))) .
+       ,(bookmark-get-bookmark-record bookmark)))))
 
 (defun bookmarkp-jump-w3m (bookmark)
   "Handler function for record returned by `bookmarkp-make-w3m-record'.
@@ -1547,7 +1547,7 @@ BOOKMARK is a bookmark name or a bookmark record."
     (gnus-summary-insert-cached-articles)
     (gnus-summary-goto-article id nil 'force)
     (bookmark-default-handler
-     (list* "" `(buffer . ,buf) (bookmark-get-bookmark-record bookmark)))))
+     `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 ;; Not needed for Emacs 22+.
 ;;;###autoload
