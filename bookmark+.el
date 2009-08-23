@@ -255,7 +255,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.12")
+(defconst bookmarkp-version-number "2.1.13")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1242,60 +1242,6 @@ position, and the context strings for the position."
 ;;;###autoload
 (when (< emacs-major-version 23)
 
-
-  ;; REPLACES ORIGINAL in `bookmark.el'.
-  ;;
-  ;; Uses `bookmark-make-record'.
-  ;;
-  (defun bookmark-set (&optional name parg)
-    "Set a bookmark named NAME.
-If NAME is nil, then prompt the user for the name.
-With a prefix arg, do not overwrite a bookmark that has the same name
-as NAME, if such a bookmark already exists.  Instead, push the new
-bookmark onto the bookmark alist.  
-
-The most recently set bookmark named NAME is thus the one in effect at
-any given time, but the others are still there, should you decide to
-delete the most recent one.
-
-To yank words from the text of the buffer and use them as part of the
-bookmark name, use `C-w' while setting a bookmark.  Repeating `C-w'
-yanks successive words.
-
-Using `C-u' inserts the name of the last bookmark used in the buffer
-\(as an aid in using a single bookmark name to track your progress
-through a large file).  If no bookmark was used, then `C-u' inserts
-the name of the file being visited.
-
-Use `\\[bookmark-delete]' to remove bookmarks (you give it a name, and it removes
-only the first instance of a bookmark with that name from the list of
-bookmarks.)
-
-If the region is active (`transient-mark-mode') and nonempty, record
-the region limits in the bookmark."
-    (interactive (list nil current-prefix-arg))
-    (let* ((record   (bookmark-make-record))
-           (default  (car record)))
-      (bookmark-maybe-load-default-file)
-      (setq bookmark-current-point   (point)
-            bookmark-yank-point      (point)
-            bookmark-current-buffer  (current-buffer))
-      (let ((str
-             (or name (read-from-minibuffer
-                       (format "Set bookmark (%s): " default) nil
-                       (let ((map  (copy-keymap minibuffer-local-map)))
-                         (define-key map "\C-w" 'bookmark-yank-word)
-                         (define-key map "\C-u" 'bookmark-insert-current-bookmark)
-                         map)
-                       nil nil default)))
-            (annotation  nil))
-        (and (string-equal str "") (setq str  default))
-        (bookmark-store str (cdr record) parg)
-        ;; Ask for an annotation buffer for this bookmark
-        (if bookmark-use-annotations
-            (bookmark-edit-annotation str)
-          (goto-char bookmark-current-point)))))
-
   ;; Same as vanilla Emacs 23+ definition.
   ;;
   (defun bookmark-store (bookmark-name alist no-overwrite)
@@ -1354,12 +1300,64 @@ posts, images, pdf documents, etc.")
         (setcar record  (or bookmark-current-bookmark (bookmark-buffer-name)))
         record))))
 
-;; Document new feature of `bookmark-set' in emacs23+.
+
+;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-(when (> emacs-major-version 22)
-  (defadvice bookmark-set (before bookmark+-add-docstring () activate)
-    "When the region is active (`transient-mark-mode') and nonempty,
-record the region start and end positions in the bookmark."))
+;; Uses `bookmark-make-record'.
+;; Default prompt for w3m and Gnus.
+;;
+(defun bookmark-set (&optional name parg)
+  "Set a bookmark named NAME.
+If NAME is nil, then prompt the user for the name.
+With a prefix arg, do not overwrite a bookmark that has the same name
+as NAME, if such a bookmark already exists.  Instead, push the new
+bookmark onto the bookmark alist.  
+
+The most recently set bookmark named NAME is thus the one in effect at
+any given time, but the others are still there, should you decide to
+delete the most recent one.
+
+To yank words from the text of the buffer and use them as part of the
+bookmark name, use `C-w' while setting a bookmark.  Repeating `C-w'
+yanks successive words.
+
+Using `C-u' inserts the name of the last bookmark used in the buffer
+\(as an aid in using a single bookmark name to track your progress
+through a large file).  If no bookmark was used, then `C-u' inserts
+the name of the file being visited.
+
+Use `\\[bookmark-delete]' to remove bookmarks (you give it a name, and it removes
+only the first instance of a bookmark with that name from the list of
+bookmarks.)
+
+If the region is active (`transient-mark-mode') and nonempty, record
+the region limits in the bookmark."
+  (interactive (list nil current-prefix-arg))
+  (let* ((record   (bookmark-make-record))
+         (default  (cond ((eq major-mode 'w3m-mode)
+                          w3m-current-title)
+                         ((eq major-mode 'gnus-summary-mode)
+                          (elt (gnus-summary-article-header) 1))
+                         (t (car record)))))
+    (bookmark-maybe-load-default-file)
+    (setq bookmark-current-point   (point)
+          bookmark-yank-point      (point)
+          bookmark-current-buffer  (current-buffer))
+    (let ((str
+           (or name (read-from-minibuffer
+                     (format "Set bookmark (%s): " default) nil
+                     (let ((map  (copy-keymap minibuffer-local-map)))
+                       (define-key map "\C-w" 'bookmark-yank-word)
+                       (define-key map "\C-u" 'bookmark-insert-current-bookmark)
+                       map)
+                     nil nil default)))
+          (annotation  nil))
+      (and (string-equal str "") (setq str  default))
+      (bookmark-store str (cdr record) parg)
+      ;; Ask for an annotation buffer for this bookmark
+      (if bookmark-use-annotations
+          (bookmark-edit-annotation str)
+          (goto-char bookmark-current-point)))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
