@@ -364,6 +364,10 @@ as part of the bookmark definition."
 If nil show only beginning of region."
   :type 'boolean :group 'bookmarkp)
 
+(defcustom bookmarkp-name-length-max 70
+  "*Maximum number of characters used to name a bookmark with region."
+  :type 'integer :group 'bookmarkp)
+
 ;;(@* "Faces (Customizable)")
 ;;; Faces (Customizable) ---------------------------------------------
 
@@ -1307,7 +1311,7 @@ posts, images, pdf documents, etc.")
 ;; Default prompt for w3m and Gnus.
 ;;
 (defun bookmark-set (&optional name parg)
-  "Set a bookmark named NAME.
+    "Set a bookmark named NAME.
 If NAME is nil, then prompt the user for the name.
 With a prefix arg, do not overwrite a bookmark that has the same name
 as NAME, if such a bookmark already exists.  Instead, push the new
@@ -1333,8 +1337,16 @@ bookmarks.)
 If the region is active (`transient-mark-mode') and nonempty, record
 the region limits in the bookmark."
   (interactive (list nil current-prefix-arg))
-  (let* ((record   (bookmark-make-record))
-         (default  (cond ((eq major-mode 'w3m-mode)
+  (let* ((record       (bookmark-make-record))
+         (regionp      (and transient-mark-mode mark-active (not (eq (mark) (point)))))
+         (name-beg     (if regionp (region-beginning) (point)))
+         (name-end     (if regionp (region-end) (save-excursion (end-of-line) (point))))
+         (def-name     (concat (buffer-name) ": " (buffer-substring name-beg name-end)))
+         (trimmed-name (substring def-name 0 (min bookmarkp-name-length-max
+                                                   (length def-name))))
+         (default      (cond (regionp
+                          trimmed-name)
+                         ((eq major-mode 'w3m-mode)
                           w3m-current-title)
                          ((eq major-mode 'gnus-summary-mode)
                           (elt (gnus-summary-article-header) 1))
