@@ -255,7 +255,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.10")
+(defconst bookmarkp-version-number "2.1.11")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -866,6 +866,7 @@ if you want to change the appearance.
                                       (string-match tramp-file-name-regexp isfile))))
                 (isssh         (and istramp (string-match "/ssh:" isfile)))
                 (isftp         (and istramp (string-match "/ftp:" isfile)))
+                (isw3m         (bookmarkp-w3m-bookmark-p name))
                 (issu          (and istramp (string-match bookmarkp-su-or-sudo-regexp
                                                           isfile)))
                 (isregion      (bookmarkp-region-bookmark-p name))
@@ -882,7 +883,7 @@ if you want to change the appearance.
                   (isgnus               ; Gnus
                    '(mouse-face highlight follow-link t face 'bookmarkp-gnus
                      help-echo "mouse-2: Go to this Gnus buffer"))
-                  ((and (string= isbuf "*w3m*") isfile (not (file-exists-p isfile))) ; W3m
+                  (isw3m
                    `(mouse-face highlight follow-link t face 'bookmarkp-w3m-url
                      help-echo (format "mouse-2 Goto URL: %s",isfile)))
                   (isssh                ; Remote SSH file
