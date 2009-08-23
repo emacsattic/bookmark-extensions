@@ -575,19 +575,6 @@ candidate."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Dont fail if bookmark have an empty filename entry.
-;; 
-(defun bookmark-location (bookmark)
-  "Return the name of the file associated with BOOKMARK.
-If filename entry doesn't exists return the buffer name instead."
-  (bookmark-maybe-load-default-file)
-  (let ((fname (bookmark-get-filename bookmark))
-        (buf   (or (bookmark-prop-get bookmark 'buffer)
-                   (bookmarkp-get-buffer-name bookmark))))
-    (if fname fname buf)))
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
 ;; Adds note about `S-delete' to doc string.
 ;;
 (or (fboundp 'old-bookmark-rename)
