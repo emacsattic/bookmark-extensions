@@ -255,7 +255,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.14")
+(defconst bookmarkp-version-number "2.1.15")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1336,40 +1336,40 @@ bookmarks.)
 
 If the region is active (`transient-mark-mode') and nonempty, record
 the region limits in the bookmark."
-  (interactive (list nil current-prefix-arg))
-  (let* ((record       (bookmark-make-record))
-         (regionp      (and transient-mark-mode mark-active (not (eq (mark) (point)))))
-         (name-beg     (if regionp (region-beginning) (point)))
-         (name-end     (if regionp (region-end) (save-excursion (end-of-line) (point))))
-         (def-name     (concat (buffer-name) ": " (buffer-substring name-beg name-end)))
-         (trimmed-name (substring def-name 0 (min bookmarkp-name-length-max
-                                                   (length def-name))))
-         (default      (cond (regionp
-                          trimmed-name)
-                         ((eq major-mode 'w3m-mode)
-                          w3m-current-title)
-                         ((eq major-mode 'gnus-summary-mode)
-                          (elt (gnus-summary-article-header) 1))
-                         (t (car record)))))
-    (bookmark-maybe-load-default-file)
-    (setq bookmark-current-point   (point)
-          bookmark-yank-point      (point)
-          bookmark-current-buffer  (current-buffer))
-    (let ((str
-           (or name (read-from-minibuffer
-                     (format "Set bookmark (%s): " default) nil
-                     (let ((map  (copy-keymap minibuffer-local-map)))
-                       (define-key map "\C-w" 'bookmark-yank-word)
-                       (define-key map "\C-u" 'bookmark-insert-current-bookmark)
-                       map)
-                     nil nil default)))
-          (annotation  nil))
-      (and (string-equal str "") (setq str  default))
-      (bookmark-store str (cdr record) parg)
-      ;; Ask for an annotation buffer for this bookmark
-      (if bookmark-use-annotations
-          (bookmark-edit-annotation str)
-          (goto-char bookmark-current-point)))))
+    (interactive (list nil current-prefix-arg))
+    (let* ((record       (bookmark-make-record))
+           (regionp      (and transient-mark-mode mark-active (not (eq (mark) (point)))))
+           (name-beg     (if regionp (region-beginning) (point)))
+           (name-end     (if regionp (region-end) (save-excursion (end-of-line) (point))))
+           (def-name     (concat (buffer-name) ": " (buffer-substring name-beg name-end)))
+           (trimmed-name (substring def-name 0 (min bookmarkp-name-length-max
+                                                    (length def-name))))
+           (default      (cond (regionp
+                                (replace-regexp-in-string "\n" " " trimmed-name))
+                               ((eq major-mode 'w3m-mode)
+                                w3m-current-title)
+                               ((eq major-mode 'gnus-summary-mode)
+                                (elt (gnus-summary-article-header) 1))
+                               (t (car record)))))
+      (bookmark-maybe-load-default-file)
+      (setq bookmark-current-point   (point)
+            bookmark-yank-point      (point)
+            bookmark-current-buffer  (current-buffer))
+      (let ((str
+             (or name (read-from-minibuffer
+                       (format "Set bookmark (%s): " default) nil
+                       (let ((map  (copy-keymap minibuffer-local-map)))
+                         (define-key map "\C-w" 'bookmark-yank-word)
+                         (define-key map "\C-u" 'bookmark-insert-current-bookmark)
+                         map)
+                       nil nil default)))
+            (annotation  nil))
+        (and (string-equal str "") (setq str  default))
+        (bookmark-store str (cdr record) parg)
+        ;; Ask for an annotation buffer for this bookmark
+        (if bookmark-use-annotations
+            (bookmark-edit-annotation str)
+            (goto-char bookmark-current-point)))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
