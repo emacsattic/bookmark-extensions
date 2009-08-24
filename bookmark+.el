@@ -265,6 +265,7 @@
 
 ;; Quiet the byte-compiler
 (defvar w3m-current-url)                ; Defined in `w3m.el'.
+(defvar w3m-current-title)              ; Defined in `w3m.el'.
 (defvar gnus-article-current)           ; Defined in `gnus-sum.el'.
 (defvar tramp-file-name-regexp)         ; Defined in `tramp.el'.
 (defvar bookmark-make-record-function)  ; Defined in `bookmark.el'.
@@ -364,7 +365,7 @@ as part of the bookmark definition."
 If nil show only beginning of region."
   :type 'boolean :group 'bookmarkp)
 
-(defcustom bookmarkp-name-length-max 70
+(defcustom bookmarkp-bookmark-name-length-max 70
   "*Maximum number of characters used to name a bookmark with region."
   :type 'integer :group 'bookmarkp)
 
@@ -566,7 +567,10 @@ candidate."
 
 ;;;###autoload
 (defun bookmark-insert-location (bookmark-name &optional no-history)
-  "Insert the name of the file for the bookmark named BOOKMARK-NAME.
+  "Insert file or buffer name for the bookmark named BOOKMARK-NAME.
+If a file is bookmarked, insert the recorded file name.
+If a non-file buffer is bookmarked, insert the recorded buffer name.
+
 Optional second arg NO-HISTORY means do not record this in the
 minibuffer history list `bookmark-history'.
 
@@ -848,7 +852,7 @@ if you want to change the appearance.
   (bookmark-maybe-load-default-file)
   (if (interactive-p)
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
-    (set-buffer (get-buffer-create "*Bookmark List*")))
+      (set-buffer (get-buffer-create "*Bookmark List*")))
   (let* ((inhibit-read-only  t)
          (alternate-title    (if title title "% Bookmark+"))
          (len-alt-title      (- (length alternate-title) 2)))
@@ -865,11 +869,14 @@ if you want to change the appearance.
          (let* ((start         (point))
                 (name          (bookmark-name-from-full-record full-record))
                 (isfile        (bookmark-get-filename name))
+                (isremote      (and isfile
+                                    (if (fboundp 'file-remote-p)
+                                        (file-remote-p isfile)
+                                        (if (fboundp 'ffap-file-remote-p)
+                                            (ffap-file-remote-p isfile)))))
                 (istramp       (and isfile (boundp 'tramp-file-name-regexp)
                                     (save-match-data
                                       (string-match tramp-file-name-regexp isfile))))
-                (isssh         (and istramp (string-match "/ssh:" isfile)))
-                (isftp         (and istramp (string-match "/ftp:" isfile)))
                 (isw3m         (bookmarkp-w3m-bookmark-p name))
                 (issu          (and istramp (string-match bookmarkp-su-or-sudo-regexp
                                                           isfile)))
@@ -887,30 +894,27 @@ if you want to change the appearance.
                   (isgnus               ; Gnus
                    '(mouse-face highlight follow-link t face 'bookmarkp-gnus
                      help-echo "mouse-2: Go to this Gnus buffer"))
-                  (isw3m
+                  (isw3m                ; W3m
                    `(mouse-face highlight follow-link t face 'bookmarkp-w3m-url
-                     help-echo (format "mouse-2 Goto URL: %s",isfile)))
-                  (isssh                ; Remote SSH file
-                   `(mouse-face highlight follow-link t face 'bookmarkp-remote-file
-                     help-echo (format "mouse-2 Goto remote file: %s",isfile)))
-                  (isftp                ; Remote FTP file
-                   `(mouse-face highlight follow-link t face 'bookmarkp-remote-file
-                     help-echo (format "mouse-2 Goto remote file: %s",isfile)))
-                  ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root or sudo
+                                help-echo (format "mouse-2 Goto URL: %s",isfile)))
+                  ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root or sudo not logged
                    `(mouse-face highlight follow-link t face 'bookmarkp-su-or-sudo
-                     help-echo (format "mouse-2 Goto file: %s",isfile)))
+                                help-echo (format "mouse-2 Goto file: %s",isfile)))
+                  ((and isremote (not issu))              ; Remote file (ssh, ftp)
+                   `(mouse-face highlight follow-link t face 'bookmarkp-remote-file
+                                help-echo (format "mouse-2 Goto remote file: %s",isfile)))
                   ((and isfile (file-directory-p isfile)) ; Local directory
                    `(mouse-face highlight follow-link t face 'bookmarkp-directory
-                     help-echo (format "mouse-2 Goto dired: %s",isfile)))
+                                help-echo (format "mouse-2 Goto dired: %s",isfile)))
                   ((and isfile (file-exists-p isfile) isregion) ; Local file with region
                    `(mouse-face highlight follow-link t face 'bookmarkp-file-region
-                     help-echo (format "mouse-2 Find region in file: %s",isfile)))
+                                help-echo (format "mouse-2 Find region in file: %s",isfile)))
                   ((and isfile (file-exists-p isfile)) ; Local file without region
                    `(mouse-face highlight follow-link t face 'bookmarkp-file
-                     help-echo (format "mouse-2 Goto file: %s",isfile)))
-                  ((and isbuf (not isfile)) ; Buffer without a file
+                                help-echo (format "mouse-2 Goto file: %s",isfile)))
+                  ((and isbuf (not isfile)) ; Buffer not filename
                    `(mouse-face highlight follow-link t face 'bookmarkp-nonfile-buffer
-                     help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
+                                help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
            (insert "\n"))))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
@@ -964,14 +968,24 @@ BOOKMARK is a bookmark name or a bookmark record."
   "Return non-nil if BOOKMARK bookmarks a remote file or directory.
 BOOKMARK is a bookmark name or a bookmark record."
   (let ((file  (bookmark-get-filename bookmark)))
-    (and file (boundp 'tramp-file-name-regexp)
-         (save-match-data (string-match tramp-file-name-regexp file)))))
+    (and file  (not (bookmark-get-handler bookmark))  (if (fboundp 'file-remote-p)
+                                                          (file-remote-p file)
+                                                        (if (fboundp 'ffap-file-remote-p)
+                                                            (ffap-file-remote-p file))))))
 
 (defun bookmarkp-local-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a local file or directory.
 BOOKMARK is a bookmark name or a bookmark record."
-  (and (bookmark-get-filename bookmark)
+  (and (bookmarkp-file-bookmark-p bookmark)
        (not (bookmarkp-remote-file-bookmark-p bookmark))))
+
+(defun bookmarkp-file-bookmark-p (bookmark)
+  "Return non-nil if BOOKMARK bookmarks a file or directory.
+This excludes bookmarks such as Info nodes that have use
+special handlers.
+BOOKMARK is a bookmark name or a bookmark record."
+  (and (bookmark-get-filename bookmark)
+       (not (bookmark-get-handler bookmark))))
 
 
 ;;; Filter functions
@@ -1136,7 +1150,7 @@ BEG and END are the new region limits for BOOKMARK.
 Do nothing and return nil if `bookmarkp-save-new-location-flag' is nil.
 Otherwise, return non-nil if region was relocated."
   (and bookmarkp-save-new-location-flag
-       (y-or-n-p "Region relocated: Do you want to save new region limits? ")
+       (y-or-n-p "Region relocated.  Do you want to save new region limits? ")
        (progn
          (bookmark-prop-set bookmark 'front-context-string
                             (bookmarkp-region-record-front-context-string beg end))
@@ -1307,69 +1321,96 @@ posts, images, pdf documents, etc.")
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Uses `bookmark-make-record'.
-;; Default prompt for w3m and Gnus.
+;; Use `bookmark-make-record'.
+;; Use special default prompts for active region, W3m, and Gnus.
 ;;
 (defun bookmark-set (&optional name parg)
-    "Set a bookmark named NAME.
-If NAME is nil, then prompt the user for the name.
-With a prefix arg, do not overwrite a bookmark that has the same name
-as NAME, if such a bookmark already exists.  Instead, push the new
-bookmark onto the bookmark alist.  
+  "Set a bookmark named NAME.
+If the region is active (`transient-mark-mode') and nonempty, then
+record the region limits in the bookmark.
+
+If NAME is nil, then prompt for the bookmark name.  The default name
+for prompting is as follows (in order of priority):
+
+ * If the region is active and nonempty, then the buffer name followed
+   by \": \" and the region prefix (up to
+   `bookmarkp-bookmark-name-length-max' chars).
+
+ * If in W3m mode, then the current W3m title.
+
+ * If in Gnus Summary mode, then the Gnus summary article header.
+
+ * Otherwise, the current buffer name.
+
+While entering a bookmark name at the prompt:
+
+ * You can use `C-w' to yank words from the buffer to the minibuffer.
+   Repeating `C-w' yanks successive words.
+
+ * You can use `C-u' to insert the name of the last bookmark used in
+   the buffer.  This can be useful as an aid to track your progress
+   through a large file.  (If no bookmark has yet been used, then
+   `C-u' inserts the name of the visited file.)
+
+With a prefix argument, do not overwrite a bookmark that has the same
+name as NAME, if such a bookmark already exists.  Instead, push the
+new bookmark onto the bookmark alist.
 
 The most recently set bookmark named NAME is thus the one in effect at
-any given time, but the others are still there, should you decide to
-delete the most recent one.
-
-To yank words from the text of the buffer and use them as part of the
-bookmark name, use `C-w' while setting a bookmark.  Repeating `C-w'
-yanks successive words.
-
-Using `C-u' inserts the name of the last bookmark used in the buffer
-\(as an aid in using a single bookmark name to track your progress
-through a large file).  If no bookmark was used, then `C-u' inserts
-the name of the file being visited.
+any given time, but any others named NAME are still available, should
+you decide to delete the most recent one.
 
 Use `\\[bookmark-delete]' to remove bookmarks (you give it a name, and it removes
 only the first instance of a bookmark with that name from the list of
-bookmarks.)
-
-If the region is active (`transient-mark-mode') and nonempty, record
-the region limits in the bookmark."
-    (interactive (list nil current-prefix-arg))
-    (let* ((record       (bookmark-make-record))
-           (regionp      (and transient-mark-mode mark-active (not (eq (mark) (point)))))
-           (name-beg     (if regionp (region-beginning) (point)))
-           (name-end     (if regionp (region-end) (save-excursion (end-of-line) (point))))
-           (def-name     (concat (buffer-name) ": " (buffer-substring name-beg name-end)))
-           (trimmed-name (substring def-name 0 (min bookmarkp-name-length-max
-                                                    (length def-name))))
-           (default      (cond (regionp
-                                (replace-regexp-in-string "\n" " " trimmed-name))
-                               ((eq major-mode 'w3m-mode)
-                                w3m-current-title)
-                               ((eq major-mode 'gnus-summary-mode)
-                                (elt (gnus-summary-article-header) 1))
-                               (t (car record)))))
-      (bookmark-maybe-load-default-file)
-      (setq bookmark-current-point   (point)
-            bookmark-yank-point      (point)
-            bookmark-current-buffer  (current-buffer))
-      (let ((str
-             (or name (read-from-minibuffer
-                       (format "Set bookmark (%s): " default) nil
-                       (let ((map  (copy-keymap minibuffer-local-map)))
-                         (define-key map "\C-w" 'bookmark-yank-word)
-                         (define-key map "\C-u" 'bookmark-insert-current-bookmark)
-                         map)
-                       nil nil default)))
-            (annotation  nil))
-        (and (string-equal str "") (setq str  default))
-        (bookmark-store str (cdr record) parg)
-        ;; Ask for an annotation buffer for this bookmark
-        (if bookmark-use-annotations
-            (bookmark-edit-annotation str)
-            (goto-char bookmark-current-point)))))
+bookmarks.)"
+  (interactive (list nil current-prefix-arg))
+  (bookmark-maybe-load-default-file)
+  (setq bookmark-current-point   (point)
+        bookmark-yank-point      (point)
+        bookmark-current-buffer  (current-buffer))
+  (let* ((annotation  nil)              ; @@@@ THIS BINDING REALLY NEEDED? Not in vanilla.
+         (record   (bookmark-make-record))
+         (defname  "")
+         (bname
+          (or name
+              (let* ((regionp  (and transient-mark-mode mark-active
+                                    (not (eq (mark) (point)))))
+                     (regname  (concat (buffer-name) ": "
+                                       (buffer-substring
+                                        (if regionp (region-beginning) (point))
+                                        (if regionp
+                                            (region-end)
+                                          (save-excursion (end-of-line) (point)))))))
+                (setq defname  (replace-regexp-in-string
+                                "\n" " "
+                                (cond (regionp
+                                       (substring regname 0
+                                                  (min bookmarkp-bookmark-name-length-max
+                                                       (length regname))))
+                                      ((eq major-mode 'w3m-mode)
+                                       w3m-current-title)
+                                      ((eq major-mode 'gnus-summary-mode)
+                                       (elt (gnus-summary-article-header) 1))
+                                      (t (car record)))))
+                (read-from-minibuffer
+                 (format "Set bookmark (%s): "
+                         (if (> emacs-major-version 21)
+                             (substitute-command-keys
+                              "`\\<minibuffer-local-map>\\[next-history-element]' \
+for default")
+                           defname))
+                 nil
+                 (let ((map  (copy-keymap minibuffer-local-map)))
+                   (define-key map "\C-w" 'bookmark-yank-word)
+                   (define-key map "\C-u" 'bookmark-insert-current-bookmark)
+                   map)
+                 nil nil defname)))))
+    (when (string-equal bname "") (setq bname  defname))
+    (bookmark-store bname (cdr record) parg)
+    ;; Ask for an annotation buffer for this bookmark
+    (if bookmark-use-annotations
+        (bookmark-edit-annotation bname)
+      (goto-char bookmark-current-point))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1442,7 +1483,7 @@ Return nil or signal `file-error'."
         (raise-frame)
         (goto-char (min pos (point-max)))
         (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
-        ;; Activate region.  Relocate it if it has moved.  Save relocated bookmark if confirm.
+        ;; Activate region.  Relocate it if it moved.  Save relocated bookmark if confirm.
         (funcall bookmarkp-handle-region-function bmk))))
 
 
