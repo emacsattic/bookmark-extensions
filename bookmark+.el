@@ -1221,9 +1221,17 @@ If region was relocated, save it if user confirms saving."
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
            (when bookmarkp-show-end-of-region
-             (save-excursion
-               (sit-for 1) (exchange-point-and-mark) (sit-for 1.5)))
-           (recenter 0)
+             (let ((end-win (save-excursion
+                              (goto-line (+ (line-number-at-pos) (window-height)))
+                              (end-of-line)
+                              (point))))
+               ;; Show beg and end of region.
+               (save-excursion
+                 (sit-for 0.6) (exchange-point-and-mark) (sit-for 1))
+               ;; Recenter when end region is not visible.
+               (when (> end-pos end-win)
+                 (recenter 1))))
+           ;; May be save region.
            (if (and reg-relocated-p
                     (bookmarkp-save-new-region-location bmk pos end-pos))
                (message "Saved relocated region (from %d to %d)" pos end-pos)
