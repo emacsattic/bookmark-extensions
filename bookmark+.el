@@ -255,7 +255,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.15")
+(defconst bookmarkp-version-number "2.1.16")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
