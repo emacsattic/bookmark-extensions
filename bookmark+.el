@@ -967,11 +967,11 @@ BOOKMARK is a bookmark name or a bookmark record."
 (defun bookmarkp-remote-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a remote file or directory.
 BOOKMARK is a bookmark name or a bookmark record."
-  (let ((file  (bookmark-get-filename bookmark)))
-    (and file  (not (bookmark-get-handler bookmark))  (if (fboundp 'file-remote-p)
-                                                          (file-remote-p file)
-                                                        (if (fboundp 'ffap-file-remote-p)
-                                                            (ffap-file-remote-p file))))))
+  (let* ((file     (bookmark-get-filename bookmark))
+         (rem-file (if (fboundp 'file-remote-p) (file-remote-p file)
+                       (if (fboundp 'ffap-file-remote-p)
+                           (ffap-file-remote-p file)))))
+    (and file (not (bookmark-get-handler bookmark)) rem-file)))
 
 (defun bookmarkp-local-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a local file or directory.
@@ -1368,49 +1368,44 @@ bookmarks.)"
   (setq bookmark-current-point   (point)
         bookmark-yank-point      (point)
         bookmark-current-buffer  (current-buffer))
-  (let* ((annotation  nil)              ; @@@@ THIS BINDING REALLY NEEDED? Not in vanilla.
-         (record   (bookmark-make-record))
-         (defname  "")
-         (bname
-          (or name
-              (let* ((regionp  (and transient-mark-mode mark-active
-                                    (not (eq (mark) (point)))))
-                     (regname  (concat (buffer-name) ": "
-                                       (buffer-substring
-                                        (if regionp (region-beginning) (point))
-                                        (if regionp
-                                            (region-end)
-                                          (save-excursion (end-of-line) (point)))))))
-                (setq defname  (replace-regexp-in-string
-                                "\n" " "
-                                (cond (regionp
-                                       (substring regname 0
-                                                  (min bookmarkp-bookmark-name-length-max
-                                                       (length regname))))
-                                      ((eq major-mode 'w3m-mode)
-                                       w3m-current-title)
-                                      ((eq major-mode 'gnus-summary-mode)
-                                       (elt (gnus-summary-article-header) 1))
-                                      (t (car record)))))
-                (read-from-minibuffer
-                 (format "Set bookmark (%s): "
-                         (if (> emacs-major-version 21)
-                             (substitute-command-keys
-                              "`\\<minibuffer-local-map>\\[next-history-element]' \
-for default")
-                           defname))
-                 nil
-                 (let ((map  (copy-keymap minibuffer-local-map)))
-                   (define-key map "\C-w" 'bookmark-yank-word)
-                   (define-key map "\C-u" 'bookmark-insert-current-bookmark)
-                   map)
-                 nil nil defname)))))
+  (let* ((record  (bookmark-make-record))
+         (regionp (and transient-mark-mode mark-active (not (eq (mark) (point)))))
+         (regname (concat (buffer-name) ": "
+                              (buffer-substring
+                               (if regionp (region-beginning) (point))
+                               (if regionp
+                                   (region-end)
+                                   (save-excursion (end-of-line) (point))))))
+         (defname (replace-regexp-in-string
+                       "\n" " "
+                       (cond (regionp
+                              (substring regname 0
+                                         (min bookmarkp-bookmark-name-length-max
+                                              (length regname))))
+                             ((eq major-mode 'w3m-mode)
+                              w3m-current-title)
+                             ((eq major-mode 'gnus-summary-mode)
+                              (elt (gnus-summary-article-header) 1))
+                             (t (car record)))))
+         (doc-cmd "`\\<minibuffer-local-map>\\[next-history-element]' \ for default")
+         (bname   (or name
+                      (read-from-minibuffer
+                       (format "Set bookmark (%s): "
+                               (if (> emacs-major-version 21)
+                                   (substitute-command-keys doc-cmd)
+                                   defname))
+                       nil
+                       (let ((map  (copy-keymap minibuffer-local-map)))
+                         (define-key map "\C-w" 'bookmark-yank-word)
+                         (define-key map "\C-u" 'bookmark-insert-current-bookmark)
+                         map)
+                       nil nil defname))))
     (when (string-equal bname "") (setq bname  defname))
     (bookmark-store bname (cdr record) parg)
     ;; Ask for an annotation buffer for this bookmark
     (if bookmark-use-annotations
         (bookmark-edit-annotation bname)
-      (goto-char bookmark-current-point))))
+        (goto-char bookmark-current-point))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
