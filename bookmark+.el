@@ -255,7 +255,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.16")
+(defconst bookmarkp-version-number "2.1.17")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -968,9 +968,10 @@ BOOKMARK is a bookmark name or a bookmark record."
   "Return non-nil if BOOKMARK bookmarks a remote file or directory.
 BOOKMARK is a bookmark name or a bookmark record."
   (let* ((file     (bookmark-get-filename bookmark))
-         (rem-file (if (fboundp 'file-remote-p) (file-remote-p file)
-                       (if (fboundp 'ffap-file-remote-p)
-                           (ffap-file-remote-p file)))))
+         (rem-file (if file ; Be sure we don't give nil to `file-remote-p'
+                       (if (fboundp 'file-remote-p) (file-remote-p file)
+                           (if (fboundp 'ffap-file-remote-p)
+                               (ffap-file-remote-p file))))))
     (and file (not (bookmark-get-handler bookmark)) rem-file)))
 
 (defun bookmarkp-local-file-bookmark-p (bookmark)
