@@ -920,7 +920,8 @@ if you want to change the appearance.
   (goto-char (point-min))
   (forward-line 2)
   (bookmark-bmenu-mode)
-  (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t)))
+  (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))
+  (when (fboundp 'fit-frame-if-one-window) (fit-frame-if-one-window)))
 
 (defun bookmarkp-get-buffer-name (bookmark)
   "Return the buffer-name of BOOKMARK.
