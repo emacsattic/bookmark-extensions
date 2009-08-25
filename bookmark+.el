@@ -255,7 +255,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.18")
+(defconst bookmarkp-version-number "2.1.19")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -300,6 +300,7 @@
 
 ;; Define extras keys in the `bookmark-bmenu-mode-map' space."
 ;;
+(define-key bookmark-bmenu-mode-map "T" 'bookmarkp-toggle-filenames-and-refresh)
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-entries)
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-entries)
 (define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-entries)
@@ -311,6 +312,7 @@
 ;;
 (defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
   "Extras keys added by bookmark+:
+T -- bookmarkp-toggle-filenames-and-refresh
 W -- bookmarkp-bmenu-list-only-w3m-entries
 I -- bookmarkp-bmenu-list-only-info-entries
 G -- bookmarkp-bmenu-list-only-gnus-entries
@@ -745,6 +747,31 @@ candidate."
                                         (not bookmarkp-use-region-flag)
                                       bookmarkp-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer)))
+
+(defun bookmarkp-refresh-current-alist ()
+  "Reload the current `bookmark-alist' maybe filtered."
+  (interactive)
+  (with-current-buffer "*Bookmark List*"
+    (goto-char (point-min))
+    (let ((alist nil)
+          (title (buffer-substring (point) (line-end-position))))
+      (forward-line 2)
+      (while (< (point) (point-max))
+        (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
+          (when bmk
+            (push bmk alist)))
+        (forward-line 1))
+      (let ((bookmark-alist alist))
+        (bookmark-bmenu-list title)))))
+
+(defun bookmarkp-toggle-filenames-and-refresh ()
+  "Toggle filename visibility and refresh alist."
+  (interactive)
+  (bookmark-bmenu-toggle-filenames)
+  (when (not bookmark-bmenu-toggle-filenames)
+    (bookmarkp-refresh-current-alist)))
+
+;(add-hook 'bookmark-after-jump-hook 'bookmarkp-refresh-current-alist)
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
