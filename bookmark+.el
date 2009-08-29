@@ -59,11 +59,11 @@
 ;;
 ;;  Commands defined here:
 ;;
-;;    `bookmarkp-bmenu-list-only-regions',
-;;    `bookmarkp-bmenu-list-only-gnus-entries',
-;;    `bookmarkp-bmenu-list-only-w3m-entries',
-;;    `bookmarkp-bmenu-list-only-info-entries',
-;;    `bookmarkp-bmenu-list-only-files-entries', `bookmarkp-version'.
+;;    `bookmarkp-bmenu-list-only-file-bookmarks',
+;;    `bookmarkp-bmenu-list-only-gnus-bookmarks',
+;;    `bookmarkp-bmenu-list-only-info-bookmarks',
+;;    `bookmarkp-bmenu-list-only-region-bookmarks',
+;;    `bookmarkp-bmenu-list-only-w3m-bookmarks', `bookmarkp-version'.
 ;;
 ;;  * User options defined here:
 ;;
@@ -75,18 +75,17 @@
 ;;
 ;;  * Faces defined here:
 ;;
-;;    `bookmarkp-directory', `bookmarkp-file',
-;;    `bookmarkp-file-region', `bookmarkp-gnus',
-;;    `bookmarkp-info-node', `bookmarkp-nonfile-buffer',
-;;    `bookmarkp-remote-file', `bookmarkp-su-or-sudo',
-;;    `bookmarkp-w3m-url'.
+;;    `bookmarkp-local-directory', `bookmarkp-local-file-with-region',
+;;    `bookmarkp-local-file-without-region', `bookmarkp-gnus',
+;;    `bookmarkp-info', `bookmarkp-non-file', `bookmarkp-remote-file',
+;;    `bookmarkp-su-or-sudo', `bookmarkp-w3m'.
 ;;
 ;;  * Non-interactive functions defined here:
 ;;
 ;;    `bookmark-make-record-function', (Emacs 20-22),
 ;;    `bookmark-menu-jump-other-window' (Emacs 20, 21),
 ;;    `bookmark-position-before-whitespace', (Emacs 20, 21),
-;;    `bookmarkp-files-alist-only', `bookmarkp-file-bookmark-p',
+;;    `bookmarkp-file-alist-only', `bookmarkp-file-bookmark-p',
 ;;    `bookmarkp-get-buffer-name', `bookmarkp-get-end-position',
 ;;    `bookmarkp-gnus-alist-only', `bookmarkp-gnus-bookmark-p',
 ;;    `bookmarkp-goto-position', `bookmarkp-handle-region-default',
@@ -94,8 +93,10 @@
 ;;    `bookmarkp-jump-gnus', `bookmarkp-jump-w3m',
 ;;    `bookmarkp-jump-w3m-new-session',
 ;;    `bookmarkp-jump-w3m-only-one-tab',
+;;    `bookmarkp-local-directory-bookmark-p',
+;;    `bookmarkp-local-file-alist-only',
 ;;    `bookmarkp-local-file-bookmark-p', `bookmarkp-make-gnus-record',
-;;    `bookmarkp-make-w3m-record',
+;;    `bookmarkp-make-w3m-record', `bookmarkp-non-file-alist-only',
 ;;    `bookmarkp-position-after-whitespace',
 ;;    `bookmarkp-record-end-context-region-string',
 ;;    `bookmarkp-record-front-context-region-string',
@@ -104,7 +105,7 @@
 ;;    `bookmarkp-region-alist-only', `bookmarkp-region-bookmark-p',
 ;;    `bookmarkp-region-record-front-context-string',
 ;;    `bookmarkp-region-record-rear-context-string',
-;;    `bookmarkp-remote-alist-only',
+;;    `bookmarkp-remote-file-alist-only',
 ;;    `bookmarkp-remote-file-bookmark-p', `bookmarkp-remove-if',
 ;;    `bookmarkp-remove-if-not', `bookmarkp-root-or-sudo-logged-p',
 ;;    `bookmarkp-save-new-region-location',
@@ -180,17 +181,44 @@
 ;;(@* "Compatibility with Vanilla Emacs (`bookmark.el')")
 ;;  ** Compatibility with Vanilla Emacs (`bookmark.el') **
 ;;
-;;  All bookmarks created by any version of vanilla Emacs (library
-;;  `bookmark.el') continue to work with `bookmark+.el'.
+;;  Library `bookmark+.el' is generally compatible with GNU Emacs
+;;  versions 20 through 23.
 ;;
-;;  Conversely, bookmarks created using `bookmark+.el' will not
-;;  interfere with the behavior of vanilla Emacs - the new bookmark
-;;  types are simply ignored by vanilla Emacs.  For example:
+;;  1. All bookmarks created using any version of vanilla Emacs
+;;     (library `bookmark.el') continue to work with `bookmark+.el'.
+;;
+;;  2. All bookmarks created using library `bookmark+.el' will work
+;;     with all Emacs versions (20-23), provided you use library
+;;     `bookmark+.el' to access them.
+;;
+;;  3. Most bookmarks created using `bookmark+.el' will not interfere
+;;     with the behavior of vanilla Emacs, versions 21-23.  The new
+;;     bookmark types are simply ignored by vanilla Emacs.  For
+;;     example:
 ;;
 ;;    - A bookmark with a region is treated like a simple position
 ;;      bookmark: the destination is the region start position.
 ;;
-;;    - A Gnus bookmark does not work; it is ignored.
+;;    - A Gnus bookmark does not work; it is simply ignored.
+;;
+;;  However, there are two cases in which `bookmark+.el' bookmarks
+;;  will raise an error in vanilla Emacs:
+;;
+;;  * You cannot use non-file bookmarks with any version of vanilla
+;;    Emacs.
+;;
+;;  * You cannot use any bookmarks created using `bookmark+.el' with
+;;    vanilla Emacs 20.
+;;
+;;    The Emacs bookmark data structure has changed from version to
+;;    version.  Library `bookmark+.el' always creates bookmarks that
+;;    have the most recent structure (Emacs 23).  As is the case for
+;;    any bookmarks that have the Emacs 23 structure, these bookmarks
+;;    will not work in vanilla Emacs 20 (that is, without
+;;    `bookmark+.el').
+;;
+;;  Bottom line: Use `bookmark+.el' to access bookmarks created using
+;;  `bookmark+.el'.
 ;;
 ;;(@* "New Bookmark Structure")
 ;;  ** New Bookmark Structure **
@@ -255,7 +283,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.19")
+(defconst bookmarkp-version-number "2.1.21")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -286,26 +314,26 @@
 ;;;###autoload
 (define-key ctl-x-map "pj" 'bookmark-jump-other-window)
 ;;;###autoload
-(define-key bookmark-map "R" 'bookmarkp-bmenu-list-only-regions)
+(define-key bookmark-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 ;;;###autoload
-(define-key bookmark-map "G" 'bookmarkp-bmenu-list-only-gnus-entries)
+(define-key bookmark-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
 ;;;###autoload
-(define-key bookmark-map "W" 'bookmarkp-bmenu-list-only-w3m-entries)
+(define-key bookmark-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
 (define-key bookmark-map "A" 'bookmark-bmenu-list)
 ;;;###autoload
-(define-key bookmark-map "F" 'bookmarkp-bmenu-list-only-files-entries)
+(define-key bookmark-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
 ;;;###autoload
-(define-key bookmark-map "I" 'bookmarkp-bmenu-list-only-info-entries)
+(define-key bookmark-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 
 ;; Define extras keys in the `bookmark-bmenu-mode-map' space."
 ;;
 (define-key bookmark-bmenu-mode-map "T" 'bookmarkp-toggle-filenames-and-refresh)
-(define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-entries)
-(define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-entries)
-(define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-entries)
-(define-key bookmark-bmenu-mode-map "F" 'bookmarkp-bmenu-list-only-files-entries)
-(define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-regions)
+(define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
+(define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
+(define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
+(define-key bookmark-bmenu-mode-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
+(define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 
 
 ;; Add the news keys to `bookmark-bmenu-mode' docstring.
@@ -313,11 +341,11 @@
 (defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
   "Extras keys added by bookmark+:
 T -- bookmarkp-toggle-filenames-and-refresh
-W -- bookmarkp-bmenu-list-only-w3m-entries
-I -- bookmarkp-bmenu-list-only-info-entries
-G -- bookmarkp-bmenu-list-only-gnus-entries
-F -- bookmarkp-bmenu-list-only-files-entries: (C-u) to remove remote files.
-R -- bookmarkp-bmenu-list-only-regions")
+W -- bookmarkp-bmenu-list-only-w3m-bookmarks
+I -- bookmarkp-bmenu-list-only-info-bookmarks
+G -- bookmarkp-bmenu-list-only-gnus-bookmarks
+F -- bookmarkp-bmenu-list-only-file-bookmarks: (C-u) for local only.
+R -- bookmarkp-bmenu-list-only-region-bookmarks")
  
 ;;(@* "User Options")
 ;;; User Options -----------------------------------------------------
@@ -374,39 +402,34 @@ If nil show only beginning of region."
 ;;(@* "Faces (Customizable)")
 ;;; Faces (Customizable) ---------------------------------------------
 
-(defface bookmarkp-nonfile-buffer
-    '((t (:foreground "grey")))
-  "*Face used for a bookmarked non-file buffer."
+(defface bookmarkp-gnus
+    '((t (:foreground "magenta")))
+  "*Face used for a gnus bookmark."
   :group 'bookmarkp)
 
-(defface bookmarkp-file-region
-    '((t (:foreground "Indianred2")))
-  "*Face used for a bookmarked region in a local file."
-  :group 'bookmarkp)
-
-(defface bookmarkp-directory
-    '((t (:foreground "DarkRed" :background "LightGray")))
-  "*Face used for a bookmarked local directory."
-  :group 'bookmarkp)
-
-(defface bookmarkp-file
-    '((t (:foreground "Blue")))
-  "*Face used for a bookmarked local file (without a region)."
-  :group 'bookmarkp)
-
-(defface bookmarkp-info-node
+(defface bookmarkp-info
     '((t (:foreground "green")))
   "*Face used for a bookmarked Info node."
   :group 'bookmarkp)
 
-(defface bookmarkp-w3m-url
-    '((t (:foreground "yellow")))
-  "*Face used for a bookmarked w3m url."
+(defface bookmarkp-local-directory
+    '((t (:foreground "DarkRed" :background "LightGray")))
+  "*Face used for a bookmarked local directory."
   :group 'bookmarkp)
 
-(defface bookmarkp-gnus
-    '((t (:foreground "magenta")))
-  "*Face used for a gnus bookmark."
+(defface bookmarkp-local-file-with-region
+    '((t (:foreground "Indianred2")))
+  "*Face used for a region bookmark in a local file."
+  :group 'bookmarkp)
+
+(defface bookmarkp-local-file-without-region
+    '((t (:foreground "Blue")))
+  "*Face used for a bookmarked local file (without a region)."
+  :group 'bookmarkp)
+
+(defface bookmarkp-non-file
+    '((t (:foreground "grey")))
+  "*Face used for a bookmarked buffer not associated with a file."
   :group 'bookmarkp)
 
 (defface bookmarkp-remote-file
@@ -419,6 +442,11 @@ If nil show only beginning of region."
   "*Face used for a bookmarked tramp file (/su: or /sudo:)."
   :group 'bookmarkp)
  
+(defface bookmarkp-w3m
+    '((t (:foreground "yellow")))
+  "*Face used for a bookmarked w3m url."
+  :group 'bookmarkp)
+
 ;;(@* "Other Code")
 ;;; Other Code -------------------------------------------------------
 
@@ -871,15 +899,15 @@ deletion, or `>' if it is flagged for displaying.
 The following faces are used for list entries.  Use `customize-face'
 if you want to change the appearance.
 
-  `bookmarkp-directory', `bookmarkp-file', `bookmarkp-file-region',
-  `bookmarkp-gnus', `bookmarkp-info-node', `bookmarkp-nonfile-buffer',
-  `bookmarkp-remote-file', `bookmarkp-su-or-sudo',
-  `bookmarkp-w3m-url'."
+  `bookmarkp-local-directory', `bookmarkp-local-file-without-region',
+  `bookmarkp-local-file-with-region', `bookmarkp-gnus',
+  `bookmarkp-info', `bookmarkp-non-file', `bookmarkp-remote-file',
+  `bookmarkp-su-or-sudo', `bookmarkp-w3m'."
   (interactive)
   (bookmark-maybe-load-default-file)
   (if (interactive-p)
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
-      (set-buffer (get-buffer-create "*Bookmark List*")))
+    (set-buffer (get-buffer-create "*Bookmark List*")))
   (let* ((inhibit-read-only  t)
          (alternate-title    (if title title "% Bookmark+"))
          (len-alt-title      (- (length alternate-title) 2)))
@@ -899,8 +927,8 @@ if you want to change the appearance.
                 (isremote      (and isfile
                                     (if (fboundp 'file-remote-p)
                                         (file-remote-p isfile)
-                                        (if (fboundp 'ffap-file-remote-p)
-                                            (ffap-file-remote-p isfile)))))
+                                      (if (fboundp 'ffap-file-remote-p)
+                                          (ffap-file-remote-p isfile)))))
                 (istramp       (and isfile (boundp 'tramp-file-name-regexp)
                                     (save-match-data
                                       (string-match tramp-file-name-regexp isfile))))
@@ -916,32 +944,34 @@ if you want to change the appearance.
            (add-text-properties
             start  (save-excursion (re-search-backward "[^ \t]") (1+ (point)))
             (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
-                   '(mouse-face highlight follow-link t face 'bookmarkp-info-node
+                   '(mouse-face highlight follow-link t face 'bookmarkp-info
                      help-echo "mouse-2: Go to this Info buffer"))
                   (isgnus               ; Gnus
                    '(mouse-face highlight follow-link t face 'bookmarkp-gnus
                      help-echo "mouse-2: Go to this Gnus buffer"))
                   (isw3m                ; W3m
-                   `(mouse-face highlight follow-link t face 'bookmarkp-w3m-url
-                                help-echo (format "mouse-2 Goto URL: %s",isfile)))
-                  ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root or sudo not logged
+                   `(mouse-face highlight follow-link t face 'bookmarkp-w3m
+                     help-echo (format "mouse-2 Goto URL: %s",isfile)))
+                  ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
                    `(mouse-face highlight follow-link t face 'bookmarkp-su-or-sudo
-                                help-echo (format "mouse-2 Goto file: %s",isfile)))
-                  ((and isremote (not issu))              ; Remote file (ssh, ftp)
+                     help-echo (format "mouse-2 Goto file: %s",isfile)))
+                  ((and isremote (not issu)) ; Remote file (ssh, ftp)
                    `(mouse-face highlight follow-link t face 'bookmarkp-remote-file
-                                help-echo (format "mouse-2 Goto remote file: %s",isfile)))
+                     help-echo (format "mouse-2 Goto remote file: %s",isfile)))
                   ((and isfile (file-directory-p isfile)) ; Local directory
-                   `(mouse-face highlight follow-link t face 'bookmarkp-directory
-                                help-echo (format "mouse-2 Goto dired: %s",isfile)))
+                   `(mouse-face highlight follow-link t face 'bookmarkp-local-directory
+                     help-echo (format "mouse-2 Goto dired: %s",isfile)))
                   ((and isfile (file-exists-p isfile) isregion) ; Local file with region
-                   `(mouse-face highlight follow-link t face 'bookmarkp-file-region
-                                help-echo (format "mouse-2 Find region in file: %s",isfile)))
+                   `(mouse-face highlight follow-link t face
+                     'bookmarkp-local-file-with-region
+                     help-echo (format "mouse-2 Find region in file: %s",isfile)))
                   ((and isfile (file-exists-p isfile)) ; Local file without region
-                   `(mouse-face highlight follow-link t face 'bookmarkp-file
-                                help-echo (format "mouse-2 Goto file: %s",isfile)))
+                   `(mouse-face highlight follow-link t face
+                     'bookmarkp-local-file-without-region
+                     help-echo (format "mouse-2 Goto file: %s",isfile)))
                   ((and isbuf (not isfile)) ; Buffer not filename
-                   `(mouse-face highlight follow-link t face 'bookmarkp-nonfile-buffer
-                                help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
+                   `(mouse-face highlight follow-link t face 'bookmarkp-non-file
+                     help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
            (insert "\n"))))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
@@ -992,6 +1022,12 @@ BOOKMARK is a bookmark name or a bookmark record."
 BOOKMARK is a bookmark name or a bookmark record."
   (eq (bookmark-get-handler bookmark) 'Info-bookmark-jump))
 
+(defun bookmarkp-file-bookmark-p (bookmark)
+  "Return non-nil if BOOKMARK bookmarks a file or directory.
+BOOKMARK is a bookmark name or a bookmark record.
+This excludes bookmarks of a more specific kind (Info, Gnus, and W3m)."
+  (and (bookmark-get-filename bookmark) (not (bookmark-get-handler bookmark))))
+
 (defun bookmarkp-remote-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a remote file or directory.
 BOOKMARK is a bookmark name or a bookmark record."
@@ -1004,17 +1040,16 @@ BOOKMARK is a bookmark name or a bookmark record."
 
 (defun bookmarkp-local-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a local file or directory.
-BOOKMARK is a bookmark name or a bookmark record."
+BOOKMARK is a bookmark name or a bookmark record.
+This excludes bookmarks of a more specific kind (Info, Gnus, and W3m)."
   (and (bookmarkp-file-bookmark-p bookmark)
        (not (bookmarkp-remote-file-bookmark-p bookmark))))
 
-(defun bookmarkp-file-bookmark-p (bookmark)
-  "Return non-nil if BOOKMARK bookmarks a file or directory.
-This excludes bookmarks such as Info nodes that have use
-special handlers.
+(defun bookmarkp-local-directory-bookmark-p (bookmark)
+  "Return non-nil if BOOKMARK bookmarks a local directory.
 BOOKMARK is a bookmark name or a bookmark record."
-  (and (bookmark-get-filename bookmark)
-       (not (bookmark-get-handler bookmark))))
+  (let ((file  (bookmark-get-filename bookmark)))
+    (and (bookmarkp-local-file-bookmark-p bookmark) (file-directory-p file))))
 
 
 ;;; Filter functions
@@ -1024,26 +1059,36 @@ A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-region-bookmark-p bookmark-alist))
 
 (defun bookmarkp-gnus-alist-only ()
-  "`bookmark-alist', filtered to retain only Gnus entries.
+  "`bookmark-alist', filtered to retain only Gnus bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-gnus-bookmark-p bookmark-alist))
 
 (defun bookmarkp-w3m-alist-only ()
-  "`bookmark-alist', filtered to retain only W3m entries.
+  "`bookmark-alist', filtered to retain only W3m bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-w3m-bookmark-p bookmark-alist))
 
 (defun bookmarkp-info-alist-only ()
-  "`bookmark-alist', filtered to retain only Info entries.
+  "`bookmark-alist', filtered to retain only Info bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-info-bookmark-p bookmark-alist))
 
-(defun bookmarkp-remote-alist-only ()
-  "`bookmark-alist', filtered to retain only remote-file entries.
+(defun bookmarkp-non-file-alist-only ()
+  "`bookmark-alist', filtered to retain only non-file bookmarks.
+A new list is returned (no side effects)."
+  (bookmarkp-remove-if #'bookmarkp-file-bookmark-p bookmark-alist))
+
+(defun bookmarkp-remote-file-alist-only ()
+  "`bookmark-alist', filtered to retain only remote-file bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-remote-file-bookmark-p bookmark-alist))
 
-(defun bookmarkp-files-alist-only (&optional hide-remote)
+(defun bookmarkp-local-file-alist-only ()
+  "`bookmark-alist', filtered to retain only local-file bookmarks.
+A new list is returned (no side effects)."
+  (bookmarkp-remove-if-not #'bookmarkp-local-file-bookmark-p bookmark-alist))
+
+(defun bookmarkp-file-alist-only (&optional hide-remote)
   "`bookmark-alist', filtered to retain only file and directory bookmarks.
 This excludes bookmarks that might contain file information but are
 particular in some way - for example, Info bookmarks or Gnus bookmarks.
@@ -1060,19 +1105,18 @@ A new list is returned (no side effects)."
                              (and hide-remote (bookmarkp-remote-file-bookmark-p bookmark))))
                        bookmark-alist))
 
-
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-files-entries (arg)
+(defun bookmarkp-bmenu-list-only-file-bookmarks (arg)
   "Display a list of file and directory bookmarks.
 With a prefix argument, do not include remote files or directories."
   (interactive "P")
-  (let ((bookmark-alist  (bookmarkp-files-alist-only arg)))
+  (let ((bookmark-alist  (bookmarkp-file-alist-only arg)))
     (call-interactively #'(lambda ()
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Files&Directories")))))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-info-entries ()
+(defun bookmarkp-bmenu-list-only-info-bookmarks ()
   "Display the Info bookmarks."
   (interactive)
   (let ((bookmark-alist  (bookmarkp-info-alist-only)))
@@ -1081,7 +1125,7 @@ With a prefix argument, do not include remote files or directories."
                             (bookmark-bmenu-list "% Bookmark+ Info")))))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-w3m-entries ()
+(defun bookmarkp-bmenu-list-only-w3m-bookmarks ()
   "Display the w3m bookmarks."
   (interactive)
   (let ((bookmark-alist  (bookmarkp-w3m-alist-only)))
@@ -1090,7 +1134,7 @@ With a prefix argument, do not include remote files or directories."
                             (bookmark-bmenu-list "% Bookmark+ W3m")))))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-gnus-entries ()
+(defun bookmarkp-bmenu-list-only-gnus-bookmarks ()
   "Display the Gnus bookmarks."
   (interactive)
   (let ((bookmark-alist  (bookmarkp-gnus-alist-only)))
@@ -1099,7 +1143,7 @@ With a prefix argument, do not include remote files or directories."
                             (bookmark-bmenu-list "% Bookmark+ Gnus")))))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-regions ()
+(defun bookmarkp-bmenu-list-only-region-bookmarks ()
   "Display the bookmarks that record a region."
   (interactive)
   (let ((bookmark-alist  (bookmarkp-region-alist-only)))
