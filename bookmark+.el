@@ -283,7 +283,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.21")
+(defconst bookmarkp-version-number "2.1.22")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -328,7 +328,6 @@
 
 ;; Define extras keys in the `bookmark-bmenu-mode-map' space."
 ;;
-(define-key bookmark-bmenu-mode-map "T" 'bookmarkp-toggle-filenames-and-refresh)
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 (define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
@@ -340,7 +339,6 @@
 ;;
 (defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
   "Extras keys added by bookmark+:
-T -- bookmarkp-toggle-filenames-and-refresh
 W -- bookmarkp-bmenu-list-only-w3m-bookmarks
 I -- bookmarkp-bmenu-list-only-info-bookmarks
 G -- bookmarkp-bmenu-list-only-gnus-bookmarks
@@ -776,31 +774,6 @@ candidate."
                                       bookmarkp-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer)))
 
-(defun bookmarkp-refresh-current-alist ()
-  "Reload the current `bookmark-alist' maybe filtered."
-  (interactive)
-  (with-current-buffer "*Bookmark List*"
-    (goto-char (point-min))
-    (let ((alist nil)
-          (title (buffer-substring (point) (line-end-position))))
-      (forward-line 2)
-      (while (< (point) (point-max))
-        (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
-          (when bmk
-            (push bmk alist)))
-        (forward-line 1))
-      (let ((bookmark-alist alist))
-        (bookmark-bmenu-list title)))))
-
-(defun bookmarkp-toggle-filenames-and-refresh ()
-  "Toggle filename visibility and refresh alist."
-  (interactive)
-  (bookmark-bmenu-toggle-filenames)
-  (when (not bookmark-bmenu-toggle-filenames)
-    (bookmarkp-refresh-current-alist)))
-
-;(add-hook 'bookmark-after-jump-hook 'bookmarkp-refresh-current-alist)
-
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -951,27 +924,25 @@ if you want to change the appearance.
                      help-echo "mouse-2: Go to this Gnus buffer"))
                   (isw3m                ; W3m
                    `(mouse-face highlight follow-link t face 'bookmarkp-w3m
-                     help-echo (format "mouse-2 Goto URL: %s",isfile)))
+                                help-echo (format "mouse-2 Goto URL: %s",isfile)))
                   ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
                    `(mouse-face highlight follow-link t face 'bookmarkp-su-or-sudo
-                     help-echo (format "mouse-2 Goto file: %s",isfile)))
+                                help-echo (format "mouse-2 Goto file: %s",isfile)))
                   ((and isremote (not issu)) ; Remote file (ssh, ftp)
                    `(mouse-face highlight follow-link t face 'bookmarkp-remote-file
-                     help-echo (format "mouse-2 Goto remote file: %s",isfile)))
+                                help-echo (format "mouse-2 Goto remote file: %s",isfile)))
                   ((and isfile (file-directory-p isfile)) ; Local directory
                    `(mouse-face highlight follow-link t face 'bookmarkp-local-directory
-                     help-echo (format "mouse-2 Goto dired: %s",isfile)))
+                                help-echo (format "mouse-2 Goto dired: %s",isfile)))
                   ((and isfile (file-exists-p isfile) isregion) ; Local file with region
-                   `(mouse-face highlight follow-link t face
-                     'bookmarkp-local-file-with-region
-                     help-echo (format "mouse-2 Find region in file: %s",isfile)))
+                   `(mouse-face highlight follow-link t face 'bookmarkp-local-file-with-region
+                                help-echo (format "mouse-2 Find region in file: %s",isfile)))
                   ((and isfile (file-exists-p isfile)) ; Local file without region
-                   `(mouse-face highlight follow-link t face
-                     'bookmarkp-local-file-without-region
-                     help-echo (format "mouse-2 Goto file: %s",isfile)))
+                   `(mouse-face highlight follow-link t face 'bookmarkp-local-file-without-region
+                                help-echo (format "mouse-2 Goto file: %s",isfile)))
                   ((and isbuf (not isfile)) ; Buffer not filename
                    `(mouse-face highlight follow-link t face 'bookmarkp-non-file
-                     help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
+                                help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
            (insert "\n"))))
      (bookmark-maybe-sort-alist)))
   (goto-char (point-min))
