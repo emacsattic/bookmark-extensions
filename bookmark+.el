@@ -283,7 +283,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.23")
+(defconst bookmarkp-version-number "2.1.24")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -958,6 +958,41 @@ if you want to change the appearance.
            ((and isbuf (not isfile)) ; Buffer not filename
             `(mouse-face highlight follow-link t face bookmarkp-non-file
                          help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))))
+
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Add the bookmark+ properties when hiding filenames.
+;;
+(defun bookmark-bmenu-hide-filenames (&optional force)
+  "Hide filename visibility in bookmark-list buffer."
+  (if (and (not force) bookmark-bmenu-toggle-filenames)
+      ;; nothing to hide if above is nil
+      (save-excursion
+        (save-window-excursion
+          (goto-char (point-min))
+          (forward-line 2)
+          (setq bookmark-bmenu-hidden-bookmarks
+                (nreverse bookmark-bmenu-hidden-bookmarks))
+          (save-excursion
+            (goto-char (point-min))
+            (search-forward "Bookmark")
+            (backward-word 1)
+            (setq bookmark-bmenu-bookmark-column (current-column)))
+          (save-excursion
+            (let ((inhibit-read-only t))
+              (while bookmark-bmenu-hidden-bookmarks
+                (move-to-column bookmark-bmenu-bookmark-column t)
+                (bookmark-kill-line)
+		(let ((start (point))
+                      (name  (car bookmark-bmenu-hidden-bookmarks))
+                      end)
+		  (insert name)
+                  (setq end (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
+                  (bookmarkp-propertize-bookmark-list name start end))
+                (setq bookmark-bmenu-hidden-bookmarks
+                      (cdr bookmark-bmenu-hidden-bookmarks))
+                (forward-line 1))))))))
 
 (defun bookmarkp-get-buffer-name (bookmark)
   "Return the buffer-name of BOOKMARK.
