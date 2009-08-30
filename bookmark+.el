@@ -891,67 +891,73 @@ if you want to change the appearance.
     (mapc
      (lambda (full-record)
        ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
-       (let ((annotation  (bookmark-get-annotation
-                           (bookmark-name-from-full-record full-record))))
+       (let ((annotation (bookmark-get-annotation
+                           (bookmark-name-from-full-record full-record)))
+             (start      (point))
+             (name       (bookmark-name-from-full-record full-record))
+             end)
          (insert (if (and annotation (not (string-equal annotation "")))  " *"  "  "))
-         (let* ((start         (point))
-                (name          (bookmark-name-from-full-record full-record))
-                (isfile        (bookmark-get-filename name))
-                (isremote      (and isfile
-                                    (if (fboundp 'file-remote-p)
-                                        (file-remote-p isfile)
-                                      (if (fboundp 'ffap-file-remote-p)
-                                          (ffap-file-remote-p isfile)))))
-                (istramp       (and isfile (boundp 'tramp-file-name-regexp)
-                                    (save-match-data
-                                      (string-match tramp-file-name-regexp isfile))))
-                (isw3m         (bookmarkp-w3m-bookmark-p name))
-                (issu          (and istramp (string-match bookmarkp-su-or-sudo-regexp
-                                                          isfile)))
-                (isregion      (bookmarkp-region-bookmark-p name))
-                (isannotation  (bookmark-get-annotation name))
-                (ishandler     (bookmark-get-handler name))
-                (isgnus        (assq 'group full-record))
-                (isbuf         (bookmarkp-get-buffer-name name)))
-           (insert name)
-           (add-text-properties
-            start  (save-excursion (re-search-backward "[^ \t]") (1+ (point)))
-            (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
-                   '(mouse-face highlight follow-link t face bookmarkp-info
-                     help-echo "mouse-2: Go to this Info buffer"))
-                  (isgnus               ; Gnus
-                   '(mouse-face highlight follow-link t face bookmarkp-gnus
-                     help-echo "mouse-2: Go to this Gnus buffer"))
-                  (isw3m                ; W3m
-                   `(mouse-face highlight follow-link t face bookmarkp-w3m
-                     help-echo (format "mouse-2 Goto URL: %s",isfile)))
-                  ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
-                   `(mouse-face highlight follow-link t face bookmarkp-su-or-sudo
-                     help-echo (format "mouse-2 Goto file: %s",isfile)))
-                  ((and isremote (not issu)) ; Remote file (ssh, ftp)
-                   `(mouse-face highlight follow-link t face bookmarkp-remote-file
-                     help-echo (format "mouse-2 Goto remote file: %s",isfile)))
-                  ((and isfile (file-directory-p isfile)) ; Local directory
-                   `(mouse-face highlight follow-link t face bookmarkp-local-directory
-                     help-echo (format "mouse-2 Goto dired: %s",isfile)))
-                  ((and isfile (file-exists-p isfile) isregion) ; Local file with region
-                   `(mouse-face highlight follow-link t face
-                     bookmarkp-local-file-with-region
-                     help-echo (format "mouse-2 Find region in file: %s",isfile)))
-                  ((and isfile (file-exists-p isfile)) ; Local file without region
-                   `(mouse-face highlight follow-link t face
-                     bookmarkp-local-file-without-region
-                     help-echo (format "mouse-2 Goto file: %s",isfile)))
-                  ((and isbuf (not isfile)) ; Buffer not filename
-                   `(mouse-face highlight follow-link t face bookmarkp-non-file
-                     help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))
-           (insert "\n"))))
-     (bookmark-maybe-sort-alist)))
-  (goto-char (point-min))
-  (forward-line 2)
-  (bookmark-bmenu-mode)
-  (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))
-  (when (fboundp 'fit-frame-if-one-window) (fit-frame-if-one-window)))
+         (insert name)
+         (setq end (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
+         (bookmarkp-propertize-bookmark-list name start end)
+         (insert "\n")))
+     (bookmark-maybe-sort-alist))
+    (goto-char (point-min))
+    (forward-line 2)
+    (bookmark-bmenu-mode)
+    (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))
+    (when (fboundp 'fit-frame-if-one-window) (fit-frame-if-one-window))))
+
+(defun bookmarkp-propertize-bookmark-list (name start end)
+  "Add text properties to bookmarks in bookmark-list buffer."
+  (let* ((isfile        (bookmark-get-filename name))
+         (isremote      (and isfile
+                             (if (fboundp 'file-remote-p)
+                                 (file-remote-p isfile)
+                                 (if (fboundp 'ffap-file-remote-p)
+                                     (ffap-file-remote-p isfile)))))
+         (istramp       (and isfile (boundp 'tramp-file-name-regexp)
+                             (save-match-data
+                               (string-match tramp-file-name-regexp isfile))))
+         (isw3m         (bookmarkp-w3m-bookmark-p name))
+         (issu          (and istramp (string-match bookmarkp-su-or-sudo-regexp
+                                                   isfile)))
+         (isregion      (bookmarkp-region-bookmark-p name))
+         (isannotation  (bookmark-get-annotation name))
+         (ishandler     (bookmark-get-handler name))
+         (isgnus        (bookmarkp-gnus-bookmark-p name));(assq 'group full-record))
+         (isbuf         (bookmarkp-get-buffer-name name)))
+    (add-text-properties
+     start  end
+     (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
+            '(mouse-face highlight follow-link t face bookmarkp-info
+              help-echo "mouse-2: Go to this Info buffer"))
+           (isgnus               ; Gnus
+            '(mouse-face highlight follow-link t face bookmarkp-gnus
+              help-echo "mouse-2: Go to this Gnus buffer"))
+           (isw3m                ; W3m
+            `(mouse-face highlight follow-link t face bookmarkp-w3m
+                         help-echo (format "mouse-2 Goto URL: %s",isfile)))
+           ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
+            `(mouse-face highlight follow-link t face bookmarkp-su-or-sudo
+                         help-echo (format "mouse-2 Goto file: %s",isfile)))
+           ((and isremote (not issu)) ; Remote file (ssh, ftp)
+            `(mouse-face highlight follow-link t face bookmarkp-remote-file
+                         help-echo (format "mouse-2 Goto remote file: %s",isfile)))
+           ((and isfile (file-directory-p isfile)) ; Local directory
+            `(mouse-face highlight follow-link t face bookmarkp-local-directory
+                         help-echo (format "mouse-2 Goto dired: %s",isfile)))
+           ((and isfile (file-exists-p isfile) isregion) ; Local file with region
+            `(mouse-face highlight follow-link t face
+                         bookmarkp-local-file-with-region
+                         help-echo (format "mouse-2 Find region in file: %s",isfile)))
+           ((and isfile (file-exists-p isfile)) ; Local file without region
+            `(mouse-face highlight follow-link t face
+                         bookmarkp-local-file-without-region
+                         help-echo (format "mouse-2 Goto file: %s",isfile)))
+           ((and isbuf (not isfile)) ; Buffer not filename
+            `(mouse-face highlight follow-link t face bookmarkp-non-file
+                         help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))))
 
 (defun bookmarkp-get-buffer-name (bookmark)
   "Return the buffer-name of BOOKMARK.
