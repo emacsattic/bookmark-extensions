@@ -283,7 +283,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.22")
+(defconst bookmarkp-version-number "2.1.23")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1208,6 +1208,10 @@ Otherwise, return non-nil if region was relocated."
                             (bookmarkp-record-end-context-region-string end))
          (bookmark-prop-set bookmark 'position beg)
          (bookmark-prop-set bookmark 'end-position end)
+         (setq bookmark-alist-modification-count
+               (1+ bookmark-alist-modification-count))
+         (when (bookmark-time-to-save-p)
+           (bookmark-save))
          t)))
 
 (defun bookmarkp-handle-region-default (bookmark)
