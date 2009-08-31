@@ -286,7 +286,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.0")
+(defconst bookmarkp-version-number "2.2.1")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1553,7 +1553,7 @@ pertains to the location within the buffer."
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
-                                                (t  nil)))))
+                                                (t  "%%Bookmark+, NON-FILE BOOKMARK%%")))))
       (buffer-name . ,buf)
       (front-context-string . ,fcs)
       (rear-context-string . ,rcs)
@@ -1692,8 +1692,10 @@ Use multi-tabs in W3m if `bookmarkp-w3m-allow-multi-tabs' is non-nil."
          (art   (cdr gnus-article-current))
          (head  (gnus-summary-article-header art))
          (id    (mail-header-id head)))
-    `(,@(bookmark-make-record-default 'point-only) (group . ,grp) (article . ,art)
-      (message-id . ,id) (handler . bookmarkp-jump-gnus))))
+    `(,@(bookmark-make-record-default 'point-only)
+        (filename . "%%Bookmark+, GNUS BOOKMARK%%" )
+        (group . ,grp) (article . ,art)
+        (message-id . ,id) (handler . bookmarkp-jump-gnus))))
 
 (add-hook 'gnus-summary-mode-hook
           #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
