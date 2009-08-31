@@ -286,7 +286,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.1")
+(defconst bookmarkp-version-number "2.2.2")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -960,7 +960,7 @@ if you want to change the appearance.
             `(mouse-face highlight follow-link t face
                          bookmarkp-local-file-without-region
                          help-echo (format "mouse-2 Goto file: %s",isfile)))
-           ((and isbuf (not isfile)) ; Buffer not filename
+           ((and isbuf (if isfile (not (file-exists-p isfile)) (not isfile))) ; Buffer not filename
             `(mouse-face highlight follow-link t face bookmarkp-non-file
                          help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))))
 
@@ -1693,7 +1693,7 @@ Use multi-tabs in W3m if `bookmarkp-w3m-allow-multi-tabs' is non-nil."
          (head  (gnus-summary-article-header art))
          (id    (mail-header-id head)))
     `(,@(bookmark-make-record-default 'point-only)
-        (filename . "%%Bookmark+, GNUS BOOKMARK%%" )
+        (filename . "%%Bookmark+, NON-FILE BOOKMARK%%" )
         (group . ,grp) (article . ,art)
         (message-id . ,id) (handler . bookmarkp-jump-gnus))))
 
