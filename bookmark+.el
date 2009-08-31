@@ -286,7 +286,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.24")
+(defconst bookmarkp-version-number "2.1.25")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -903,7 +903,7 @@ if you want to change the appearance.
          (insert (if (and annotation (not (string-equal annotation "")))  " *"  "  "))
          (insert name)
          (setq end (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
-         (bookmarkp-propertize-bookmark-list name start end)
+         (bookmarkp-propertize-bmenu-item name start end)
          (insert "\n")))
      (bookmark-maybe-sort-alist))
     (goto-char (point-min))
@@ -912,9 +912,10 @@ if you want to change the appearance.
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))
     (when (fboundp 'fit-frame-if-one-window) (fit-frame-if-one-window))))
 
-(defun bookmarkp-propertize-bookmark-list (name start end)
-  "Add text properties to bookmarks in bookmark-list buffer."
-  (let* ((isfile        (bookmark-get-filename name))
+
+(defun bookmarkp-propertize-bmenu-item (bookmark-name start end)
+  "Add text properties to BOOKMARK-NAME, from START to END."
+  (let* ((isfile        (bookmark-get-filename bookmark-name))
          (isremote      (and isfile
                              (if (fboundp 'file-remote-p)
                                  (file-remote-p isfile)
@@ -923,14 +924,14 @@ if you want to change the appearance.
          (istramp       (and isfile (boundp 'tramp-file-name-regexp)
                              (save-match-data
                                (string-match tramp-file-name-regexp isfile))))
-         (isw3m         (bookmarkp-w3m-bookmark-p name))
+         (isw3m         (bookmarkp-w3m-bookmark-p bookmark-name))
          (issu          (and istramp (string-match bookmarkp-su-or-sudo-regexp
                                                    isfile)))
-         (isregion      (bookmarkp-region-bookmark-p name))
-         (isannotation  (bookmark-get-annotation name))
-         (ishandler     (bookmark-get-handler name))
-         (isgnus        (bookmarkp-gnus-bookmark-p name));(assq 'group full-record))
-         (isbuf         (bookmarkp-get-buffer-name name)))
+         (isregion      (bookmarkp-region-bookmark-p bookmark-name))
+         (isannotation  (bookmark-get-annotation bookmark-name))
+         (ishandler     (bookmark-get-handler bookmark-name))
+         (isgnus        (bookmarkp-gnus-bookmark-p bookmark-name));(assq 'group full-record))
+         (isbuf         (bookmarkp-get-buffer-name bookmark-name)))
     (add-text-properties
      start  end
      (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
@@ -992,7 +993,7 @@ if you want to change the appearance.
                     end)
                 (insert name)
                 (setq end  (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
-                (bookmarkp-propertize-bookmark-list name start end))
+                (bookmarkp-propertize-bmenu-item name start end))
               (setq bookmark-bmenu-hidden-bookmarks  (cdr bookmark-bmenu-hidden-bookmarks))
               (forward-line 1))))))))
 
