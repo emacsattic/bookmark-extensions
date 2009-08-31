@@ -93,6 +93,7 @@
 ;;    `bookmarkp-jump-gnus', `bookmarkp-jump-w3m',
 ;;    `bookmarkp-jump-w3m-new-session',
 ;;    `bookmarkp-jump-w3m-only-one-tab',
+;;    `bookmarkp-line-number-at-pos',
 ;;    `bookmarkp-local-directory-bookmark-p',
 ;;    `bookmarkp-local-file-alist-only',
 ;;    `bookmarkp-local-file-bookmark-p', `bookmarkp-make-gnus-record',
@@ -121,7 +122,8 @@
 ;;  ***** NOTE: The following functions defined in `bookmark.el'
 ;;              have been REDEFINED OR ADVISED HERE:
 ;;
-;;   `bookmark-bmenu-list', `bookmark-bmenu-mode',
+;;   `bookmark-bmenu-hide-filenames', `bookmark-bmenu-list',
+;;   `bookmark-bmenu-mode', `bookmark-bmenu-other-window',
 ;;   `bookmark-completing-read', `bookmark-default-handler',
 ;;   `bookmark-delete', `bookmark-get-bookmark' (Emacs 20-22),
 ;;   `bookmark-get-bookmark-record' (Emacs 20-22),
@@ -281,6 +283,7 @@
 ;;; Code:
 
 (require 'bookmark)
+(unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
 (defconst bookmarkp-version-number "2.1.24")
@@ -777,8 +780,9 @@ candidate."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; 1. Handle also bookmarked regions and non-file buffer locations.
-;; 2. Add note about Icicles `S-delete' to doc string.
+;; 1. Use `pop-to-buffer', not `switch-to-buffer-other-window'.
+;; 2. Handle also bookmarked regions and non-file buffer locations.
+;; 3. Add note about Icicles `S-delete' to doc string.
 ;;
 ;;;###autoload
 (defun bookmark-jump-other-window (bookmark-name &optional use-region-p)
@@ -793,7 +797,7 @@ See `bookmark-jump'."
   (let ((bookmarkp-use-region-flag  (if use-region-p
                                         (not bookmarkp-use-region-flag)
                                       bookmarkp-use-region-flag)))
-    (bookmark--jump-via bookmark-name 'switch-to-buffer-other-window)))
+    (bookmark--jump-via bookmark-name 'pop-to-buffer)))
 
 ;;; These are all the same as the vanilla Emacs 23+ definitions,
 ;;; but with a bit more info in doc strings.
@@ -888,7 +892,7 @@ if you want to change the appearance.
     (insert (format "%s\n- %s\n" alternate-title (make-string len-alt-title ?-)))
     (add-text-properties (point-min) (point)
                          '(font-lock-face bookmark-menu-heading))
-    (mapc
+    (mapcar
      (lambda (full-record)
        ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
        (let ((annotation (bookmark-get-annotation
@@ -962,37 +966,48 @@ if you want to change the appearance.
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Add the bookmark+ properties when hiding filenames.
+;; Add text properties when hiding filenames.
 ;;
 (defun bookmark-bmenu-hide-filenames (&optional force)
   "Hide filename visibility in bookmark-list buffer."
-  (if (and (not force) bookmark-bmenu-toggle-filenames)
-      ;; nothing to hide if above is nil
-      (save-excursion
-        (save-window-excursion
+  (when (and (not force)  bookmark-bmenu-toggle-filenames)
+    ;; nothing to hide if above is nil
+    (save-excursion
+      (save-window-excursion
+        (goto-char (point-min))
+        (forward-line 2)
+        (setq bookmark-bmenu-hidden-bookmarks  (nreverse bookmark-bmenu-hidden-bookmarks))
+        (save-excursion
           (goto-char (point-min))
-          (forward-line 2)
-          (setq bookmark-bmenu-hidden-bookmarks
-                (nreverse bookmark-bmenu-hidden-bookmarks))
-          (save-excursion
-            (goto-char (point-min))
-            (search-forward "Bookmark")
-            (backward-word 1)
-            (setq bookmark-bmenu-bookmark-column (current-column)))
-          (save-excursion
-            (let ((inhibit-read-only t))
-              (while bookmark-bmenu-hidden-bookmarks
-                (move-to-column bookmark-bmenu-bookmark-column t)
-                (bookmark-kill-line)
-		(let ((start (point))
-                      (name  (car bookmark-bmenu-hidden-bookmarks))
-                      end)
-		  (insert name)
-                  (setq end (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
-                  (bookmarkp-propertize-bookmark-list name start end))
-                (setq bookmark-bmenu-hidden-bookmarks
-                      (cdr bookmark-bmenu-hidden-bookmarks))
-                (forward-line 1))))))))
+          (search-forward "Bookmark")
+          (backward-word 1)
+          (setq bookmark-bmenu-bookmark-column  (current-column)))
+        (save-excursion
+          (let ((inhibit-read-only  t))
+            (while bookmark-bmenu-hidden-bookmarks
+              (move-to-column bookmark-bmenu-bookmark-column t)
+              (bookmark-kill-line)
+              (let ((start  (point))
+                    (name   (car bookmark-bmenu-hidden-bookmarks))
+                    end)
+                (insert name)
+                (setq end  (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
+                (bookmarkp-propertize-bookmark-list name start end))
+              (setq bookmark-bmenu-hidden-bookmarks  (cdr bookmark-bmenu-hidden-bookmarks))
+              (forward-line 1))))))))
+
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Use `pop-to-buffer', not `switch-to-buffer-other-window'.
+;;
+(defun bookmark-bmenu-other-window ()
+  "Select this line's bookmark in other window, leaving bookmark menu visible."
+  (interactive)
+  (let ((bookmark  (bookmark-bmenu-bookmark)))
+    (when (bookmark-bmenu-check-position)
+      (let ((bookmark-automatically-show-annotations  t)) ;FIXME: needed?
+        (bookmark--jump-via bookmark 'pop-to-buffer)))))
 
 (defun bookmarkp-get-buffer-name (bookmark)
   "Return the buffer-name of BOOKMARK.
@@ -1251,8 +1266,7 @@ Otherwise, return non-nil if region was relocated."
          (bookmark-prop-set bookmark 'end-position end)
          (setq bookmark-alist-modification-count
                (1+ bookmark-alist-modification-count))
-         (when (bookmark-time-to-save-p)
-           (bookmark-save))
+         (when (bookmark-time-to-save-p) (bookmark-save))
          t)))
 
 (defun bookmarkp-handle-region-default (bookmark)
@@ -1312,16 +1326,15 @@ If region was relocated, save it if user confirms saving."
            (setq deactivate-mark  nil)
            (when bookmarkp-show-end-of-region
              (let ((end-win (save-excursion
-                              (goto-line (+ (line-number-at-pos) (window-height)))
+                              (goto-line (+ (bookmarkp-line-number-at-pos)
+                                            (window-height)))
                               (end-of-line)
                               (point))))
-               ;; Show beg and end of region.
-               (save-excursion
-                 (sit-for 0.6) (exchange-point-and-mark) (sit-for 1))
-               ;; Recenter when end region is not visible.
-               (when (> end-pos end-win)
-                 (recenter 1))))
-           ;; May be save region.
+               ;; Bounce point and mark.
+               (save-excursion (sit-for 0.6) (exchange-point-and-mark) (sit-for 1))
+               ;; Recenter if region end is not visible.
+               (when (> end-pos end-win) (recenter 1))))
+           ;; Maybe save region.
            (if (and reg-relocated-p
                     (bookmarkp-save-new-region-location bmk pos end-pos))
                (message "Saved relocated region (from %d to %d)" pos end-pos)
@@ -1329,6 +1342,13 @@ If region was relocated, save it if user confirms saving."
           (t                            ; No region.  Go to old start.  Don't push-mark.
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
+
+;; Same as `line-number-at-pos', which is not available until Emacs 22.
+(defun bookmarkp-line-number-at-pos (&optional pos)
+  "Buffer line number at position POS. Current line number if POS is nil.
+Counting starts at (point-min), so any narrowing restriction applies."
+  (1+ (count-lines (point-min) (save-excursion (when pos (goto-char pos))
+                                               (forward-line 0) (point)))))
 
 (defun bookmarkp-goto-position (file buf bufname pos forward-str behind-str)
   "Go to a bookmark that has no region.
@@ -1581,7 +1601,7 @@ Return nil or signal `file-error'."
       (funcall bookmarkp-handle-region-function bmk))))
 
 
-;; Same as vanilla Emacs 23+ definitions.
+;; Same as vanilla Emacs 23+ definitions, except as noted.
 ;;
 ;;;###autoload
 (when (< emacs-major-version 23)
@@ -1593,9 +1613,11 @@ Return nil or signal `file-error'."
       (info-node . ,Info-current-node)
       (handler . Info-bookmark-jump)))
 
+  ;; Requires `info.el' explicitly (not autoloaded for `Info-find-node'.
   (defun Info-bookmark-jump (bookmark)
     "Jump to Info bookmark BOOKMARK.
 BOOKMARK is a bookmark name or a bookmark record."
+    (require 'info)
     ;; Implements the `handler' for the record type returned by `Info-bookmark-make-record'.
     (let* ((file       (bookmark-prop-get bookmark 'filename))
            (info-node  (bookmark-prop-get bookmark 'info-node))
