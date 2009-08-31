@@ -111,7 +111,7 @@
 ;;    `bookmarkp-remove-if-not', `bookmarkp-root-or-sudo-logged-p',
 ;;    `bookmarkp-save-new-region-location',
 ;;    `bookmarkp-w3m-alist-only', `bookmarkp-w3m-bookmark-p',
-;;    `bookmarkp-w3m-set-new-buffer-name'.
+;;    `bookmarkp-w3m-set-new-buffer-name', `bookmarkp-propertize-bmenu-item'.
 ;;
 ;;  * Internal variables defined here:
 ;;
@@ -286,7 +286,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.1.25")
+(defconst bookmarkp-version-number "2.2.0")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
