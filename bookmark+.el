@@ -282,11 +282,88 @@
 
 ;;; Code:
 
-(require 'bookmark)
+
+;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
+;;
+;; Doc string reflects Bookmark+ enhancements.
+;;
+(when (require 'bookmark)
+  (put 'bookmark-alist 'variable-documentation
+       "Association list of bookmarks and their records.
+Bookmark functions update the value automatically.
+You probably do not want to change the value yourself.
+
+The value is an alist with entries of the form
+ (BOOKMARK-NAME . PARAM-ALIST)
+or the deprecated form (BOOKMARK-NAME PARAM-ALIST).
+
+ BOOKMARK-NAME is the name you provided for the bookmark.
+ PARAM-ALIST is an alist of bookmark information.  The order of the
+  entries in PARAM-ALIST is not important.  The possible entries are
+  described below.  A nil value means the entry is not used.
+
+Bookmarks created using vanilla Emacs (`bookmark.el'):
+
+ (filename . FILENAME)
+ (position . POS)
+ (front-context-string . STR-AFTER-POS)
+ (rear-context-string  . STR-BEFORE-POS)
+ (annotation . ANNOTATION)
+ (handler . HANDLER)
+
+ FILENAME names the bookmarked file.
+ POS is the bookmarked buffer position (position in the file).
+ STR-AFTER-POS is buffer text that immediately follows POS.
+ STR-BEFORE-POS is buffer text that immediately precedes POS.
+ ANNOTATION is a string that you can provide to identify the bookmark.
+  See options `bookmark-use-annotations' and
+  `bookmark-automatically-show-annotations'.
+ HANDLER is a function that provides the bookmark-jump behavior
+  for a specific kind of bookmark.  This is the case for Info
+  bookmarks, for instance (starting with Emacs 23).
+
+Bookmarks created using Bookmark+ are the same as for vanilla Emacs,
+except for the following differences.
+
+1. If no file is associated with the bookmark, then FILENAME is nil.
+
+2. The following additional entries are used.  Their values are
+non-nil when a region is bookmarked; they are nil otherwise.  When a
+region is bookmarked, POS represents the region start position.
+
+ (buffer-name . BUFFER-NAME)
+ (end-position . END-POS)
+ (front-context-region-string . STR-BEFORE-END-POS)
+ (rear-context-region-string . STR-AFTER-END-POS))
+
+ BUFFER-NAME is the name of a bookmarked buffer, which might not be
+  associated with any file (see #1).
+ END-POS is the region end position.
+ STR-BEFORE-END-POS is buffer text that precedes END-POS.
+ STR-AFTER-END-POS is buffer text that follows END-POS.
+
+ NOTE: The relative locations of `front-context-region-string' and
+ `rear-context-region-string' are reversed from those of
+ `front-context-string' and `rear-context-string'.  For example,
+ `front-context-string' is the text that *follows* `position', but
+ `front-context-region-string' that *precedes* `end-position'.
+
+3. The following additional entries are used for a Gnus bookmark.
+
+ (group . GNUS-GROUP-NAME)
+ (article . GNUS-ARTICLE-NUMBER)
+ (message-id . GNUS-MESSAGE-ID)
+
+ GNUS-GROUP-NAME is the name of a Gnus group.
+ GNUS-ARTICLE-NUMBER is the number of a Gnus article.
+ GNUS-MESSAGE-ID is the identifier of a Gnus message.
+
+4. For a W3m bookmark, FILENAME is a W3m URL."))
+
 (unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.2")
+(defconst bookmarkp-version-number "2.2.3")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -453,83 +530,6 @@ If nil show only beginning of region."
 
 (defvar bookmarkp-jump-display-function nil
   "Function used currently to display a bookmark.")'
-
-
-;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
-;;
-;; Doc string reflects Bookmark+ enhancements.
-;;
-(put 'bookmark-alist 'variable-documentation
-     "Association list of bookmarks and their records.
-Bookmark functions update the value automatically.
-You probably do not want to change the value yourself.
-
-The value is an alist with entries of the form
- (BOOKMARK-NAME . PARAM-ALIST)
-or the deprecated form (BOOKMARK-NAME PARAM-ALIST).
-
- BOOKMARK-NAME is the name you provided for the bookmark.
- PARAM-ALIST is an alist of bookmark information.  The order of the
-  entries in PARAM-ALIST is not important.  The possible entries are
-  described below.  A nil value means the entry is not used.
-
-Bookmarks created using vanilla Emacs (`bookmark.el'):
-
- (filename . FILENAME)
- (position . POS)
- (front-context-string . STR-AFTER-POS)
- (rear-context-string  . STR-BEFORE-POS)
- (annotation . ANNOTATION)
- (handler . HANDLER)
-
- FILENAME names the bookmarked file.
- POS is the bookmarked buffer position (position in the file).
- STR-AFTER-POS is buffer text that immediately follows POS.
- STR-BEFORE-POS is buffer text that immediately precedes POS.
- ANNOTATION is a string that you can provide to identify the bookmark.
-  See options `bookmark-use-annotations' and
-  `bookmark-automatically-show-annotations'.
- HANDLER is a function that provides the bookmark-jump behavior
-  for a specific kind of bookmark.  This is the case for Info
-  bookmarks, for instance (starting with Emacs 23).
-
-Bookmarks created using Bookmark+ are the same as for vanilla Emacs,
-except for the following differences.
-
-1. If no file is associated with the bookmark, then FILENAME is nil.
-
-2. The following additional entries are used.  Their values are
-non-nil when a region is bookmarked; they are nil otherwise.  When a
-region is bookmarked, POS represents the region start position.
-
- (buffer-name . BUFFER-NAME)
- (end-position . END-POS)
- (front-context-region-string . STR-BEFORE-END-POS)
- (rear-context-region-string . STR-AFTER-END-POS))
-
- BUFFER-NAME is the name of a bookmarked buffer, which might not be
-  associated with any file (see #1).
- END-POS is the region end position.
- STR-BEFORE-END-POS is buffer text that precedes END-POS.
- STR-AFTER-END-POS is buffer text that follows END-POS.
-
- NOTE: The relative locations of `front-context-region-string' and
- `rear-context-region-string' are reversed from those of
- `front-context-string' and `rear-context-string'.  For example,
- `front-context-string' is the text that *follows* `position', but
- `front-context-region-string' that *precedes* `end-position'.
-
-3. The following additional entries are used for a Gnus bookmark.
-
- (group . GNUS-GROUP-NAME)
- (article . GNUS-ARTICLE-NUMBER)
- (message-id . GNUS-MESSAGE-ID)
-
- GNUS-GROUP-NAME is the name of a Gnus group.
- GNUS-ARTICLE-NUMBER is the number of a Gnus article.
- GNUS-MESSAGE-ID is the identifier of a Gnus message.
-
-4. For a W3m bookmark, FILENAME is a W3m URL.")
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
