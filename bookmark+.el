@@ -899,7 +899,7 @@ if you want to change the appearance.
                            (bookmark-name-from-full-record full-record)))
              start
              (name       (bookmark-name-from-full-record full-record))
-             (end (point)))
+             (end        (point)))
          (insert (if (and annotation (not (string-equal annotation "")))  " *"  "  "))
          (insert name)
          (setq start (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
@@ -984,15 +984,15 @@ if you want to change the appearance.
           (backward-word 1)
           (setq bookmark-bmenu-bookmark-column  (current-column)))
         (save-excursion
-          (let ((inhibit-read-only  t))
+          (let ((inhibit-read-only t))
             (while bookmark-bmenu-hidden-bookmarks
               (move-to-column bookmark-bmenu-bookmark-column t)
               (bookmark-kill-line)
-              (let ((start  (point))
-                    (name   (car bookmark-bmenu-hidden-bookmarks))
-                    end)
+              (let ((name (car bookmark-bmenu-hidden-bookmarks))
+                    start
+                    (end  (point)))
                 (insert name)
-                (setq end  (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
+                (setq start (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
                 (bookmarkp-propertize-bmenu-item name start end))
               (setq bookmark-bmenu-hidden-bookmarks  (cdr bookmark-bmenu-hidden-bookmarks))
               (forward-line 1))))))))
