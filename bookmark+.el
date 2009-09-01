@@ -363,7 +363,7 @@ region is bookmarked, POS represents the region start position.
 (unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.3")
+(defconst bookmarkp-version-number "2.2.4")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -897,12 +897,12 @@ if you want to change the appearance.
        ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
        (let ((annotation (bookmark-get-annotation
                            (bookmark-name-from-full-record full-record)))
-             (start      (point))
+             start
              (name       (bookmark-name-from-full-record full-record))
-             end)
+             (end (point)))
          (insert (if (and annotation (not (string-equal annotation "")))  " *"  "  "))
          (insert name)
-         (setq end (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
+         (setq start (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
          (bookmarkp-propertize-bmenu-item name start end)
          (insert "\n")))
      (bookmark-maybe-sort-alist))
