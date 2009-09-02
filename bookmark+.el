@@ -287,6 +287,7 @@
 (require 'bookmark)
 (unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
+(eval-when-compile (require 'cl))       ; needed for `gensym'. 
 
 (defconst bookmarkp-version-number "2.2.6")
 
