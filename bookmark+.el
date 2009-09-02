@@ -138,7 +138,8 @@
 ;;   `bookmark-prop-set' (Emacs 20, 21), `bookmark-relocate',
 ;;   `bookmark-rename', `bookmark-set', `bookmark-store'
 ;;   `bookmark-bmenu-surreptitiously-rebuild-list',
-;;   `bookmark-bmenu-execute-deletions' .
+;;   `bookmark-bmenu-execute-deletions', `bookmark-bmenu-rename',
+;;   `bookmark-yank-word'.
 ;;
 ;;
 ;;  ***** NOTE: The following functions defined in `info.el'
@@ -291,7 +292,7 @@
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 (eval-when-compile (require 'cl))       ; needed for `gensym'. 
 
-(defconst bookmarkp-version-number "2.2.8")
+(defconst bookmarkp-version-number "2.2.9")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -811,6 +812,39 @@ Don't affect the buffer ring order."
                                 (buffer-substring (point-at-bol) (point-at-eol)))))
           (bookmark-bmenu-list title))))))
 
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Don't call a second time `bookmark-bmenu-list'.
+;;
+(defun bookmark-bmenu-rename ()
+  "Rename bookmark on current line.  Prompts for a new name."
+  (interactive)
+  (if (bookmark-bmenu-check-position)
+      (let ((bmrk (bookmark-bmenu-bookmark))
+            (thispoint (point)))
+        (bookmark-rename bmrk)
+        (goto-char thispoint))))
+
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Maybe remove white spaces at beginning of word.
+;;
+(defun bookmark-yank-word ()
+  "Yank the word at point in `bookmark-current-buffer'.
+Then get the next word from the buffer and append it to the name of
+the bookmark currently being set."
+  (interactive)
+  (let ((string (with-current-buffer bookmark-current-buffer
+                  (goto-char bookmark-yank-point)
+                  (buffer-substring-no-properties
+                   (point)
+                   (progn
+                     (forward-word 1)
+                     (setq bookmark-yank-point (point)))))))
+    (setq string (replace-regexp-in-string "^  " "" string))
+    (insert string)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
