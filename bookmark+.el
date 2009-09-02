@@ -1780,7 +1780,7 @@ See `bookmark-jump-other-window'."
                                   (not (assoc 'filename bmk)))
                              (setcdr bmk (push `(filename . ,bookmarkp-non-file-filename)
                                                (cdr bmk))))))))
-              (error (format "No changes made. %s" (error-message-string err)))))
+              (error (message "No changes made. %s" (error-message-string err)))))
       (bookmark-save)
       (message "Bookmarks file fixed.  Old version is `%s'" bkup-file))))
 
