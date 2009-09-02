@@ -117,7 +117,8 @@
 ;;  * Internal variables defined here:
 ;;
 ;;    `bookmark-make-record-function' (Emacs 20-22),
-;;    `bookmarkp-jump-display-function', `bookmarkp-version-number'.
+;;    `bookmarkp-jump-display-function',
+;;    `bookmarkp-non-file-filename', `bookmarkp-version-number'.
 ;;
 ;;
 ;;  ***** NOTE: The following functions defined in `bookmark.el'
@@ -287,7 +288,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap))
 (eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.5")
+(defconst bookmarkp-version-number "2.2.6")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -453,7 +454,10 @@ If nil show only beginning of region."
 ;;; Other Code -------------------------------------------------------
 
 (defvar bookmarkp-jump-display-function nil
-  "Function used currently to display a bookmark.")'
+  "Function used currently to display a bookmark.")
+
+(defconst bookmarkp-non-file-filename "%%Bookmark+, NON-FILE BOOKMARK%%"
+  "Name to use for `filename' entry, for non-file bookmarks.")
 
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
@@ -1559,7 +1563,7 @@ pertains to the location within the buffer."
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
-                                                (t  "%%Bookmark+, NON-FILE BOOKMARK%%")))))
+                                                (t  bookmarkp-non-file-filename)))))
       (buffer-name . ,buf)
       (front-context-string . ,fcs)
       (rear-context-string . ,rcs)
@@ -1699,7 +1703,7 @@ Use multi-tabs in W3m if `bookmarkp-w3m-allow-multi-tabs' is non-nil."
          (head  (gnus-summary-article-header art))
          (id    (mail-header-id head)))
     `(,@(bookmark-make-record-default 'point-only)
-        (filename . "%%Bookmark+, NON-FILE BOOKMARK%%" )
+        (filename . ,bookmarkp-non-file-filename)
         (group . ,grp) (article . ,art)
         (message-id . ,id) (handler . bookmarkp-jump-gnus))))
 
@@ -1770,10 +1774,10 @@ See `bookmark-jump-other-window'."
                     (let ((fn-tail (member '(filename) bmk))
                           (hdlr    (bookmark-get-handler (car bmk))))
                       (cond (fn-tail
-                             (setcar fn-tail (cons 'filename "%%Bookmark+, NON-FILE BOOKMARK%%")))
+                             (setcar fn-tail (cons 'filename bookmarkp-non-file-filename)))
                             ((and (eq hdlr 'bookmarkp-jump-gnus)
                                   (not (assoc 'filename bmk)))
-                             (setcdr bmk (push '(filename . "%%Bookmark+, NON-FILE BOOKMARK%%")
+                             (setcdr bmk (push `(filename . ,bookmarkp-non-file-filename)
                                                (cdr bmk))))))))
               (error (format "No changes made. %s" (error-message-string err)))))
       (bookmark-save)
@@ -1786,3 +1790,4 @@ See `bookmark-jump-other-window'."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bookmark+.el ends here
+
