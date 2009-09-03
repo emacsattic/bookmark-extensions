@@ -292,7 +292,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.12")
+(defconst bookmarkp-version-number "2.2.13")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -805,7 +805,7 @@ Don't affect the buffer ring order."
                                  (goto-char (point-min))
                                  (buffer-substring (line-beginning-position)
                                                    (line-end-position)))))
-          (bookmark-bmenu-list title))))))
+          (bookmark-bmenu-list title 'filter-on))))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -983,12 +983,18 @@ buffer and POINT is the location within BUFFER."
 ;; 2. Handles also region bookmarks and buffer (non-file) bookmarks.
 ;;
 ;;;###autoload
-(defun bookmark-bmenu-list (&optional title)
+(defun bookmark-bmenu-list (&optional title filter-on)
   "Display a list of existing bookmarks, in buffer `*Bookmark List*'.
+
 Optional arg TITLE is a string to be used as the title.
  The default title is `% Bookmark+'.
 The leftmost column of a bookmark entry shows `D' if the bookmark is
  flagged for deletion, or `>' if it is marked for displaying.
+
+When optional arg FILTER-ON is non--nil, that mean `bookmark-alist' is
+actually filtered (e.g gnus, w3m, info, files, or regions), in this case,
+`bookmarkp-latest-bookmark-alist' is NOT RESET to the whole `bookmark-alist'
+value.
 
 The following faces are used for the list entries.
 Use `customize-face' if you want to change the appearance.
@@ -999,7 +1005,7 @@ Use `customize-face' if you want to change the appearance.
   `bookmarkp-su-or-sudo', `bookmarkp-w3m'."
   (interactive)
   (bookmark-maybe-load-default-file)
-  (unless title (setq bookmarkp-latest-bookmark-alist bookmark-alist))
+  (unless filter-on (setq bookmarkp-latest-bookmark-alist bookmark-alist))
   (if (interactive-p)
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
     (set-buffer (get-buffer-create "*Bookmark List*")))
@@ -1048,7 +1054,7 @@ Use `customize-face' if you want to change the appearance.
          (isregion      (bookmarkp-region-bookmark-p bookmark-name))
          (isannotation  (bookmark-get-annotation bookmark-name))
          (ishandler     (bookmark-get-handler bookmark-name))
-         (isgnus        (bookmarkp-gnus-bookmark-p bookmark-name));(assq 'group full-record))
+         (isgnus        (bookmarkp-gnus-bookmark-p bookmark-name))
          (isbuf         (bookmarkp-get-buffer-name bookmark-name)))
     (add-text-properties
      start  end
@@ -1246,8 +1252,7 @@ directory bookmarks.
 
 A new list is returned (no side effects)."
   (bookmarkp-remove-if (lambda (bookmark)
-                         (or ;(bookmarkp-region-bookmark-p bookmark)
-                             (bookmarkp-gnus-bookmark-p bookmark)
+                         (or (bookmarkp-gnus-bookmark-p bookmark)
                              (bookmarkp-w3m-bookmark-p bookmark)
                              (bookmarkp-info-bookmark-p bookmark)
                              (and hide-remote (bookmarkp-remote-file-bookmark-p bookmark))))
@@ -1262,7 +1267,7 @@ With a prefix argument, do not include remote files or directories."
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ Files&Directories")))))
+                            (bookmark-bmenu-list "% Bookmark+ Files&Directories" 'filter-on)))))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-list-only-info-bookmarks ()
@@ -1272,7 +1277,7 @@ With a prefix argument, do not include remote files or directories."
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ Info")))))
+                            (bookmark-bmenu-list "% Bookmark+ Info" 'filter-on)))))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-list-only-w3m-bookmarks ()
@@ -1282,7 +1287,7 @@ With a prefix argument, do not include remote files or directories."
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ W3m")))))
+                            (bookmark-bmenu-list "% Bookmark+ W3m" 'filter-on)))))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-list-only-gnus-bookmarks ()
@@ -1292,7 +1297,7 @@ With a prefix argument, do not include remote files or directories."
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ Gnus")))))
+                            (bookmark-bmenu-list "% Bookmark+ Gnus" 'filter-on)))))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-list-only-region-bookmarks ()
@@ -1302,7 +1307,7 @@ With a prefix argument, do not include remote files or directories."
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ Regions")))))
+                            (bookmark-bmenu-list "% Bookmark+ Regions" 'filter-on)))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
