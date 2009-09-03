@@ -292,7 +292,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.13")
+(defconst bookmarkp-version-number "2.2.14")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -772,7 +772,7 @@ candidate.  In this way, you can delete multiple bookmarks."
       (let ((bmk (bookmark-bmenu-bookmark))) 
         (bookmark-delete bmk 'batch) ; pass BATCH arg
         (setq bookmarkp-latest-bookmark-alist
-              (remove (assoc bmk bookmarkp-latest-bookmark-alist)
+              (delete (assoc bmk bookmarkp-latest-bookmark-alist)
                       bookmarkp-latest-bookmark-alist))))
     (bookmark-bmenu-surreptitiously-rebuild-list)
     (setq bookmark-bmenu-toggle-filenames hide-em)
