@@ -292,7 +292,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.10")
+(defconst bookmarkp-version-number "2.2.11")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1873,8 +1873,7 @@ See `bookmark-jump-other-window'."
 ;; existing `bookmark-default-file' (`.emacs.bmk'), after backing up
 ;; that file (suffixing the name with "_saveNUMBER").
 (defun bookmarkp-fix-bookmark-alist-and-save ()
-  "Reformat a bookmark file created with `bookmark+.el' in summer 2009.
-This makes the file compatible with vanilla Emacs 23 bookmarks."
+  "Format old bookmark-file created with `bookmark+.el' for compatibility with vanilla bookmark."
   (interactive)
   (require 'cl)                         ; `gensym'
   (if (not (yes-or-no-p "This will modify your bookmarks file, after backing it up.  OK? "))
@@ -1892,8 +1891,8 @@ This makes the file compatible with vanilla Emacs 23 bookmarks."
                              (setcar fn-tail (cons 'filename bookmarkp-non-file-filename)))
                             ((and (eq hdlr 'bookmarkp-jump-gnus)
                                   (not (assoc 'filename bmk)))
-                             (setcdr bmk `((filename . ,bookmarkp-non-file-filename)
-                                           . (cdr bmk))))))))
+                             (setcdr bmk (cons (cons 'filename bookmarkp-non-file-filename)
+                                               (cdr bmk))))))))
               (error (error "No changes made. %s" (error-message-string err)))))
       (bookmark-save)
       (message "Bookmarks file fixed.  Old version is `%s'" bkup-file))))
