@@ -292,7 +292,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.14")
+(defconst bookmarkp-version-number "2.2.15")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -720,10 +720,8 @@ BOOKMARK is a bookmark name or a bookmark record."
 ;;
 ;; Add note about `S-delete' to doc string.
 ;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
+;; Increment `bookmark-alist-modification-count' even when using `batch' arg.
 ;;
-(or (fboundp 'old-bookmark-delete)
-(fset 'old-bookmark-delete (symbol-function 'bookmark-delete)))
-
 ;;;###autoload
 (defun bookmark-delete (bookmark-name &optional batch)
   "Delete the bookmark named BOOKMARK-NAME from the bookmark list.
@@ -740,7 +738,21 @@ candidate.  In this way, you can delete multiple bookmarks."
   (interactive
    (list (bookmark-completing-read "Delete bookmark"
 				   bookmark-current-bookmark)))
-  (old-bookmark-delete bookmark-name batch))
+  (bookmark-maybe-historicize-string bookmark-name)
+  (bookmark-maybe-load-default-file)
+  (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
+    (setq bookmark-alist (delq will-go bookmark-alist))
+    ;; Added by db, nil bookmark-current-bookmark if the last
+    ;; occurrence has been deleted
+    (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
+        (setq bookmark-current-bookmark nil)))
+  ;; Don't rebuild the list when using `batch' arg
+  (unless batch
+    (bookmark-bmenu-surreptitiously-rebuild-list))
+  (setq bookmark-alist-modification-count
+        (1+ bookmark-alist-modification-count))
+  (when (bookmark-time-to-save-p)
+    (bookmark-save)))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
