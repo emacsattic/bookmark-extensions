@@ -112,14 +112,16 @@
 ;;    `bookmarkp-remove-if-not', `bookmarkp-root-or-sudo-logged-p',
 ;;    `bookmarkp-save-new-region-location',
 ;;    `bookmarkp-w3m-alist-only', `bookmarkp-w3m-bookmark-p',
-;;    `bookmarkp-w3m-set-new-buffer-name'.
+;;    `bookmarkp-w3m-set-new-buffer-name', `old-bookmark-insert',
+;;    `old-bookmark-insert-location', `old-bookmark-relocate',
+;;    `old-bookmark-rename'.
 ;;
 ;;  * Internal variables defined here:
 ;;
 ;;    `bookmark-make-record-function' (Emacs 20-22),
 ;;    `bookmarkp-jump-display-function',
 ;;    `bookmarkp-non-file-filename', `bookmarkp-version-number',
-;;    `bookmarkp-last-bookmark-alist-in-use'.
+;;    `bookmarkp-latest-bookmark-alist'.
 ;;
 ;;  ***** NOTE: The following functions defined in `bookmark.el'
 ;;              have been REDEFINED OR ADVISED HERE:
@@ -138,8 +140,7 @@
 ;;   `bookmark-prop-set' (Emacs 20, 21), `bookmark-relocate',
 ;;   `bookmark-rename', `bookmark-set', `bookmark-store'
 ;;   `bookmark-bmenu-surreptitiously-rebuild-list',
-;;   `bookmark-bmenu-execute-deletions', `bookmark-bmenu-rename',
-;;   `bookmark-yank-word'.
+;;   `bookmark-bmenu-execute-deletions' .
 ;;
 ;;
 ;;  ***** NOTE: The following functions defined in `info.el'
@@ -288,11 +289,10 @@
 ;;; Code:
 
 (require 'bookmark)
-(unless (fboundp 'file-remote-p) (require 'ffap))
-(eval-when-compile (require 'gnus))     ; mail-header-id (really in `nnheader.el')
-(eval-when-compile (require 'cl))       ; needed for `gensym'. 
+(unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
+(eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.9")
+(defconst bookmarkp-version-number "2.2.10")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -460,8 +460,8 @@ If nil show only beginning of region."
 (defvar bookmarkp-jump-display-function nil
   "Function used currently to display a bookmark.")
 
-(defvar bookmarkp-last-bookmark-alist-in-use nil
-  "Last filtered `bookmark-alist' used")
+(defvar bookmarkp-latest-bookmark-alist ()
+  "Content of `bookmark-alist' as last filtered.")
 
 (defconst bookmarkp-non-file-filename "%%Bookmark+, NON-FILE BOOKMARK%%"
   "Name to use for `filename' entry, for non-file bookmarks.")
@@ -721,6 +721,9 @@ BOOKMARK is a bookmark name or a bookmark record."
 ;; Add note about `S-delete' to doc string.
 ;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
 ;;
+(or (fboundp 'old-bookmark-delete)
+(fset 'old-bookmark-delete (symbol-function 'bookmark-delete)))
+
 ;;;###autoload
 (defun bookmark-delete (bookmark-name &optional batch)
   "Delete the bookmark named BOOKMARK-NAME from the bookmark list.
@@ -737,25 +740,14 @@ candidate.  In this way, you can delete multiple bookmarks."
   (interactive
    (list (bookmark-completing-read "Delete bookmark"
 				   bookmark-current-bookmark)))
-  (bookmark-maybe-historicize-string bookmark-name)
-  (bookmark-maybe-load-default-file)
-  (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
-    (setq bookmark-alist (delq will-go bookmark-alist))
-    ;; Added by db, nil bookmark-current-bookmark if the last
-    ;; occurrence has been deleted
-    (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
-        (setq bookmark-current-bookmark nil)))
-  ;; Don't rebuild the list
-  (unless batch
-    (bookmark-bmenu-surreptitiously-rebuild-list))
-  (setq bookmark-alist-modification-count
-        (1+ bookmark-alist-modification-count))
-  (when (bookmark-time-to-save-p)
-    (bookmark-save)))
+  (old-bookmark-delete bookmark-name batch))
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; call `bookmark-bmenu-surreptitiously-rebuild-list' instead of `bookmark-bmenu-list'.
+;; 1. Use  `bookmark-bmenu-surreptitiously-rebuild-list', instead of using
+;; `bookmark-bmenu-list', updating the modification count, and saving.
+;; 2. Update `bookmarkp-latest-bookmark-alist' to reflect deletion.
 ;;
 ;;;###autoload
 (defun bookmark-bmenu-execute-deletions ()
@@ -779,9 +771,9 @@ candidate.  In this way, you can delete multiple bookmarks."
     (while (re-search-forward "^D" (point-max) t)
       (let ((bmk (bookmark-bmenu-bookmark))) 
         (bookmark-delete bmk 'batch) ; pass BATCH arg
-        (setq bookmarkp-last-bookmark-alist-in-use
-              (remove (assoc bmk bookmarkp-last-bookmark-alist-in-use)
-                      bookmarkp-last-bookmark-alist-in-use))))
+        (setq bookmarkp-latest-bookmark-alist
+              (remove (assoc bmk bookmarkp-latest-bookmark-alist)
+                      bookmarkp-latest-bookmark-alist))))
     (bookmark-bmenu-surreptitiously-rebuild-list)
     (setq bookmark-bmenu-toggle-filenames hide-em)
     (when bookmark-bmenu-toggle-filenames
@@ -796,9 +788,11 @@ candidate.  In this way, you can delete multiple bookmarks."
     (beginning-of-line)
     (message "Deleting bookmarks...done")))
 
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Rebuilt `bookmark-alist' with the last filtered alist in use.
+;; 1. Rebuild `bookmark-alist' using the last filtered alist in use.
+;; 2. Update the menu-list title.
 ;;
 (defun bookmark-bmenu-surreptitiously-rebuild-list ()
   "Rebuild the Bookmark List if it exists.
@@ -806,10 +800,11 @@ Don't affect the buffer ring order."
   (when (get-buffer "*Bookmark List*")
     (save-excursion
       (save-window-excursion
-        (let ((bookmark-alist bookmarkp-last-bookmark-alist-in-use)
-              (title          (with-current-buffer "*Bookmark List*"
-                                (goto-char (point-min))
-                                (buffer-substring (point-at-bol) (point-at-eol)))))
+        (let ((bookmark-alist  bookmarkp-latest-bookmark-alist)
+              (title           (with-current-buffer "*Bookmark List*"
+                                 (goto-char (point-min))
+                                 (buffer-substring (line-beginning-position)
+                                                   (line-end-position)))))
           (bookmark-bmenu-list title))))))
 
 
@@ -868,7 +863,7 @@ DISPLAY-FUNCTION is the function that displays the bookmark."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; 1. Handle also bookmarked regions and non-file buffer locations.
+;; 1. Added optional arg USE-REGION-P.
 ;; 2. Add note about Icicles `S-delete' to doc string.
 ;;
 ;;;###autoload
@@ -902,9 +897,7 @@ candidate."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; 1. Use `pop-to-buffer', not `switch-to-buffer-other-window'.
-;; 2. Handle also bookmarked regions and non-file buffer locations.
-;; 3. Add note about Icicles `S-delete' to doc string.
+;; Added optional arg USE-REGION-P.
 ;;
 ;;;###autoload
 (defun bookmark-jump-other-window (bookmark-name &optional use-region-p)
@@ -919,7 +912,7 @@ See `bookmark-jump'."
   (let ((bookmarkp-use-region-flag  (if use-region-p
                                         (not bookmarkp-use-region-flag)
                                       bookmarkp-use-region-flag)))
-    (bookmark--jump-via bookmark-name 'pop-to-buffer)))
+    (bookmark--jump-via bookmark-name 'switch-to-buffer-other-window)))
 
 ;;; These are all the same as the vanilla Emacs 23+ definitions,
 ;;; but with a bit more info in doc strings.
@@ -985,18 +978,20 @@ buffer and POINT is the location within BUFFER."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Handles also region bookmarks and buffer (non-file) bookmarks.
+;; 1. Added argument TITLE
+;;
+;; 2. Handles also region bookmarks and buffer (non-file) bookmarks.
 ;;
 ;;;###autoload
 (defun bookmark-bmenu-list (&optional title)
-  "Display a list of existing bookmarks.
+  "Display a list of existing bookmarks, in buffer `*Bookmark List*'.
 Optional arg TITLE is a string to be used as the title.
-The list is displayed in buffer `*Bookmark List*'.
-The leftmost column show `D' if the bookmark is flagged for
-deletion, or `>' if it is flagged for displaying.
+ The default title is `% Bookmark+'.
+The leftmost column of a bookmark entry shows `D' if the bookmark is
+ flagged for deletion, or `>' if it is marked for displaying.
 
-The following faces are used for list entries.  Use `customize-face'
-if you want to change the appearance.
+The following faces are used for the list entries.
+Use `customize-face' if you want to change the appearance.
 
   `bookmarkp-local-directory', `bookmarkp-local-file-without-region',
   `bookmarkp-local-file-with-region', `bookmarkp-gnus',
@@ -1004,8 +999,7 @@ if you want to change the appearance.
   `bookmarkp-su-or-sudo', `bookmarkp-w3m'."
   (interactive)
   (bookmark-maybe-load-default-file)
-  (unless title
-    (setq bookmarkp-last-bookmark-alist-in-use bookmark-alist))
+  (unless title (setq bookmarkp-latest-bookmark-alist bookmark-alist))
   (if (interactive-p)
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
     (set-buffer (get-buffer-create "*Bookmark List*")))
@@ -1084,7 +1078,7 @@ if you want to change the appearance.
             `(mouse-face highlight follow-link t face
                          bookmarkp-local-file-without-region
                          help-echo (format "mouse-2 Goto file: %s",isfile)))
-           ((and isbuf (if isfile (not (file-exists-p isfile)) (not isfile))) ; Buffer not filename
+           ((and isbuf (if isfile (not (file-exists-p isfile)) (not isfile))) ; No filename
             `(mouse-face highlight follow-link t face bookmarkp-non-file
                          help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))))
 
@@ -1265,7 +1259,7 @@ A new list is returned (no side effects)."
 With a prefix argument, do not include remote files or directories."
   (interactive "P")
   (let ((bookmark-alist  (bookmarkp-file-alist-only arg)))
-    (setq bookmarkp-last-bookmark-alist-in-use bookmark-alist)
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Files&Directories")))))
@@ -1275,7 +1269,7 @@ With a prefix argument, do not include remote files or directories."
   "Display the Info bookmarks."
   (interactive)
   (let ((bookmark-alist  (bookmarkp-info-alist-only)))
-    (setq bookmarkp-last-bookmark-alist-in-use bookmark-alist)
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Info")))))
@@ -1285,7 +1279,7 @@ With a prefix argument, do not include remote files or directories."
   "Display the w3m bookmarks."
   (interactive)
   (let ((bookmark-alist  (bookmarkp-w3m-alist-only)))
-    (setq bookmarkp-last-bookmark-alist-in-use bookmark-alist)
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ W3m")))))
@@ -1295,7 +1289,7 @@ With a prefix argument, do not include remote files or directories."
   "Display the Gnus bookmarks."
   (interactive)
   (let ((bookmark-alist  (bookmarkp-gnus-alist-only)))
-    (setq bookmarkp-last-bookmark-alist-in-use bookmark-alist)
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Gnus")))))
@@ -1305,7 +1299,7 @@ With a prefix argument, do not include remote files or directories."
   "Display the bookmarks that record a region."
   (interactive)
   (let ((bookmark-alist  (bookmarkp-region-alist-only)))
-    (setq bookmarkp-last-bookmark-alist-in-use bookmark-alist)
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Regions")))))
@@ -1879,8 +1873,10 @@ See `bookmark-jump-other-window'."
 ;; existing `bookmark-default-file' (`.emacs.bmk'), after backing up
 ;; that file (suffixing the name with "_saveNUMBER").
 (defun bookmarkp-fix-bookmark-alist-and-save ()
-  "Format old bookmark-file created with `bookmark+.el' for compatibility with vanilla bookmark."
+  "Reformat a bookmark file created with `bookmark+.el' in summer 2009.
+This makes the file compatible with vanilla Emacs 23 bookmarks."
   (interactive)
+  (require 'cl)                         ; `gensym'
   (if (not (yes-or-no-p "This will modify your bookmarks file, after backing it up.  OK? "))
       (message "OK, nothing done")
     (bookmark-maybe-load-default-file)
@@ -1896,9 +1892,9 @@ See `bookmark-jump-other-window'."
                              (setcar fn-tail (cons 'filename bookmarkp-non-file-filename)))
                             ((and (eq hdlr 'bookmarkp-jump-gnus)
                                   (not (assoc 'filename bmk)))
-                             (setcdr bmk (push `(filename . ,bookmarkp-non-file-filename)
-                                               (cdr bmk))))))))
-              (error (message "No changes made. %s" (error-message-string err)))))
+                             (setcdr bmk `((filename . ,bookmarkp-non-file-filename)
+                                           . (cdr bmk))))))))
+              (error (error "No changes made. %s" (error-message-string err)))))
       (bookmark-save)
       (message "Bookmarks file fixed.  Old version is `%s'" bkup-file))))
 
