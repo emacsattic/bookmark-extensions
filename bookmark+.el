@@ -292,7 +292,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.15")
+(defconst bookmarkp-version-number "2.2.16")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -843,13 +843,13 @@ Don't affect the buffer ring order."
 Then get the next word from the buffer and append it to the name of
 the bookmark currently being set."
   (interactive)
-  (let ((string (with-current-buffer bookmark-current-buffer
-                  (goto-char bookmark-yank-point)
-                  (buffer-substring-no-properties
-                   (point)
-                   (progn
-                     (forward-word 1)
-                     (setq bookmark-yank-point (point)))))))
+  (let* ((string (with-current-buffer bookmark-current-buffer
+                   (goto-char bookmark-yank-point)
+                   (buffer-substring-no-properties
+                    (point)
+                    (progn
+                      (forward-word 1)
+                      (setq bookmark-yank-point (point)))))))
     (setq string (bookmarkp-replace-regexp-in-string "^  " "" string))
     (insert string)))
 
@@ -1639,6 +1639,7 @@ bookmarks.)"
          (defname (bookmarkp-replace-regexp-in-string
                    "\n" " "
                    (cond (regionp
+                          (setq bookmark-yank-point (region-beginning))
                           (substring regname 0
                                      (min bookmarkp-bookmark-name-length-max
                                           (length regname))))
