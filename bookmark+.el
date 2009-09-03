@@ -1928,7 +1928,7 @@ See `bookmark-jump-other-window'."
   "Replace `regexp' by `rep' in `string'."
   (if (string-match regexp string)
       (replace-match rep nil nil string)
-      string)))
+      string))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
