@@ -850,7 +850,7 @@ the bookmark currently being set."
                    (progn
                      (forward-word 1)
                      (setq bookmark-yank-point (point)))))))
-    (setq string (replace-regexp-in-string "^  " "" string))
+    (setq string (bookmarkp-replace-regexp-in-string "^  " "" string))
     (insert string)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1636,7 +1636,7 @@ bookmarks.)"
                            (if regionp
                                (region-end)
                              (save-excursion (end-of-line) (point))))))
-         (defname (replace-regexp-in-string
+         (defname (bookmarkp-replace-regexp-in-string
                    "\n" " "
                    (cond (regionp
                           (substring regname 0
@@ -1914,6 +1914,20 @@ See `bookmark-jump-other-window'."
       (bookmark-save)
       (message "Bookmarks file fixed.  Old version is `%s'" bkup-file))))
 
+
+;; For compatibility with emacs20
+(defun bookmarkp-replace-regexp-in-string
+    (regexp rep string &optional fixedcase literal subexp start)
+  "A replacement of `replace-regexp-in-string' for compatibility with emacs20."
+  (if (fboundp 'replace-regexp-in-string)
+      (replace-regexp-in-string regexp rep string fixedcase literal subexp start)
+    (bookmarkp-replace-regexp-in-string-1 regexp rep string)))
+
+(defun bookmarkp-replace-regexp-in-string-1 (regexp rep string)
+  "Replace `regexp' by `rep' in `string'."
+  (if (string-match regexp string)
+      (replace-match rep nil nil string)
+      string)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
