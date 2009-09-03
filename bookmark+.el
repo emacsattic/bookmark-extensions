@@ -292,7 +292,7 @@
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
 
-(defconst bookmarkp-version-number "2.2.11")
+(defconst bookmarkp-version-number "2.2.12")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -463,7 +463,7 @@ If nil show only beginning of region."
 (defvar bookmarkp-latest-bookmark-alist ()
   "Content of `bookmark-alist' as last filtered.")
 
-(defconst bookmarkp-non-file-filename "%%Bookmark+, NON-FILE BOOKMARK%%"
+(defconst bookmarkp-non-file-filename "   - no file -"
   "Name to use for `filename' entry, for non-file bookmarks.")
 
 
