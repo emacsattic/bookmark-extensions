@@ -112,8 +112,10 @@
 ;;    `bookmarkp-remove-if-not', `bookmarkp-root-or-sudo-logged-p',
 ;;    `bookmarkp-save-new-region-location',
 ;;    `bookmarkp-w3m-alist-only', `bookmarkp-w3m-bookmark-p',
-;;    `bookmarkp-w3m-set-new-buffer-name', `old-bookmark-insert',
-;;    `old-bookmark-insert-location', `old-bookmark-relocate',
+;;    `bookmarkp-w3m-set-new-buffer-name',
+;;    `bookmarkp-replace-regexp-in-string'
+;;    `old-bookmark-insert',
+;;    `old-bookmark-insert-location', `old-bookmark-relocate'.
 ;;    `old-bookmark-rename'.
 ;;
 ;;  * Internal variables defined here:
@@ -291,8 +293,10 @@
 (require 'bookmark)
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
+(eval-when-compile (require 'cl)) ;; case, (plus, for Emacs 20: push, pop, dolist,
+                                  ;;        and, for Emacs <20: cadr, when, unless)
 
-(defconst bookmarkp-version-number "2.2.16")
+(defconst bookmarkp-version-number "2.2.17")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -335,7 +339,7 @@
 ;;;###autoload
 (define-key bookmark-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 
-;; Define extras keys in the `bookmark-bmenu-mode-map' space."
+;; Define extras keys in the `bookmark-bmenu-mode-map' space.
 ;;
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
@@ -343,6 +347,10 @@
 (define-key bookmark-bmenu-mode-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
 (define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 
+;; Define key missing in emacs20 in the `bookmark-bmenu-mode-map' space.
+;;
+(when (< emacs-major-version 21)
+  (define-key bookmark-bmenu-mode-map (kbd "RET") 'bookmark-bmenu-this-window))
 
 ;; Add the news keys to `bookmark-bmenu-mode' docstring.
 ;;
@@ -1917,15 +1925,15 @@ See `bookmark-jump-other-window'."
 
 
 ;; For compatibility with emacs20
-(defun bookmarkp-replace-regexp-in-string
-    (regexp rep string &optional fixedcase literal subexp start)
-  "A replacement of `replace-regexp-in-string' for compatibility with emacs20."
+(defun bookmarkp-replace-regexp-in-string (regexp rep string
+                                           &optional fixedcase literal subexp start)
+  "Replace all matches for REGEXP with REP in STRING and return STRING."
   (if (fboundp 'replace-regexp-in-string)
       (replace-regexp-in-string regexp rep string fixedcase literal subexp start)
     (bookmarkp-replace-regexp-in-string-1 regexp rep string)))
 
 (defun bookmarkp-replace-regexp-in-string-1 (regexp rep string)
-  "Replace `regexp' by `rep' in `string'."
+  "A replacement of `replace-regexp-in-string' for compatibility with emacs20."
   (if (string-match regexp string)
       (replace-match rep nil nil string)
       string))
