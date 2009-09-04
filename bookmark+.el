@@ -1901,6 +1901,7 @@ See `bookmark-jump-other-window'."
 (defun bookmarkp-fix-bookmark-alist-and-save ()
   "Format old bookmark-file created with `bookmark+.el' for compatibility with vanilla bookmark."
   (interactive)
+  (require 'cl)                         ; For `gensym'
   (if (not (yes-or-no-p "This will modify your bookmarks file, after backing it up.  OK? "))
       (message "OK, nothing done")
     (bookmark-maybe-load-default-file)
