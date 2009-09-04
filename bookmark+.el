@@ -1918,10 +1918,11 @@ See `bookmark-jump-other-window'."
                             ((and (eq hdlr 'bookmarkp-jump-gnus)
                                   (not (assoc 'filename bmk)))
                              (setcdr bmk (cons (cons 'filename bookmarkp-non-file-filename)
-                                               (cdr bmk))))))))
-              (error (error "No changes made. %s" (error-message-string err)))))
-      (bookmark-save)
-      (message "Bookmarks file fixed.  Old version is `%s'" bkup-file))))
+                                               (cdr bmk)))))))
+                  t)                    ; Be sure `dolist' exit with t to allow saving.
+              (error (error "No changes made. %s" (error-message-string err))))
+        (bookmark-save)
+        (message "Bookmarks file fixed.  Old version is `%s'" bkup-file)))))
 
 
 ;; For compatibility with emacs20
