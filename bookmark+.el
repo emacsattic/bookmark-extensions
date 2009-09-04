@@ -293,8 +293,8 @@
 (require 'bookmark)
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
-(eval-when-compile (require 'cl)) ;; case, (plus, for Emacs 20: push, pop, dolist,
-                                  ;;        and, for Emacs <20: cadr, when, unless)
+(eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist,
+                                  ;;         and, for Emacs <20: cadr, when, unless)
 
 (defconst bookmarkp-version-number "2.2.17")
 
@@ -1901,7 +1901,6 @@ See `bookmark-jump-other-window'."
 (defun bookmarkp-fix-bookmark-alist-and-save ()
   "Format old bookmark-file created with `bookmark+.el' for compatibility with vanilla bookmark."
   (interactive)
-  (require 'cl)                         ; `gensym'
   (if (not (yes-or-no-p "This will modify your bookmarks file, after backing it up.  OK? "))
       (message "OK, nothing done")
     (bookmark-maybe-load-default-file)
