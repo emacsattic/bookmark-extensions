@@ -112,8 +112,10 @@
 ;;    `bookmarkp-remove-if-not', `bookmarkp-root-or-sudo-logged-p',
 ;;    `bookmarkp-save-new-region-location',
 ;;    `bookmarkp-w3m-alist-only', `bookmarkp-w3m-bookmark-p',
-;;    `bookmarkp-w3m-set-new-buffer-name', `old-bookmark-insert',
-;;    `old-bookmark-insert-location', `old-bookmark-relocate',
+;;    `bookmarkp-w3m-set-new-buffer-name',
+;;    `bookmarkp-replace-regexp-in-string'
+;;    `old-bookmark-insert',
+;;    `old-bookmark-insert-location', `old-bookmark-relocate'.
 ;;    `old-bookmark-rename'.
 ;;
 ;;  * Internal variables defined here:
@@ -291,8 +293,10 @@
 (require 'bookmark)
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
+(eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist,
+                                  ;;         and, for Emacs <20: cadr, when, unless)
 
-(defconst bookmarkp-version-number "2.2.14")
+(defconst bookmarkp-version-number "2.2.17")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -335,7 +339,7 @@
 ;;;###autoload
 (define-key bookmark-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 
-;; Define extras keys in the `bookmark-bmenu-mode-map' space."
+;; Define extras keys in the `bookmark-bmenu-mode-map' space.
 ;;
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
@@ -343,6 +347,10 @@
 (define-key bookmark-bmenu-mode-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
 (define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 
+;; Define key missing in emacs20 in the `bookmark-bmenu-mode-map' space.
+;;
+(when (< emacs-major-version 21)
+  (define-key bookmark-bmenu-mode-map (kbd "RET") 'bookmark-bmenu-this-window))
 
 ;; Add the news keys to `bookmark-bmenu-mode' docstring.
 ;;
@@ -720,10 +728,8 @@ BOOKMARK is a bookmark name or a bookmark record."
 ;;
 ;; Add note about `S-delete' to doc string.
 ;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
+;; Increment `bookmark-alist-modification-count' even when using `batch' arg.
 ;;
-(or (fboundp 'old-bookmark-delete)
-(fset 'old-bookmark-delete (symbol-function 'bookmark-delete)))
-
 ;;;###autoload
 (defun bookmark-delete (bookmark-name &optional batch)
   "Delete the bookmark named BOOKMARK-NAME from the bookmark list.
@@ -740,7 +746,21 @@ candidate.  In this way, you can delete multiple bookmarks."
   (interactive
    (list (bookmark-completing-read "Delete bookmark"
 				   bookmark-current-bookmark)))
-  (old-bookmark-delete bookmark-name batch))
+  (bookmark-maybe-historicize-string bookmark-name)
+  (bookmark-maybe-load-default-file)
+  (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
+    (setq bookmark-alist (delq will-go bookmark-alist))
+    ;; Added by db, nil bookmark-current-bookmark if the last
+    ;; occurrence has been deleted
+    (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
+        (setq bookmark-current-bookmark nil)))
+  ;; Don't rebuild the list when using `batch' arg
+  (unless batch
+    (bookmark-bmenu-surreptitiously-rebuild-list))
+  (setq bookmark-alist-modification-count
+        (1+ bookmark-alist-modification-count))
+  (when (bookmark-time-to-save-p)
+    (bookmark-save)))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -831,14 +851,14 @@ Don't affect the buffer ring order."
 Then get the next word from the buffer and append it to the name of
 the bookmark currently being set."
   (interactive)
-  (let ((string (with-current-buffer bookmark-current-buffer
-                  (goto-char bookmark-yank-point)
-                  (buffer-substring-no-properties
-                   (point)
-                   (progn
-                     (forward-word 1)
-                     (setq bookmark-yank-point (point)))))))
-    (setq string (replace-regexp-in-string "^  " "" string))
+  (let* ((string (with-current-buffer bookmark-current-buffer
+                   (goto-char bookmark-yank-point)
+                   (buffer-substring-no-properties
+                    (point)
+                    (progn
+                      (forward-word 1)
+                      (setq bookmark-yank-point (point)))))))
+    (setq string (bookmarkp-replace-regexp-in-string "^  " "" string))
     (insert string)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1624,9 +1644,10 @@ bookmarks.)"
                            (if regionp
                                (region-end)
                              (save-excursion (end-of-line) (point))))))
-         (defname (replace-regexp-in-string
+         (defname (bookmarkp-replace-regexp-in-string
                    "\n" " "
                    (cond (regionp
+                          (setq bookmark-yank-point (region-beginning))
                           (substring regname 0
                                      (min bookmarkp-bookmark-name-length-max
                                           (length regname))))
@@ -1880,7 +1901,7 @@ See `bookmark-jump-other-window'."
 (defun bookmarkp-fix-bookmark-alist-and-save ()
   "Format old bookmark-file created with `bookmark+.el' for compatibility with vanilla bookmark."
   (interactive)
-  (require 'cl)                         ; `gensym'
+  (require 'cl)                         ; For `gensym'
   (if (not (yes-or-no-p "This will modify your bookmarks file, after backing it up.  OK? "))
       (message "OK, nothing done")
     (bookmark-maybe-load-default-file)
@@ -1897,11 +1918,26 @@ See `bookmark-jump-other-window'."
                             ((and (eq hdlr 'bookmarkp-jump-gnus)
                                   (not (assoc 'filename bmk)))
                              (setcdr bmk (cons (cons 'filename bookmarkp-non-file-filename)
-                                               (cdr bmk))))))))
-              (error (error "No changes made. %s" (error-message-string err)))))
-      (bookmark-save)
-      (message "Bookmarks file fixed.  Old version is `%s'" bkup-file))))
+                                               (cdr bmk)))))))
+                  t)                    ; Be sure `dolist' exit with t to allow saving.
+              (error (error "No changes made. %s" (error-message-string err))))
+        (bookmark-save)
+        (message "Bookmarks file fixed.  Old version is `%s'" bkup-file)))))
 
+
+;; For compatibility with emacs20
+(defun bookmarkp-replace-regexp-in-string (regexp rep string
+                                           &optional fixedcase literal subexp start)
+  "Replace all matches for REGEXP with REP in STRING and return STRING."
+  (if (fboundp 'replace-regexp-in-string)
+      (replace-regexp-in-string regexp rep string fixedcase literal subexp start)
+    (bookmarkp-replace-regexp-in-string-1 regexp rep string)))
+
+(defun bookmarkp-replace-regexp-in-string-1 (regexp rep string)
+  "A replacement of `replace-regexp-in-string' for compatibility with emacs20."
+  (if (string-match regexp string)
+      (replace-match rep nil nil string)
+      string))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
