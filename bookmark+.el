@@ -64,6 +64,7 @@
 ;;    `bookmarkp-bmenu-list-only-info-bookmarks',
 ;;    `bookmarkp-bmenu-list-only-region-bookmarks',
 ;;    `bookmarkp-bmenu-list-only-w3m-bookmarks',
+;;    `bookmarkp-bmenu-edit-bookmark',
 ;;    `bookmarkp-fix-bookmark-alist-and-save', `bookmarkp-version'.
 ;;
 ;;  * User options defined here:
@@ -114,6 +115,8 @@
 ;;    `bookmarkp-w3m-alist-only', `bookmarkp-w3m-bookmark-p',
 ;;    `bookmarkp-w3m-set-new-buffer-name',
 ;;    `bookmarkp-replace-regexp-in-string'
+;;    `bookmarkp-edit-bookmark',
+;;    `bookmarkp-maybe-save-bookmark',
 ;;    `old-bookmark-insert',
 ;;    `old-bookmark-insert-location', `old-bookmark-relocate'.
 ;;    `old-bookmark-rename'.
@@ -296,7 +299,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist,
                                   ;;         and, for Emacs <20: cadr, when, unless)
 
-(defconst bookmarkp-version-number "2.2.17")
+(defconst bookmarkp-version-number "2.2.18")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -346,6 +349,7 @@
 (define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
 (define-key bookmark-bmenu-mode-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
 (define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
+(define-key bookmark-bmenu-mode-map "E" 'bookmarkp-bmenu-edit-bookmark)
 
 ;; Define key missing in emacs20 in the `bookmark-bmenu-mode-map' space.
 ;;
@@ -360,7 +364,8 @@ W -- bookmarkp-bmenu-list-only-w3m-bookmarks
 I -- bookmarkp-bmenu-list-only-info-bookmarks
 G -- bookmarkp-bmenu-list-only-gnus-bookmarks
 F -- bookmarkp-bmenu-list-only-file-bookmarks: (C-u) for local only.
-R -- bookmarkp-bmenu-list-only-region-bookmarks")
+R -- bookmarkp-bmenu-list-only-region-bookmarks
+E -- bookmarkp-bmenu-edit-bookmark")
  
 ;;(@* "User Options")
 ;;; User Options -----------------------------------------------------
@@ -757,10 +762,7 @@ candidate.  In this way, you can delete multiple bookmarks."
   ;; Don't rebuild the list when using `batch' arg
   (unless batch
     (bookmark-bmenu-surreptitiously-rebuild-list))
-  (setq bookmark-alist-modification-count
-        (1+ bookmark-alist-modification-count))
-  (when (bookmark-time-to-save-p)
-    (bookmark-save)))
+  (bookmarkp-maybe-save-bookmark))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -841,6 +843,46 @@ Don't affect the buffer ring order."
         (bookmark-rename bmrk)
         (goto-char thispoint))))
 
+(defun bookmarkp-maybe-save-bookmark ()
+  "Increment save counter and maybe save `bookmark-alist'."
+  (setq bookmark-alist-modification-count
+        (1+ bookmark-alist-modification-count))
+  (when (bookmark-time-to-save-p)
+    (bookmark-save)))
+
+(defun bookmarkp-edit-bookmark (bookmark-name)
+  "Edit bookmark `bookmark-name' and maybe save NEW-NAME and NEW-FILENAME to `bookmark-alist'."
+  (let* ((bookmark-filename (bookmark-get-filename bookmark-name))
+         (new-name          (read-from-minibuffer "Name: "
+                                                  nil nil nil nil
+                                                  bookmark-name))
+         (new-filename      (read-from-minibuffer "FileName: "
+                                                  nil nil nil nil
+                                                  bookmark-filename)))
+    (when (and (not (equal new-name ""))
+               (not (equal new-filename ""))
+               (y-or-n-p "Save changes?"))
+      (bookmark-rename bookmark-name new-name)
+      (bookmark-set-filename new-name new-filename)
+      (bookmarkp-maybe-save-bookmark)
+      (list new-name new-filename))))
+
+
+(defun bookmarkp-bmenu-edit-bookmark ()
+  "Interactively edit BOOKMARK-NAME and BOOKMARK-FILENAME."
+  (interactive)
+  (when (bookmark-bmenu-check-position)
+    (let* ((bmk-name (bookmark-bmenu-bookmark))
+           (new-data (bookmarkp-edit-bookmark bmk-name))
+           (new-name (car new-data)))
+      (if new-data
+          (progn
+            (bookmark-bmenu-surreptitiously-rebuild-list)
+            (when
+                (or (search-forward new-name (point-max) t)
+                    (search-backward new-name (point-min) t))
+              (beginning-of-line)))
+          (message "No changes found")))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1413,9 +1455,7 @@ Otherwise, return non-nil if region was relocated."
                             (bookmarkp-record-end-context-region-string end))
          (bookmark-prop-set bookmark 'position beg)
          (bookmark-prop-set bookmark 'end-position end)
-         (setq bookmark-alist-modification-count
-               (1+ bookmark-alist-modification-count))
-         (when (bookmark-time-to-save-p) (bookmark-save))
+         (bookmarkp-maybe-save-bookmark)
          t)))
 
 (defun bookmarkp-handle-region-default (bookmark)
@@ -1548,9 +1588,8 @@ discard the old one."
           ;; Use the new (NAME . ALIST) format.
           (setcdr (bookmark-get-bookmark stripped-name) alist)
         (push (cons stripped-name alist) bookmark-alist))
-      (setq bookmark-current-bookmark          stripped-name
-            bookmark-alist-modification-count  (1+ bookmark-alist-modification-count))
-      (when (bookmark-time-to-save-p) (bookmark-save))
+      (setq bookmark-current-bookmark          stripped-name)
+      (bookmarkp-maybe-save-bookmark)
       (setq bookmark-current-bookmark  stripped-name)
       (bookmark-bmenu-surreptitiously-rebuild-list)))
 
