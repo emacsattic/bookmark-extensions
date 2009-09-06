@@ -299,7 +299,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist,
                                   ;;         and, for Emacs <20: cadr, when, unless)
 
-(defconst bookmarkp-version-number "2.2.19")
+(defconst bookmarkp-version-number "2.2.20")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -848,7 +848,7 @@ candidate."
     (setq bookmark-current-bookmark newname)
     (unless batch
       (bookmark-bmenu-surreptitiously-rebuild-list))
-    (bookmarkp-maybe-save-bookmark)))
+    (bookmarkp-maybe-save-bookmark) newname))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -858,11 +858,14 @@ candidate."
 (defun bookmark-bmenu-rename ()
   "Rename bookmark on current line.  Prompts for a new name."
   (interactive)
-  (if (bookmark-bmenu-check-position)
-      (let ((bmrk (bookmark-bmenu-bookmark))
-            (thispoint (point)))
-        (bookmark-rename bmrk)
-        (goto-char thispoint))))
+  (when (bookmark-bmenu-check-position)
+    (let* ((bmrk     (bookmark-bmenu-bookmark))
+           (new-name (bookmark-rename bmrk)))
+      (when
+          (or (search-forward new-name (point-max) t)
+              (search-backward new-name (point-min) t))
+        (beginning-of-line)))))
+                                        
 
 (defun bookmarkp-maybe-save-bookmark ()
   "Increment save counter and maybe save `bookmark-alist'."
