@@ -299,7 +299,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist,
                                   ;;         and, for Emacs <20: cadr, when, unless)
 
-(defconst bookmarkp-version-number "2.2.18")
+(defconst bookmarkp-version-number "2.2.19")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -644,33 +644,6 @@ candidate."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Adds note about `S-delete' to doc string.
-;;
-(or (fboundp 'old-bookmark-rename)
-(fset 'old-bookmark-rename (symbol-function 'bookmark-rename)))
-
-;;;###autoload
-(defun bookmark-rename (old &optional new)
-  "Change bookmark name from OLD to NEW.
-If called from keyboard, prompt for OLD and NEW.  If called from the
-menubar, select OLD from a menu and prompt for NEW.
-
-If called from Lisp, prompt for NEW if OLD was the only argument.  If
-called with two strings, then do not prompt.  You must pass at least
-OLD when calling from Lisp.
-
-While the user enters the new name, repeated `C-w' inserts consecutive
-words from the buffer into the new bookmark name.
-
-If you use Icicles, then you can use `S-delete' during completion of a
-bookmark name to delete the bookmark named by the current completion
-candidate."
-  (interactive (list (bookmark-completing-read "Old bookmark name")))
-  (old-bookmark-rename old new))
-
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
 ;; Add note about `S-delete' to doc string.
 ;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
 ;;
@@ -832,8 +805,56 @@ Don't affect the buffer ring order."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
+;; Adds note about `S-delete' to doc string.
+;; If batch arg is non--nil don't rebuild menu-list.
+;;
+;;;###autoload
+(defun bookmark-rename (old &optional new batch)
+  "Change the name of OLD bookmark to NEW name.
+If called from keyboard, prompt for OLD and NEW.  If called from
+menubar, select OLD from a menu and prompt for NEW.
+
+If called from Lisp, prompt for NEW if only OLD was passed as an
+argument.  If called with two strings, then no prompting is done.  You
+must pass at least OLD when calling from Lisp.
+
+If batch arg is non--nil don't rebuild menu-list.
+
+While you are entering the new name, consecutive C-w's insert
+consecutive words from the text of the buffer into the new bookmark
+name.
+
+If you use Icicles, then you can use `S-delete' during completion of a
+bookmark name to delete the bookmark named by the current completion
+candidate."
+  (interactive (list (bookmark-completing-read "Old bookmark name")))
+  (bookmark-maybe-historicize-string old)
+  (bookmark-maybe-load-default-file)
+
+  (setq bookmark-current-point (point))
+  (setq bookmark-yank-point (point))
+  (setq bookmark-current-buffer (current-buffer))
+  (let ((newname
+         (or new   ; use second arg, if non-nil
+             (read-from-minibuffer
+              "New name: "
+              nil
+              (let ((now-map (copy-keymap minibuffer-local-map)))
+                (define-key now-map  "\C-w" 'bookmark-yank-word)
+                now-map)
+              nil
+              'bookmark-history))))
+    (bookmark-set-name old newname)
+    (setq bookmark-current-bookmark newname)
+    (unless batch
+      (bookmark-bmenu-surreptitiously-rebuild-list))
+    (bookmarkp-maybe-save-bookmark)))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
 ;; Don't call a second time `bookmark-bmenu-list'.
 ;;
+;;;###autoload
 (defun bookmark-bmenu-rename ()
   "Rename bookmark on current line.  Prompts for a new name."
   (interactive)
@@ -862,12 +883,12 @@ Don't affect the buffer ring order."
     (when (and (not (equal new-name ""))
                (not (equal new-filename ""))
                (y-or-n-p "Save changes?"))
-      (bookmark-rename bookmark-name new-name)
+      (bookmark-rename bookmark-name new-name 'batch)
       (bookmark-set-filename new-name new-filename)
       (bookmarkp-maybe-save-bookmark)
       (list new-name new-filename))))
 
-
+;;;###autoload
 (defun bookmarkp-bmenu-edit-bookmark ()
   "Interactively edit BOOKMARK-NAME and BOOKMARK-FILENAME."
   (interactive)
@@ -888,6 +909,7 @@ Don't affect the buffer ring order."
 ;;
 ;; Maybe remove white spaces at beginning of word.
 ;;
+;;;###autoload
 (defun bookmark-yank-word ()
   "Yank the word at point in `bookmark-current-buffer'.
 Then get the next word from the buffer and append it to the name of
