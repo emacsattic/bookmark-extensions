@@ -299,7 +299,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist,
                                   ;;         and, for Emacs <20: cadr, when, unless)
 
-(defconst bookmarkp-version-number "2.2.20")
+(defconst bookmarkp-version-number "2.2.21")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -846,6 +846,10 @@ candidate."
               'bookmark-history))))
     (bookmark-set-name old newname)
     (setq bookmark-current-bookmark newname)
+    ;; Little hack for Emacs20.
+    ;; Not used in emacs23.
+    (when (assoc old bookmarkp-latest-bookmark-alist)
+      (setcar (assoc old bookmarkp-latest-bookmark-alist) newname))
     (unless batch
       (bookmark-bmenu-surreptitiously-rebuild-list))
     (bookmarkp-maybe-save-bookmark) newname))
@@ -888,6 +892,10 @@ candidate."
                (y-or-n-p "Save changes?"))
       (bookmark-rename bookmark-name new-name 'batch)
       (bookmark-set-filename new-name new-filename)
+      ;; Little hack for Emacs20.
+      ;; Not used in emacs23.
+      (when (assoc bookmark-name bookmarkp-latest-bookmark-alist)
+        (setcar (assoc bookmark-name bookmarkp-latest-bookmark-alist) new-name))      
       (bookmarkp-maybe-save-bookmark)
       (list new-name new-filename))))
 
