@@ -299,7 +299,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist,
                                   ;;         and, for Emacs <20: cadr, when, unless)
 
-(defconst bookmarkp-version-number "2.2.21")
+(defconst bookmarkp-version-number "2.3.0")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
