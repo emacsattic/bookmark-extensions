@@ -676,7 +676,6 @@ discard the old one."
           ;; Use the new (NAME . ALIST) format.
           (setcdr (bookmark-get-bookmark stripped-name) alist)
         (push (cons stripped-name alist) bookmark-alist))
-      (setq bookmark-current-bookmark          stripped-name)
       (bookmarkp-maybe-save-bookmark)
       (setq bookmark-current-bookmark  stripped-name)
       (bookmark-bmenu-surreptitiously-rebuild-list)))
