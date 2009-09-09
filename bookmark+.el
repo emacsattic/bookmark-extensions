@@ -307,7 +307,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.6")
+(defconst bookmarkp-version-number "2.3.7")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1217,6 +1217,37 @@ candidate.  In this way, you can delete multiple bookmarks."
   (unless batch
     (bookmark-bmenu-surreptitiously-rebuild-list))
   (bookmarkp-maybe-save-bookmark))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Improve performances when saving `bookmark-alist' to file.
+;;
+(defun bookmark-write-file (file)
+  "Write `bookmark-alist' to .emacs.bmk."
+  (bookmark-maybe-message "Saving bookmarks to file %s..." file)
+  (with-current-buffer (get-buffer-create " *Bookmarks*")
+    (goto-char (point-min))
+    (delete-region (point-min) (point-max))
+    (let ((print-length nil)
+          (print-level nil))
+      (bookmark-insert-file-format-version-stamp)
+      (progn (insert "(")
+             (dolist (i bookmark-alist)
+                (pp i (current-buffer)))
+             (insert ")"))
+      (let ((version-control
+             (cond
+              ((null bookmark-version-control) nil)
+              ((eq 'never bookmark-version-control) 'never)
+              ((eq 'nospecial bookmark-version-control) version-control)
+              (t t))))
+        (condition-case nil
+            (write-region (point-min) (point-max) file)
+          (file-error (message "Can't write %s" file)))
+        (kill-buffer (current-buffer))
+        (bookmark-maybe-message
+         "Saving bookmarks to file %s...done" file)))))
+
 
 ;;(@* "Menu List Replacements (`bookmark-bmenu-*')")
 ;;; Menu List Replacements (`bookmark-bmenu-*') ----------------------
