@@ -1747,6 +1747,18 @@ With a prefix argument, do not include remote files or directories."
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))))
 
+
+;;;###autoload
+(defun bookmark-bmenu-mark ()
+  "Mark bookmark on this line to be displayed by \\<bookmark-bmenu-mode-map>\\[bookmark-bmenu-select]."
+  (interactive)
+  (beginning-of-line)
+  (when (bookmark-bmenu-check-position)
+    (let ((inhibit-read-only t))
+      (delete-char 1)
+      (insert ?>)
+      (forward-line 1))))
+
 ;;;###autoload
 (defun bookmarkp-bmenu-mark-bookmark-matching-regexp (regexp)
   "Mark bookmarks matching regexp."
@@ -1758,8 +1770,8 @@ With a prefix argument, do not include remote files or directories."
     (with-current-buffer "*Bookmark List*"
       (goto-char (point-min))
       (forward-line 2)
-        (while (re-search-forward regexp (1- (point-max)) t))
-          (bookmark-bmenu-mark))
+      (while (re-search-forward regexp (point-max) t)
+        (bookmark-bmenu-mark)))
     (setq bookmark-bmenu-toggle-filenames hide-em)
     (when bookmark-bmenu-toggle-filenames
       (bookmark-bmenu-toggle-filenames 'show))))
