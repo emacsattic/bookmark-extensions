@@ -311,7 +311,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.11")
+(defconst bookmarkp-version-number "2.3.12")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1758,8 +1758,8 @@ With a prefix argument, do not include remote files or directories."
     (with-current-buffer "*Bookmark List*"
       (goto-char (point-min))
       (forward-line 2)
-      (while (re-search-forward regexp (point-max) t)
-        (bookmark-bmenu-mark)))
+        (while (re-search-forward regexp (1- (point-max)) t))
+          (bookmark-bmenu-mark))
     (setq bookmark-bmenu-toggle-filenames hide-em)
     (when bookmark-bmenu-toggle-filenames
       (bookmark-bmenu-toggle-filenames 'show))))
