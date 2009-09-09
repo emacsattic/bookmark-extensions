@@ -123,6 +123,9 @@
 ;;    `bookmarkp-root-or-sudo-logged-p',
 ;;    `bookmarkp-save-new-region-location',
 ;;    `bookmarkp-w3m-alist-only', `bookmarkp-w3m-bookmark-p',
+;;    `bookmarkp-bmenu-mark-bookmark-matching-regexp',
+;;    `bookmarkp-bmenu-hide-marked-bookmark',
+;;    `bookmarkp-bmenu-hide-not-marked-bookmark',
 ;;    `bookmarkp-w3m-set-new-buffer-name', `old-bookmark-insert',
 ;;    `old-bookmark-insert-location', `old-bookmark-relocate',
 ;;    `old-bookmark-rename'.
@@ -308,7 +311,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.8")
+(defconst bookmarkp-version-number "2.3.9")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -367,6 +370,13 @@
 (define-key bookmark-bmenu-mode-map "E" 'bookmarkp-bmenu-edit-bookmark)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "N" 'bookmarkp-bmenu-list-only-non-file-bookmarks)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "\%m" 'bookmarkp-bmenu-mark-bookmark-matching-regexp)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "H" 'bookmarkp-bmenu-hide-not-marked-bookmark)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "h" 'bookmarkp-bmenu-hide-marked-bookmark)
+
 
 ;;;###autoload
 (when (< emacs-major-version 21)
@@ -380,7 +390,10 @@
 \\[bookmarkp-bmenu-list-only-info-bookmarks] - List only Info bookmarks
 \\[bookmarkp-bmenu-list-only-region-bookmarks] - List only region bookmarks
 \\[bookmarkp-bmenu-list-only-w3m-bookmarks] - List only W3M bookmarks
-\\[bookmarkp-bmenu-list-only-non-file-bookmarks] - List only Non-files bookmarks")
+\\[bookmarkp-bmenu-list-only-non-file-bookmarks] - List only Non-files bookmarks
+\\[bookmarkp-bmenu-mark-bookmark-matching-regexp] - Mark bookmark matching regexp
+\\[bookmarkp-bmenu-hide-marked-bookmark] - Hide marked bookmarks
+\\[bookmarkp-bmenu-hide-not-marked-bookmark] - Hide not marked bookmarks")
 
 
 ;;(@* "Faces (Customizable)")
@@ -1728,6 +1741,40 @@ With a prefix argument, do not include remote files or directories."
     (call-interactively #'(lambda ()
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))))
+
+(defun bookmarkp-bmenu-mark-bookmark-matching-regexp (regexp)
+  "Mark bookmarks matching regexp."
+  (interactive "sRegexp: ")
+  (with-current-buffer "*Bookmark List*"
+    (goto-char (point-min))
+    (while (re-search-forward regexp (point-max) t)
+      (bookmark-bmenu-mark))))
+
+(defun bookmarkp-bmenu-hide-marked-bookmark ()
+  "Hide all marked bookmarks."
+  (interactive)
+  (let ((bookmark-alist bookmarkp-latest-bookmark-alist))
+    (with-current-buffer "*Bookmark List*"
+      (goto-char (point-min))
+      (while (re-search-forward "^\>" (point-max) t)
+        (if (bookmark-bmenu-check-position)
+            (let ((bmrk (bookmark-bmenu-bookmark)))
+              (setq bookmark-alist (remove (assoc bmrk bookmark-alist) bookmark-alist))))))
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+    (bookmark-bmenu-surreptitiously-rebuild-list)))
+
+(defun bookmarkp-bmenu-hide-not-marked-bookmark ()
+  "Hide all bookmark not marked."
+  (interactive)
+  (let ((bookmark-alist bookmarkp-latest-bookmark-alist))
+    (with-current-buffer "*Bookmark List*"
+      (goto-char (point-min))
+      (while (re-search-forward "^  " (point-max) t)
+        (if (bookmark-bmenu-check-position)
+            (let ((bmrk (bookmark-bmenu-bookmark)))
+              (setq bookmark-alist (remove (assoc bmrk bookmark-alist) bookmark-alist))))))
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+    (bookmark-bmenu-surreptitiously-rebuild-list)))
 
 ;; General Utility Functions -----------------------------------------
 
