@@ -70,6 +70,7 @@
 ;;    `bookmarkp-bmenu-list-only-w3m-bookmarks',
 ;;    `bookmarkp-bmenu-edit-bookmark',
 ;;    `bookmarkp-fix-bookmark-alist-and-save', `bookmarkp-version'.
+;;    `bookmarkp-bmenu-list-only-non-file-bookmarks'.
 ;;
 ;;  * User options defined here:
 ;;
@@ -95,6 +96,8 @@
 ;;    `bookmarkp-gnus-alist-only', `bookmarkp-gnus-bookmark-p',
 ;;    `bookmarkp-goto-position', `bookmarkp-handle-region-default',
 ;;    `bookmarkp-info-alist-only', `bookmarkp-info-bookmark-p',
+;;    `bookmarkp-bmenu-list-only-non-file-bookmarks',
+;;    `bookmarkp-buffer--non-filename-bookmark-p',
 ;;    `bookmarkp-jump-gnus', `bookmarkp-jump-w3m',
 ;;    `bookmarkp-jump-w3m-new-session',
 ;;    `bookmarkp-jump-w3m-only-one-tab',
@@ -150,7 +153,7 @@
 ;;   `bookmark-make-record-default', `bookmark-prop-get' (Emacs
 ;;   20,21), `bookmark-prop-set' (Emacs 20, 21), `bookmark-relocate',
 ;;   `bookmark-rename', `bookmark-set', `bookmark-store',
-;;   `bookmark-yank-word'.
+;;   `bookmark-yank-word', `bookmark-maybe-sort-alist'.
 ;;
 ;;
 ;;  ***** NOTE: The following functions defined in `info.el'
@@ -304,7 +307,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.5")
+(defconst bookmarkp-version-number "2.3.6")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -361,6 +364,8 @@
 (define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "E" 'bookmarkp-bmenu-edit-bookmark)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "N" 'bookmarkp-bmenu-list-only-non-file-bookmarks)
 
 ;;;###autoload
 (when (< emacs-major-version 21)
@@ -373,7 +378,9 @@
 \\[bookmarkp-bmenu-list-only-gnus-bookmarks] - List only Gnus bookmarks
 \\[bookmarkp-bmenu-list-only-info-bookmarks] - List only Info bookmarks
 \\[bookmarkp-bmenu-list-only-region-bookmarks] - List only region bookmarks
-\\[bookmarkp-bmenu-list-only-w3m-bookmarks] - List only W3M bookmarks")
+\\[bookmarkp-bmenu-list-only-w3m-bookmarks] - List only W3M bookmarks
+\\[bookmarkp-bmenu-list-only-non-file-bookmarks] - List only Non-files bookmarks")
+
 
 ;;(@* "Faces (Customizable)")
 ;;; Faces (Customizable) ---------------------------------------------
@@ -1557,35 +1564,49 @@ BOOKMARK is a bookmark name or a bookmark record."
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-region-bookmark-p bookmark-alist))
 
+;; (find-epp (bookmarkp-region-alist-only))
+
 (defun bookmarkp-gnus-alist-only ()
   "`bookmark-alist', filtered to retain only Gnus bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-gnus-bookmark-p bookmark-alist))
+
+;; (find-epp (bookmarkp-gnus-alist-only))
 
 (defun bookmarkp-w3m-alist-only ()
   "`bookmark-alist', filtered to retain only W3m bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-w3m-bookmark-p bookmark-alist))
 
+;; (find-epp (bookmarkp-w3m-alist-only))
+
 (defun bookmarkp-info-alist-only ()
   "`bookmark-alist', filtered to retain only Info bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-info-bookmark-p bookmark-alist))
+
+;; (find-epp (bookmarkp-info-alist-only))
 
 (defun bookmarkp-non-file-alist-only ()
   "`bookmark-alist', filtered to retain only non-file bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if #'bookmarkp-file-bookmark-p bookmark-alist))
 
+;; (find-epp (bookmarkp-non-file-file-alist-only))
+
 (defun bookmarkp-remote-file-alist-only ()
   "`bookmark-alist', filtered to retain only remote-file bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-remote-file-bookmark-p bookmark-alist))
 
+;; (find-epp (bookmarkp-remote-file-alist-only))
+
 (defun bookmarkp-local-file-alist-only ()
   "`bookmark-alist', filtered to retain only local-file bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-local-file-bookmark-p bookmark-alist))
+
+;; (find-epp (bookmarkp-local-file-alist-only))
 
 (defun bookmarkp-file-alist-only (&optional hide-remote)
   "`bookmark-alist', filtered to retain only file and directory bookmarks.
@@ -1604,6 +1625,24 @@ A new list is returned (no side effects)."
                                (bookmarkp-buffer--non-filename-bookmark-p bookmark)))
                        bookmark-alist))
 
+;; (find-epp (bookmarkp-file-alist-only))
+
+(defun bookmarkp-non-file-alist-only ()
+  "Return only non--filename bookmarks from `bookmark-alist'."
+  (bookmarkp-remove-if-not #'bookmarkp-buffer--non-filename-bookmark-p bookmark-alist))
+
+;; (find-epp (bookmarkp-non-file-alist-only))
+
+;;;###autoload
+(defun bookmarkp-bmenu-list-only-non-file-bookmarks ()
+  "Display a list of only non--filenames bookmarks."
+  (interactive)
+  (let ((bookmark-alist (bookmarkp-non-file-alist-only)))
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+    (call-interactively #'(lambda ()
+                            (interactive)
+                            (bookmark-bmenu-list "% Bookmark+ Non--Files" 'filteredp)))))
+    
 ;;;###autoload
 (defun bookmarkp-bmenu-list-only-file-bookmarks (arg)
   "Display a list of file and directory bookmarks (only).
