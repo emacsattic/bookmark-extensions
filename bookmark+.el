@@ -371,7 +371,7 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "N" 'bookmarkp-bmenu-list-only-non-file-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\%m" 'bookmarkp-bmenu-mark-bookmark-matching-regexp)
+(define-key bookmark-bmenu-mode-map (kbd "%m") 'bookmarkp-bmenu-mark-bookmark-matching-regexp)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "H" 'bookmarkp-bmenu-hide-not-marked-bookmark)
 ;;;###autoload
@@ -1742,39 +1742,64 @@ With a prefix argument, do not include remote files or directories."
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))))
 
+;;;###autoload
 (defun bookmarkp-bmenu-mark-bookmark-matching-regexp (regexp)
   "Mark bookmarks matching regexp."
   (interactive "sRegexp: ")
-  (with-current-buffer "*Bookmark List*"
-    (goto-char (point-min))
-    (while (re-search-forward regexp (point-max) t)
-      (bookmark-bmenu-mark))))
-
+  (let ((hide-em bookmark-bmenu-toggle-filenames)
+        (bookmark-alist bookmarkp-latest-bookmark-alist))
+    (when hide-em (bookmark-bmenu-hide-filenames))
+    (setq bookmark-bmenu-toggle-filenames nil)
+    (with-current-buffer "*Bookmark List*"
+      (goto-char (point-min))
+      (forward-line 2)
+      (while (re-search-forward regexp (point-max) t)
+        (bookmark-bmenu-mark)))
+    (setq bookmark-bmenu-toggle-filenames hide-em)
+    (when bookmark-bmenu-toggle-filenames
+      (bookmark-bmenu-toggle-filenames 'show))))
+    
+;;;###autoload
 (defun bookmarkp-bmenu-hide-marked-bookmark ()
   "Hide all marked bookmarks."
   (interactive)
-  (let ((bookmark-alist bookmarkp-latest-bookmark-alist))
+  (let ((hide-em bookmark-bmenu-toggle-filenames)
+        (bookmark-alist bookmarkp-latest-bookmark-alist))
+    (when hide-em (bookmark-bmenu-hide-filenames))
+    (setq bookmark-bmenu-toggle-filenames nil)
     (with-current-buffer "*Bookmark List*"
       (goto-char (point-min))
+      (forward-line 2)
       (while (re-search-forward "^\>" (point-max) t)
         (if (bookmark-bmenu-check-position)
             (let ((bmrk (bookmark-bmenu-bookmark)))
               (setq bookmark-alist (remove (assoc bmrk bookmark-alist) bookmark-alist))))))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-surreptitiously-rebuild-list)))
+    (bookmark-bmenu-surreptitiously-rebuild-list)
+    (setq bookmark-bmenu-toggle-filenames hide-em)
+    (when bookmark-bmenu-toggle-filenames
+      (bookmark-bmenu-toggle-filenames 'show))))
 
+;;;###autoload
 (defun bookmarkp-bmenu-hide-not-marked-bookmark ()
   "Hide all bookmark not marked."
   (interactive)
-  (let ((bookmark-alist bookmarkp-latest-bookmark-alist))
+  (let ((hide-em bookmark-bmenu-toggle-filenames)
+        (bookmark-alist bookmarkp-latest-bookmark-alist))
+    (when hide-em (bookmark-bmenu-hide-filenames))
+    (setq bookmark-bmenu-toggle-filenames nil)
     (with-current-buffer "*Bookmark List*"
       (goto-char (point-min))
-      (while (re-search-forward "^  " (point-max) t)
-        (if (bookmark-bmenu-check-position)
-            (let ((bmrk (bookmark-bmenu-bookmark)))
-              (setq bookmark-alist (remove (assoc bmrk bookmark-alist) bookmark-alist))))))
+      (forward-line 2)
+      (while (re-search-forward "^ +" (point-max) t)
+        (when (bookmark-bmenu-check-position)
+          (let ((bmrk (bookmark-bmenu-bookmark)))
+            (setq bookmark-alist (remove (assoc bmrk bookmark-alist) bookmark-alist))))))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-surreptitiously-rebuild-list)))
+    (bookmark-bmenu-surreptitiously-rebuild-list)
+    (setq bookmark-bmenu-toggle-filenames hide-em)
+    (when bookmark-bmenu-toggle-filenames
+      (bookmark-bmenu-toggle-filenames 'show))))
 
 ;; General Utility Functions -----------------------------------------
 
