@@ -304,7 +304,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.4")
+(defconst bookmarkp-version-number "2.3.5")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1516,7 +1516,16 @@ BOOKMARK is a bookmark name or a bookmark record."
   "Return non-nil if BOOKMARK bookmarks a file or directory.
 BOOKMARK is a bookmark name or a bookmark record.
 This excludes bookmarks of a more specific kind (Info, Gnus, and W3m)."
-  (and (bookmark-get-filename bookmark) (not (bookmark-get-handler bookmark))))
+  (let* ((filename (bookmark-get-filename bookmark))
+         (isnonfile (equal filename bookmarkp-non-file-filename))) 
+    (and filename (not isnonfile) (not (bookmark-get-handler bookmark)))))
+
+(defun bookmarkp-buffer--non-filename-bookmark-p (bookmark)
+  "Return non-nil if BOOKMARK is non--file and also not Gnus bookmark.
+e.g *scratch*."
+  (let* ((filename (bookmark-get-filename bookmark))
+         (isnonfile (equal filename bookmarkp-non-file-filename))) 
+    (and isnonfile (not (bookmark-get-handler bookmark)))))
 
 (defun bookmarkp-remote-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a remote file or directory.
@@ -1587,11 +1596,12 @@ Non-nil argument HIDE-REMOTE means do not include remote file or
 directory bookmarks.
 
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if (lambda (bookmark)
-                         (or (bookmarkp-gnus-bookmark-p bookmark)
-                             (bookmarkp-w3m-bookmark-p bookmark)
-                             (bookmarkp-info-bookmark-p bookmark)
-                             (and hide-remote (bookmarkp-remote-file-bookmark-p bookmark))))
+  (bookmarkp-remove-if #'(lambda (bookmark)
+                           (or (bookmarkp-gnus-bookmark-p bookmark)
+                               (bookmarkp-w3m-bookmark-p bookmark)
+                               (bookmarkp-info-bookmark-p bookmark)
+                               (and hide-remote (bookmarkp-remote-file-bookmark-p bookmark))
+                               (bookmarkp-buffer--non-filename-bookmark-p bookmark)))
                        bookmark-alist))
 
 ;;;###autoload
