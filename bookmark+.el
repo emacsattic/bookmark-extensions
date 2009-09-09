@@ -154,6 +154,7 @@
 ;;   20,21), `bookmark-prop-set' (Emacs 20, 21), `bookmark-relocate',
 ;;   `bookmark-rename', `bookmark-set', `bookmark-store',
 ;;   `bookmark-yank-word', `bookmark-maybe-sort-alist'.
+;;   `bookmark-maybe-message', `bookmark-write-file'.
 ;;
 ;;
 ;;  ***** NOTE: The following functions defined in `info.el'
@@ -307,7 +308,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.7")
+(defconst bookmarkp-version-number "2.3.8")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
