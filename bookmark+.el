@@ -311,7 +311,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.9")
+(defconst bookmarkp-version-number "2.3.11")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -355,6 +355,10 @@
 (define-key bookmark-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "%" nil)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "*" nil)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-r" 'bookmark-bmenu-relocate) ; Was `R' in vanilla.
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
@@ -371,7 +375,7 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "N" 'bookmarkp-bmenu-list-only-non-file-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "%m") 'bookmarkp-bmenu-mark-bookmark-matching-regexp)
+(define-key bookmark-bmenu-mode-map "%m" 'bookmarkp-bmenu-mark-bookmark-matching-regexp)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "H" 'bookmarkp-bmenu-hide-not-marked-bookmark)
 ;;;###autoload
@@ -380,7 +384,8 @@
 
 ;;;###autoload
 (when (< emacs-major-version 21)
-  (define-key bookmark-bmenu-mode-map (kbd "RET") 'bookmark-bmenu-this-window))
+  (define-key bookmark-bmenu-mode-map (kbd "RET") 'bookmark-bmenu-this-window)
+  (define-key bookmark-bmenu-mode-map (kbd "*m") 'bookmark-bmenu-mark))
 
 (defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
   "Extras keys added by bookmark+:\\<bookmark-bmenu-mode-map>
