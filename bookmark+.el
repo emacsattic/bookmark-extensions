@@ -1587,12 +1587,6 @@ A new list is returned (no side effects)."
 
 ;; (find-epp (bookmarkp-info-alist-only))
 
-(defun bookmarkp-non-file-alist-only ()
-  "`bookmark-alist', filtered to retain only non-file bookmarks.
-A new list is returned (no side effects)."
-  (bookmarkp-remove-if #'bookmarkp-file-bookmark-p bookmark-alist))
-
-;; (find-epp (bookmarkp-non-file-file-alist-only))
 
 (defun bookmarkp-remote-file-alist-only ()
   "`bookmark-alist', filtered to retain only remote-file bookmarks.
@@ -1628,7 +1622,8 @@ A new list is returned (no side effects)."
 ;; (find-epp (bookmarkp-file-alist-only))
 
 (defun bookmarkp-non-file-alist-only ()
-  "Return only non--filename bookmarks from `bookmark-alist'."
+  "`bookmark-alist', filtered to retain only non-file bookmarks.
+A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-buffer--non-filename-bookmark-p bookmark-alist))
 
 ;; (find-epp (bookmarkp-non-file-alist-only))
