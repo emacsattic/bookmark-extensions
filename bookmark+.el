@@ -880,8 +880,8 @@ bookmarks.)"
   (interactive (list nil current-prefix-arg))
   (bookmark-maybe-load-default-file)
   (setq bookmark-current-point   (point)
-        bookmark-yank-point      (point)
         bookmark-current-buffer  (current-buffer))
+  (save-excursion (skip-chars-forward " ") (setq bookmark-yank-point (point)))
   (let* ((record  (bookmark-make-record))
          (regionp (and transient-mark-mode mark-active (not (eq (mark) (point)))))
          (regname (concat (buffer-name) ": "
@@ -893,7 +893,8 @@ bookmarks.)"
          (defname (bookmarkp-replace-regexp-in-string
                    "\n" " "
                    (cond (regionp
-                          (setq bookmark-yank-point (region-beginning))
+                          (save-excursion (goto-char (region-beginning))
+                            (skip-chars-forward " ") (setq bookmark-yank-point (point)))
                           (substring regname 0
                                      (min bookmarkp-bookmark-name-length-max
                                           (length regname))))
@@ -925,9 +926,8 @@ bookmarks.)"
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Maybe remove 2 whitespaces at beginning of first word yanked.
-;; Used in `bookmark-rename' to remove first two spaces in menu-list.
-;;
+;; Prevent adding a newline in a bookmark when yanking.
+;; 
 ;;;###autoload
 (defun bookmark-yank-word ()
   "Yank the word at point in `bookmark-current-buffer'.
@@ -938,7 +938,7 @@ Repeat to yank subsequent words from the buffer, appending them."
                    (buffer-substring-no-properties
                     (point)
                     (progn (forward-word 1) (setq bookmark-yank-point (point)))))))
-    (setq string  (bookmarkp-replace-regexp-in-string "^  " "" string))
+    (setq string  (bookmarkp-replace-regexp-in-string "\n" "" string))
     (insert string)))
 
 
@@ -1139,7 +1139,7 @@ candidate."
   (bookmark-maybe-historicize-string old)
   (bookmark-maybe-load-default-file)
   (setq bookmark-current-point (point))
-  (setq bookmark-yank-point (point))
+  (save-excursion (skip-chars-forward " ") (setq bookmark-yank-point (point)))
   (setq bookmark-current-buffer (current-buffer))
   (let ((newname  (or new  (read-from-minibuffer
                             "New name: " nil
