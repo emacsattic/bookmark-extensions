@@ -766,6 +766,13 @@ Else return `bookmark-alist'."
                (lambda (x y) (string-lessp (car x) (car y)))))
       bookmark-alist)))
 
+(when (< emacs-major-version 22)
+  ;; Not needed for Emacs 22+.
+  (defun bookmark-maybe-message (fmt &rest args)
+    "Apply `message' to FMT and ARGS, but only if the display is fast enough."
+    (if (>= baud-rate 9600)
+        (apply 'message fmt args))))
+
 
 ;;(@* "Core Replacements (`bookmark-*' except `bookmark-bmenu-*')")
 ;;; Core Replacements (`bookmark-*' except `bookmark-bmenu-*') -------
