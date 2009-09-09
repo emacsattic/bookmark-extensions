@@ -745,6 +745,20 @@ See `bookmark-jump-other-window'."
     (interactive "e")
     (bookmark-popup-menu-and-apply-function 'bookmark-jump-other-window
                                             "Jump to Bookmark (in another window)" event)))
+
+
+(when (< emacs-major-version 22)
+  ;; Not needed for Emacs 22+ - it fix a bug in emacs20 by using `copy-sequence'
+  ;; instead of `copy-alist'.
+  (defun bookmark-maybe-sort-alist ()
+    "If `bookmark-sort-flag' is non-nil, then return a sorted copy of the `bookmark-alist'.
+Else return `bookmark-alist'."
+    (if bookmark-sort-flag
+        (sort (copy-sequence bookmark-alist)
+              (function
+               (lambda (x y) (string-lessp (car x) (car y)))))
+      bookmark-alist)))
+
 
 ;;(@* "Core Replacements (`bookmark-*' except `bookmark-bmenu-*')")
 ;;; Core Replacements (`bookmark-*' except `bookmark-bmenu-*') -------
@@ -1135,8 +1149,6 @@ candidate."
                             nil 'bookmark-history))))
     (bookmark-set-name old newname)
     (setq bookmark-current-bookmark  newname)
-    (when (assoc old bookmarkp-latest-bookmark-alist) ; Emacs < 23.
-      (setcar (assoc old bookmarkp-latest-bookmark-alist) newname))
     (unless batch (bookmark-bmenu-surreptitiously-rebuild-list))
     (bookmarkp-maybe-save-bookmark) newname))
 
@@ -1405,8 +1417,6 @@ BOOKMARK-NAME is the current (old) name of the bookmark to be renamed."
                (y-or-n-p "Save changes?"))
       (bookmark-rename bookmark-name new-name 'batch)
       (bookmark-set-filename new-name new-filename)
-      (when (assoc bookmark-name bookmarkp-latest-bookmark-alist) ; For Emacs 20.
-        (setcar (assoc bookmark-name bookmarkp-latest-bookmark-alist) new-name))      
       (bookmarkp-maybe-save-bookmark)
       (list new-name new-filename))))
 
