@@ -1754,10 +1754,13 @@ With a prefix argument, do not include remote files or directories."
   (interactive)
   (beginning-of-line)
   (when (bookmark-bmenu-check-position)
-    (let ((inhibit-read-only t))
+    (let ((inhibit-read-only t)
+          (bmk (bookmark-bmenu-bookmark)))
+      (push bmk bookmarkp-bookmark-marked-list)
       (delete-char 1)
       (insert ?>)
       (forward-line 1))))
+
 
 (defun bookmarkp-restore-all-mark ()
   (when bookmarkp-bookmark-marked-list
@@ -1794,7 +1797,6 @@ With a prefix argument, do not include remote files or directories."
       (while (re-search-forward regexp (point-max) t)
         (when (bookmark-bmenu-check-position)
           (let ((bmk  (bookmark-bmenu-bookmark)))
-            (push bmk bookmarkp-bookmark-marked-list)
             (bookmark-bmenu-mark)))))
     (setq bookmark-bmenu-toggle-filenames  hide-em)
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show))))
