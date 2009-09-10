@@ -353,6 +353,8 @@
 (define-key bookmark-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "q" 'bookmarkp-bmenu-quit)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "E" 'bookmarkp-bmenu-edit-bookmark)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
@@ -1345,6 +1347,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
                 (bookmarkp-bmenu-propertize-item name start end)
                 (insert "\n")))
             (bookmark-maybe-sort-alist))
+    (bookmarkp-restore-all-mark)
     (goto-char (point-min))
     (forward-line 2)
     (bookmark-bmenu-mode)
@@ -1745,6 +1748,7 @@ With a prefix argument, do not include remote files or directories."
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))))
 
+;;;###autoload
 (defun bookmark-bmenu-mark ()
   "Mark bookmark on this line to be displayed by \\<bookmark-bmenu-mode-map>\\[bookmark-bmenu-select]."
   (interactive)
@@ -1768,6 +1772,11 @@ With a prefix argument, do not include remote files or directories."
                 (forward-line 1) (forward-line 0))))))))
 
 ;; (find-epp bookmarkp-bookmark-marked-list)
+
+(defun bookmarkp-bmenu-quit ()
+  (interactive)
+  (setq bookmarkp-bookmark-marked-list nil)
+  (quit-window))
 
 (defvar bookmarkp-bookmark-marked-list nil)
 ;;;###autoload
