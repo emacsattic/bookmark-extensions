@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.12")
+(defconst bookmarkp-version-number "2.3.13")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -911,11 +911,6 @@ bookmarks.)"
   (bookmark-maybe-load-default-file)
   (setq bookmark-current-point   (point)
         bookmark-current-buffer  (current-buffer))
-  ;; @@@@@@@@@@ THIS CANNOT BE RIGHT.
-  ;; We do not want to stop users from including a whitespace prefix.
-  ;; This function is not necessarily called from the menu list.
-  ;; If there is an Emacs bug because of a name that starts with whitespace,
-  ;; then write a code comment before the workaround.
   (save-excursion (skip-chars-forward " ") (setq bookmark-yank-point (point)))
   (let* ((record  (bookmark-make-record))
          (regionp (and transient-mark-mode mark-active (not (eq (mark) (point)))))
@@ -928,7 +923,6 @@ bookmarks.)"
          (defname (bookmarkp-replace-regexp-in-string
                    "\n" " "
                    (cond (regionp
-                          ;; @@@@@@@@@@ THIS CANNOT BE RIGHT.  SEE PREVIOUS
                           (save-excursion (goto-char (region-beginning))
                             (skip-chars-forward " ") (setq bookmark-yank-point (point)))
                           (substring regname 0
@@ -1176,7 +1170,6 @@ candidate."
   (bookmark-maybe-historicize-string old)
   (bookmark-maybe-load-default-file)
   (setq bookmark-current-point (point))
-  ;; @@@@@@@@@@ THIS CANNOT BE RIGHT.  SEE PREVIOUS
   (save-excursion (skip-chars-forward " ") (setq bookmark-yank-point (point)))
   (setq bookmark-current-buffer (current-buffer))
   (let ((newname  (or new  (read-from-minibuffer
@@ -1252,9 +1245,9 @@ candidate.  In this way, you can delete multiple bookmarks."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Improved performance when saving `bookmark-alist'.
-;;
-;; @@@@@@@@@@@@ YOU NEED TO DESCRIBE THE SPECIFIC CODE CHANGES from the vanilla code.
+;; Improved performances when saving `bookmark-alist' by inserting
+;; little chunk of code one by one instead of letting `pp' parse the whole
+;; `bookmark-alist' in one time, what is very long.
 ;;
 (defun bookmark-write-file (file)
   "Write `bookmark-alist' to `bookmark-default-file'."
@@ -1752,10 +1745,36 @@ With a prefix argument, do not include remote files or directories."
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))))
 
+(defun bookmark-bmenu-mark ()
+  "Mark bookmark on this line to be displayed by \\<bookmark-bmenu-mode-map>\\[bookmark-bmenu-select]."
+  (interactive)
+  (beginning-of-line)
+  (when (bookmark-bmenu-check-position)
+    (let ((inhibit-read-only t))
+      (delete-char 1)
+      (insert ?>)
+      (forward-line 1))))
+
+(defun bookmarkp-restore-all-mark ()
+  (when bookmarkp-bookmark-marked-list
+    (with-current-buffer "*Bookmark List*"
+      (goto-char (point-min))
+      (forward-line 2)
+      (while (not (eobp))
+        (when (bookmark-bmenu-check-position)
+          (let ((bmk (bookmark-bmenu-bookmark)))
+            (if (and bmk (member bmk bookmarkp-bookmark-marked-list))
+                (bookmark-bmenu-mark)
+                (forward-line 1) (forward-line 0))))))))
+
+;; (find-epp bookmarkp-bookmark-marked-list)
+
+(defvar bookmarkp-bookmark-marked-list nil)
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
   "Mark bookmarks that match REGEXP."
   (interactive "sRegexp: ")
+  (setq bookmarkp-bookmark-marked-list nil)
   (let ((hide-em         bookmark-bmenu-toggle-filenames)
         (bookmark-alist  bookmarkp-latest-bookmark-alist))
     (when hide-em (bookmark-bmenu-hide-filenames))
@@ -1763,7 +1782,11 @@ With a prefix argument, do not include remote files or directories."
     (with-current-buffer "*Bookmark List*"
       (goto-char (point-min))
       (forward-line 2)
-      (while (re-search-forward regexp (point-max) t) (bookmark-bmenu-mark)))
+      (while (re-search-forward regexp (point-max) t)
+        (when (bookmark-bmenu-check-position)
+          (let ((bmk  (bookmark-bmenu-bookmark)))
+            (push bmk bookmarkp-bookmark-marked-list)
+            (bookmark-bmenu-mark)))))
     (setq bookmark-bmenu-toggle-filenames  hide-em)
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show))))
     
