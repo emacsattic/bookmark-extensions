@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.20")
+(defconst bookmarkp-version-number "2.3.21")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -520,6 +520,12 @@ If nil show only beginning of region."
 
 (defvar bookmarkp-bookmark-marked-list nil
   "A list that contains all marked bookmarks.")
+
+(defvar bookmarkp-bmenu-before-hide-unmarked-list nil
+  "Store the list like it was before hiding unmarked bookmarks.")
+
+(defvar bookmarkp-bmenu-before-hide-marked-list nil
+  "Store the list like it was before hiding marked bookmarks.")
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
 ;;
@@ -1661,6 +1667,10 @@ BOOKMARK is a bookmark name or a bookmark record."
   (let ((file  (bookmark-get-filename bookmark)))
     (and (bookmarkp-local-file-bookmark-p bookmark) (file-directory-p file))))
 
+(defun bookmarkp-bookmark-marked-p (bookmark)
+  "Return non-nil if BOOKMARK is a marked bookmark."
+  (member (car bookmark) bookmarkp-bookmark-marked-list))
+
 ;; Filter Functions --------------------------------------------------
 
 (defun bookmarkp-region-alist-only ()
@@ -1732,6 +1742,14 @@ A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-non-file-bookmark-p bookmark-alist))
 
 ;; (find-epp (bookmarkp-non-file-alist-only))
+
+(defun bookmarkp-marked-bookmarks-only ()
+  "Return the list of marked bookmarks."
+  (bookmarkp-remove-if-not #'bookmarkp-bookmark-marked-p bookmark-alist))
+
+(defun bookmarkp-non-marked-bookmarks-only ()
+  "Return the list of not marked bookmarks."
+  (bookmarkp-remove-if #'bookmarkp-bookmark-marked-p bookmark-alist))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-list-only-file-bookmarks (arg)
@@ -1864,43 +1882,39 @@ With a prefix argument, do not include remote files or directories."
     (setq bookmark-bmenu-toggle-filenames  hide-em)
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show))))
 
-(defun bookmarkp-bookmark-marked-p (bookmark)
-  (member (car bookmark) bookmarkp-bookmark-marked-list))
 
-(defun bookmarkp-marked-bookmarks-only ()
-  (bookmarkp-remove-if-not #'bookmarkp-bookmark-marked-p bookmark-alist))
-
-(defun bookmarkp-non-marked-bookmarks-only ()
-  (bookmarkp-remove-if #'bookmarkp-bookmark-marked-p bookmark-alist))
-
-(defvar bookmarkp-bmenu-before-hide-marked-list nil
-  "Store the list like it was before hiding marked or unmarked bookmarks.")
 ;;;###autoload
 (defun bookmarkp-bmenu-hide-marked ()
   "Hide all marked bookmarks."
   (interactive)
   (when bookmarkp-bookmark-marked-list ; (bookmarkp-current-list-have-marked-p)
     (let ((hide-em         bookmark-bmenu-toggle-filenames)
-          (bookmark-alist  bookmarkp-latest-bookmark-alist))
+          (bookmark-alist  bookmarkp-latest-bookmark-alist)
+          status)
       (when hide-em (bookmark-bmenu-hide-filenames))
       (setq bookmark-bmenu-toggle-filenames nil)
       (if bookmarkp-bmenu-before-hide-marked-list
-          (progn                                                      ; unhide marked
+          ;; unhide marked
+          (progn
             (setq bookmark-alist bookmarkp-bmenu-before-hide-marked-list)
             (setq bookmarkp-bmenu-before-hide-marked-list nil)
-            (setq bookmarkp-latest-bookmark-alist  bookmark-alist))
+            (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+            (setq status 'show))
+          ;; hide marked
           (setq bookmarkp-bmenu-before-hide-marked-list bookmarkp-latest-bookmark-alist)
-          (setq bookmark-alist (bookmarkp-non-marked-bookmarks-only)) ; hide marked
-          (setq bookmarkp-latest-bookmark-alist  bookmark-alist))
+          (setq bookmark-alist (bookmarkp-non-marked-bookmarks-only))
+          (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+          (setq status 'hiden))
       (bookmark-bmenu-surreptitiously-rebuild-list)
-      (bookmark-bmenu-check-position)
+      (if (eq status 'hiden)
+          (bookmark-bmenu-check-position)
+          (goto-char (point-min))
+          (when (re-search-forward "^>" (point-max) t)
+            (forward-line 0)))
       (setq bookmark-bmenu-toggle-filenames  hide-em)
       (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show)))))
 
-(defvar bookmarkp-bmenu-before-hide-unmarked-list nil
-  "Store the list like it was before hiding marked or unmarked bookmarks.")
 ;;;###autoload
-
 (defun bookmarkp-bmenu-hide-unmarked ()
   "Hide all unmarked bookmarks."
   (interactive)
@@ -1910,12 +1924,14 @@ With a prefix argument, do not include remote files or directories."
       (when hide-em (bookmark-bmenu-hide-filenames))
       (setq bookmark-bmenu-toggle-filenames  nil)
       (if bookmarkp-bmenu-before-hide-unmarked-list
-          (progn                                                  ; unhide non marked
+          ;; unhide non marked
+          (progn                                                  
             (setq bookmark-alist bookmarkp-bmenu-before-hide-unmarked-list)
             (setq bookmarkp-bmenu-before-hide-unmarked-list nil)
             (setq bookmarkp-latest-bookmark-alist  bookmark-alist))
+          ;; hide non-marked
           (setq bookmarkp-bmenu-before-hide-unmarked-list bookmarkp-latest-bookmark-alist)
-          (setq bookmark-alist (bookmarkp-marked-bookmarks-only)) ; hide non-marked
+          (setq bookmark-alist (bookmarkp-marked-bookmarks-only))
           (setq bookmarkp-latest-bookmark-alist  bookmark-alist))
       (bookmark-bmenu-surreptitiously-rebuild-list)
       (bookmark-bmenu-check-position)
