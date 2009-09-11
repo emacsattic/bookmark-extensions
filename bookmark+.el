@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.16")
+(defconst bookmarkp-version-number "2.3.17")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -995,6 +995,26 @@ Newline characters are stripped out."
       (insert ?>)
       (forward-line 1))))
 
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Return t instead of returning `bookmark-alist'
+;; to increase performances of display.
+;;
+(defun bookmark-bmenu-check-position ()
+  "Ensure point is not outside of bookmark list.
+e.g in the first two lines or on end line.
+Returns non-nil if on a line with a bookmark and
+`bookmark-alist' is not empty."
+  (unless (zerop (length bookmark-alist)) ; Be sure we have bookmarks
+    (cond ((< (count-lines (point-min) (point)) 2)
+           (goto-char (point-min))
+           (forward-line 2) t)
+          ((and (bolp) (eobp))
+           (beginning-of-line 0) t)
+          (t
+           t))))
+         
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
