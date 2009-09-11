@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.21")
+(defconst bookmarkp-version-number "2.3.22")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1855,13 +1855,14 @@ With a prefix argument, do not include remote files or directories."
   (setq bookmarkp-bookmark-marked-list nil)
   (bookmark-bmenu-list))
 
-(defun bookmarkp-current-list-have-marked-p ()
+(defun bookmarkp-current-list-have-marked-p (&optional alist)
   "Return non--nil if `bookmarkp-latest-bookmark-alist' have marked bookmarks."
   (when bookmarkp-bookmark-marked-list
-    (catch 'break
-      (dolist (i bookmarkp-latest-bookmark-alist)
-        (when (member (car i) bookmarkp-bookmark-marked-list)
-          (throw 'break t))))))
+    (let ((last-alist (or alist bookmarkp-latest-bookmark-alist)))
+      (catch 'break
+        (dolist (i last-alist)
+          (when (member (car i) bookmarkp-bookmark-marked-list)
+            (throw 'break t)))))))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
@@ -1887,7 +1888,9 @@ With a prefix argument, do not include remote files or directories."
 (defun bookmarkp-bmenu-hide-marked ()
   "Hide all marked bookmarks."
   (interactive)
-  (when bookmarkp-bookmark-marked-list ; (bookmarkp-current-list-have-marked-p)
+  (when (or (bookmarkp-current-list-have-marked-p)
+            (bookmarkp-current-list-have-marked-p 
+             bookmarkp-bmenu-before-hide-marked-list))
     (let ((hide-em         bookmark-bmenu-toggle-filenames)
           (bookmark-alist  bookmarkp-latest-bookmark-alist)
           status)
