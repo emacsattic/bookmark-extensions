@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.17")
+(defconst bookmarkp-version-number "2.3.18")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -354,6 +354,10 @@
 
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "." 'bookmark-bmenu-list)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "\M-\C-?" 'bookmarkp-unmark-all-bookmarks)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "U" 'bookmarkp-unmark-all-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "q" 'bookmarkp-bmenu-quit)
 ;;;###autoload
@@ -514,6 +518,8 @@ If nil show only beginning of region."
 (defconst bookmarkp-non-file-filename "   - no file -"
   "Name to use for `filename' entry, for non-file bookmarks.")
 
+(defvar bookmarkp-bookmark-marked-list nil
+  "A list that contains all marked bookmarks.")
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
 ;;
@@ -1791,6 +1797,7 @@ With a prefix argument, do not include remote files or directories."
 
 
 (defun bookmarkp-restore-all-mark ()
+  "Put back the mark on marked bookmarks when changing filter."
   (when bookmarkp-bookmark-marked-list
     (with-current-buffer "*Bookmark List*"
       (goto-char (point-min))
@@ -1805,7 +1812,18 @@ With a prefix argument, do not include remote files or directories."
 ;; (find-epp bookmarkp-bookmark-marked-list)
 
 ;;;###autoload
+(defun bookmarkp-unmark-all-bookmarks ()
+  "Remove mark on all marked bookmarks if there is some."
+  (interactive)
+  (when bookmarkp-bookmark-marked-list
+    (let ((thispoint (point)))
+      (setq bookmarkp-bookmark-marked-list)
+      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (goto-char thispoint))))
+
+;;;###autoload
 (defun bookmarkp-bmenu-quit ()
+  "Reset the marked bookmark list and quit."
   (interactive)
   (setq bookmarkp-bookmark-marked-list nil)
   (quit-window))
@@ -1817,7 +1835,6 @@ With a prefix argument, do not include remote files or directories."
   (setq bookmarkp-bookmark-marked-list nil)
   (bookmark-bmenu-list))
 
-(defvar bookmarkp-bookmark-marked-list nil)
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
   "Mark bookmarks that match REGEXP."
