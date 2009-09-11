@@ -1817,7 +1817,7 @@ With a prefix argument, do not include remote files or directories."
   (interactive)
   (when bookmarkp-bookmark-marked-list
     (let ((thispoint (point)))
-      (setq bookmarkp-bookmark-marked-list)
+      (setq bookmarkp-bookmark-marked-list nil)
       (bookmark-bmenu-surreptitiously-rebuild-list)
       (goto-char thispoint))))
 
