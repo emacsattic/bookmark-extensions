@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.18")
+(defconst bookmarkp-version-number "2.3.19")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1874,6 +1874,7 @@ With a prefix argument, do not include remote files or directories."
     (setq bookmark-bmenu-toggle-filenames  hide-em)
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show))))
 
+(defvar bookmarkp-bmenu-before-hide-marked-list nil)
 ;;;###autoload
 (defun bookmarkp-bmenu-hide-unmarked ()
   "Hide all unmarked bookmarks."
@@ -1882,17 +1883,26 @@ With a prefix argument, do not include remote files or directories."
         (bookmark-alist  bookmarkp-latest-bookmark-alist))
     (when hide-em (bookmark-bmenu-hide-filenames))
     (setq bookmark-bmenu-toggle-filenames  nil)
-    (with-current-buffer "*Bookmark List*"
-      (goto-char (point-min))
-      (forward-line 2)
-      (while (re-search-forward "^ +" (point-max) t)
-        (when (bookmark-bmenu-check-position)
-          (let ((bmk  (bookmark-bmenu-bookmark)))
-            (setq bookmark-alist  (remove (assoc bmk bookmark-alist) bookmark-alist))))))
-    (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+    (if bookmarkp-bmenu-before-hide-marked-list
+        (progn                                 ; show all as before
+          (setq bookmark-alist bookmarkp-bmenu-before-hide-marked-list)
+          (setq bookmarkp-bmenu-before-hide-marked-list nil)
+          (setq bookmarkp-latest-bookmark-alist  bookmark-alist))
+        (with-current-buffer "*Bookmark List*" ; show only marked
+          (goto-char (point-min))
+          (forward-line 2)
+          (while (re-search-forward "^ +" (point-max) t)
+            (when (bookmark-bmenu-check-position)
+              (let ((bmk  (bookmark-bmenu-bookmark)))
+                (setq bookmark-alist  (remove (assoc bmk bookmark-alist) bookmark-alist)))))
+          (setq bookmarkp-bmenu-before-hide-marked-list bookmarkp-latest-bookmark-alist)
+          (setq bookmarkp-latest-bookmark-alist  bookmark-alist)))
     (bookmark-bmenu-surreptitiously-rebuild-list)
+    (bookmark-bmenu-check-position)
     (setq bookmark-bmenu-toggle-filenames  hide-em)
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show))))
+
+;; (find-epp bookmarkp-latest-bookmark-alist)
 
 ;; General Utility Functions -----------------------------------------
 
