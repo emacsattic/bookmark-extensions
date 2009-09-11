@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.15")
+(defconst bookmarkp-version-number "2.3.16")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -340,7 +340,7 @@
 ;;;###autoload
 (define-key bookmark-map "q" 'bookmark-jump-other-window)
 ;;;###autoload
-(define-key bookmark-map "A" 'bookmark-bmenu-list)
+(define-key bookmark-map "A" 'bookmarkp-bmenu-wipe-marked-and-show-all)
 ;;;###autoload
 (define-key bookmark-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
 ;;;###autoload
@@ -353,6 +353,8 @@
 (define-key bookmark-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "." 'bookmark-bmenu-list)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "q" 'bookmarkp-bmenu-quit)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "E" 'bookmarkp-bmenu-edit-bookmark)
@@ -361,9 +363,9 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "H" 'bookmarkp-bmenu-hide-unmarked)
+(define-key bookmark-bmenu-mode-map "<" 'bookmarkp-bmenu-hide-unmarked)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "h" 'bookmarkp-bmenu-hide-marked)
+(define-key bookmark-bmenu-mode-map ">" 'bookmarkp-bmenu-hide-marked)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 ;;;###autoload
@@ -973,6 +975,25 @@ Newline characters are stripped out."
                     (progn (forward-word 1) (setq bookmark-yank-point (point)))))))
     (setq string  (bookmarkp-replace-regexp-in-string "\n" "" string))
     (insert string)))
+
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Add marked bookmark to `bookmarkp-bookmark-marked-list',
+;; Don't call a second time `bookmark-bmenu-check-position'.
+;;
+;;;###autoload
+(defun bookmark-bmenu-mark ()
+  "Mark bookmark on this line to be displayed by \\<bookmark-bmenu-mode-map>\\[bookmark-bmenu-select]."
+  (interactive)
+  (beginning-of-line)
+  (when (bookmark-bmenu-check-position)
+    (let ((inhibit-read-only t)
+          (bmk (bookmark-bmenu-bookmark)))
+      (push bmk bookmarkp-bookmark-marked-list)
+      (delete-char 1)
+      (insert ?>)
+      (forward-line 1))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1748,19 +1769,6 @@ With a prefix argument, do not include remote files or directories."
                             (interactive)
                             (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))))
 
-;;;###autoload
-(defun bookmark-bmenu-mark ()
-  "Mark bookmark on this line to be displayed by \\<bookmark-bmenu-mode-map>\\[bookmark-bmenu-select]."
-  (interactive)
-  (beginning-of-line)
-  (when (bookmark-bmenu-check-position)
-    (let ((inhibit-read-only t)
-          (bmk (bookmark-bmenu-bookmark)))
-      (push bmk bookmarkp-bookmark-marked-list)
-      (delete-char 1)
-      (insert ?>)
-      (forward-line 1))))
-
 
 (defun bookmarkp-restore-all-mark ()
   (when bookmarkp-bookmark-marked-list
@@ -1776,10 +1784,18 @@ With a prefix argument, do not include remote files or directories."
 
 ;; (find-epp bookmarkp-bookmark-marked-list)
 
+;;;###autoload
 (defun bookmarkp-bmenu-quit ()
   (interactive)
   (setq bookmarkp-bookmark-marked-list nil)
   (quit-window))
+
+;;;###autoload
+(defun bookmarkp-bmenu-wipe-marked-and-show-all ()
+  "Remove all marks and run `bookmark-bmenu-list'."
+  (interactive)
+  (setq bookmarkp-bookmark-marked-list nil)
+  (bookmark-bmenu-list))
 
 (defvar bookmarkp-bookmark-marked-list nil)
 ;;;###autoload
