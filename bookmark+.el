@@ -353,9 +353,9 @@
 (define-key bookmark-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "." 'bookmark-bmenu-list)
+(define-key bookmark-bmenu-mode-map "." 'bookmarkp-bmenu-reset-alist)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U") nil)
+(define-key bookmark-bmenu-mode-map (kbd "U") nil) ; Emacs20
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-unmark-all-bookmarks)
 ;;;###autoload
@@ -379,7 +379,7 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "N" 'bookmarkp-bmenu-list-only-non-file-bookmarks)
+(define-key bookmark-bmenu-mode-map "B" 'bookmarkp-bmenu-list-only-non-file-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 ;;;###autoload
@@ -387,11 +387,11 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "%" nil)
+(define-key bookmark-bmenu-mode-map "%" nil) ; Emacs20
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "%m" 'bookmarkp-bmenu-regexp-mark)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "*" nil)
+(define-key bookmark-bmenu-mode-map "*" nil) ; Emacs20
 ;;;###autoload
 (when (< emacs-major-version 21)
   (define-key bookmark-bmenu-mode-map (kbd "RET") 'bookmark-bmenu-this-window)
@@ -1989,6 +1989,11 @@ With a prefix argument, do not include remote files or directories."
       (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show)))))
 
 ;; (find-epp bookmarkp-latest-bookmark-alist)
+
+(defun bookmarkp-bmenu-reset-alist ()
+  (interactive)
+  (when (equal (buffer-name (current-buffer)) "*Bookmark List*")
+    (bookmark-bmenu-list)))
 
 ;; General Utility Functions -----------------------------------------
 
