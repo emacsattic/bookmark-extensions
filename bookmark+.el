@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.22")
+(defconst bookmarkp-version-number "2.3.23")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -355,9 +355,9 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "." 'bookmark-bmenu-list)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\M-\C-?" 'bookmarkp-unmark-all-bookmarks)
-;;;###autoload
 (define-key bookmark-bmenu-mode-map "U" 'bookmarkp-unmark-all-bookmarks)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "\M-m" 'bookmarkp-mark-all-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "q" 'bookmarkp-bmenu-quit)
 ;;;###autoload
@@ -1830,18 +1830,35 @@ With a prefix argument, do not include remote files or directories."
 ;; (find-epp bookmarkp-bookmark-marked-list)
 
 ;;;###autoload
-(defun bookmarkp-unmark-all-bookmarks ()
-  "Remove mark on all marked bookmarks if there is some."
+(defun bookmarkp-mark-all-bookmarks ()
+  "Mark all bookmarks."
   (interactive)
-  (when bookmarkp-bookmark-marked-list
-    (let ((thispoint (point)))
-      (setq bookmarkp-bookmark-marked-list nil)
-      (bookmark-bmenu-surreptitiously-rebuild-list)
-      (goto-char thispoint))))
+  (with-current-buffer "*Bookmark List*"
+    (goto-char (point-min))
+    (bookmark-bmenu-check-position)
+    (save-excursion
+      (while (not (eobp))
+        (when (bookmark-bmenu-check-position)
+          (bookmark-bmenu-mark))))))
 
 ;;;###autoload
+(defun bookmarkp-unmark-all-bookmarks ()
+  "Unmark all bookmarks."
+  (interactive)
+  (with-current-buffer "*Bookmark List*"
+    (goto-char (point-min))
+    (bookmark-bmenu-check-position)
+    (save-excursion
+      (while (or (re-search-forward "^>" (point-max) t)
+                 (re-search-forward "^D" (point-max) t))
+        (when (bookmark-bmenu-check-position)
+          (bookmark-bmenu-unmark)))))
+  (setq bookmarkp-bookmark-marked-list nil))
+
+          
+;;;###autoload
 (defun bookmarkp-bmenu-quit ()
-  "Reset the marked bookmark list and quit."
+  "Reset the marked bookmark lists and quit."
   (interactive)
   (setq bookmarkp-bookmark-marked-list nil)
   (setq bookmarkp-bmenu-before-hide-marked-list nil)
@@ -1878,8 +1895,7 @@ With a prefix argument, do not include remote files or directories."
       (forward-line 2)
       (while (re-search-forward regexp (point-max) t)
         (when (bookmark-bmenu-check-position)
-          (let ((bmk  (bookmark-bmenu-bookmark)))
-            (bookmark-bmenu-mark)))))
+          (bookmark-bmenu-mark))))
     (setq bookmark-bmenu-toggle-filenames  hide-em)
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show))))
 
@@ -1923,7 +1939,8 @@ With a prefix argument, do not include remote files or directories."
   (interactive)
   (when (bookmarkp-current-list-have-marked-p)
     (let ((hide-em         bookmark-bmenu-toggle-filenames)
-          (bookmark-alist  bookmarkp-latest-bookmark-alist))
+          (bookmark-alist  bookmarkp-latest-bookmark-alist)
+          status)
       (when hide-em (bookmark-bmenu-hide-filenames))
       (setq bookmark-bmenu-toggle-filenames  nil)
       (if bookmarkp-bmenu-before-hide-unmarked-list
@@ -1931,13 +1948,20 @@ With a prefix argument, do not include remote files or directories."
           (progn                                                  
             (setq bookmark-alist bookmarkp-bmenu-before-hide-unmarked-list)
             (setq bookmarkp-bmenu-before-hide-unmarked-list nil)
-            (setq bookmarkp-latest-bookmark-alist  bookmark-alist))
+            (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+            (setq status 'show))
           ;; hide non-marked
           (setq bookmarkp-bmenu-before-hide-unmarked-list bookmarkp-latest-bookmark-alist)
           (setq bookmark-alist (bookmarkp-marked-bookmarks-only))
-          (setq bookmarkp-latest-bookmark-alist  bookmark-alist))
+          (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+          (setq status 'hiden))
       (bookmark-bmenu-surreptitiously-rebuild-list)
-      (bookmark-bmenu-check-position)
+      (if (eq status 'hiden)
+          (bookmark-bmenu-check-position)
+          (goto-char (point-min))
+          (when (re-search-forward "^>" (point-max) t)
+            (forward-line 0)))
+      ;(bookmark-bmenu-check-position)
       (setq bookmark-bmenu-toggle-filenames  hide-em)
       (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show)))))
 
