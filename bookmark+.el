@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.24")
+(defconst bookmarkp-version-number "2.3.25")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -354,6 +354,8 @@
 
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "." 'bookmark-bmenu-list)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "U") nil)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-unmark-all-bookmarks)
 ;;;###autoload
