@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.23")
+(defconst bookmarkp-version-number "2.3.24")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -355,7 +355,11 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "." 'bookmark-bmenu-list)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "U" 'bookmarkp-unmark-all-bookmarks)
+(define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-unmark-all-bookmarks)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "U D") 'bookmarkp-unmark-all-delete-flag)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "U >") 'bookmarkp-unmark-all-marked-flag)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-m" 'bookmarkp-mark-all-bookmarks)
 ;;;###autoload
@@ -1842,15 +1846,33 @@ With a prefix argument, do not include remote files or directories."
           (bookmark-bmenu-mark))))))
 
 ;;;###autoload
-(defun bookmarkp-unmark-all-bookmarks ()
-  "Unmark all bookmarks."
+(defun bookmarkp-unmark-all-delete-flag ()
   (interactive)
+  (bookmarkp-unmark-all-bookmarks1 'del))
+
+;;;###autoload
+(defun bookmarkp-unmark-all-marked-flag ()
+  (interactive)
+  (bookmarkp-unmark-all-bookmarks1 nil 'mark))
+
+;;;###autoload
+(defun bookmarkp-unmark-all-bookmarks ()
+  (interactive)
+  (bookmarkp-unmark-all-bookmarks1))
+    
+(defun bookmarkp-unmark-all-bookmarks1 (&optional del mark)
+  "Unmark all bookmarks."
   (with-current-buffer "*Bookmark List*"
     (goto-char (point-min))
     (bookmark-bmenu-check-position)
     (save-excursion
-      (while (or (re-search-forward "^>" (point-max) t)
-                 (re-search-forward "^D" (point-max) t))
+      (while (cond (mark
+                    (re-search-forward "^>" (point-max) t))
+                   (del
+                    (re-search-forward "^D" (point-max) t))
+                   (t
+                    (or (re-search-forward "^>" (point-max) t)
+                        (re-search-forward "^D" (point-max) t))))
         (when (bookmark-bmenu-check-position)
           (bookmark-bmenu-unmark)))))
   (setq bookmarkp-bookmark-marked-list nil))
@@ -1885,7 +1907,6 @@ With a prefix argument, do not include remote files or directories."
 (defun bookmarkp-bmenu-regexp-mark (regexp)
   "Mark bookmarks that match REGEXP."
   (interactive "sRegexp: ")
-  (setq bookmarkp-bookmark-marked-list nil)
   (let ((hide-em         bookmark-bmenu-toggle-filenames)
         (bookmark-alist  bookmarkp-latest-bookmark-alist))
     (when hide-em (bookmark-bmenu-hide-filenames))
