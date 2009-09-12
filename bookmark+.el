@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.25")
+(defconst bookmarkp-version-number "2.3.26")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1865,9 +1865,9 @@ With a prefix argument, do not include remote files or directories."
 (defun bookmarkp-unmark-all-bookmarks1 (&optional del mark)
   "Unmark all bookmarks."
   (with-current-buffer "*Bookmark List*"
-    (goto-char (point-min))
-    (bookmark-bmenu-check-position)
     (save-excursion
+      (goto-char (point-min))
+      (bookmark-bmenu-check-position)
       (while (cond (mark
                     (re-search-forward "^>" (point-max) t))
                    (del
