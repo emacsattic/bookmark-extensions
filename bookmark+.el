@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.3.26")
+(defconst bookmarkp-version-number "2.4.0")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -409,7 +409,11 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks
 \\[bookmarkp-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
 \\[bookmarkp-bmenu-hide-marked]\t- Hide marked bookmarks
-\\[bookmarkp-bmenu-hide-unmarked]\t- Hide unmarked bookmarks")
+\\[bookmarkp-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
+\\[bookmarkp-mark-all-bookmarks]\t- Mark all bookmarks
+\\[bookmarkp-unmark-all-bookmarks]\t - Unmark all bookmarks
+\\[bookmarkp-unmark-all-marked-flag]\t - Unmark all bookmarks with flag >
+\\[bookmarkp-unmark-all-delete-flag]\t - Unmark all bookmarks with flag D")
 
 
 ;;(@* "Faces (Customizable)")
@@ -1837,7 +1841,7 @@ With a prefix argument, do not include remote files or directories."
 
 ;;;###autoload
 (defun bookmarkp-mark-all-bookmarks ()
-  "Mark all bookmarks."
+  "Mark all bookmarks with flag >."
   (interactive)
   (with-current-buffer "*Bookmark List*"
     (goto-char (point-min))
@@ -1849,21 +1853,27 @@ With a prefix argument, do not include remote files or directories."
 
 ;;;###autoload
 (defun bookmarkp-unmark-all-delete-flag ()
+  "Unmark all bookmarks marked with flag D."
   (interactive)
   (bookmarkp-unmark-all-bookmarks1 'del))
 
 ;;;###autoload
 (defun bookmarkp-unmark-all-marked-flag ()
+  "Unmark all bookmarks marked with flag >."
   (interactive)
   (bookmarkp-unmark-all-bookmarks1 nil 'mark))
 
 ;;;###autoload
 (defun bookmarkp-unmark-all-bookmarks ()
+  "Unmark all bookmarks marked with flag > or D."
   (interactive)
   (bookmarkp-unmark-all-bookmarks1))
     
 (defun bookmarkp-unmark-all-bookmarks1 (&optional del mark)
-  "Unmark all bookmarks."
+  "Unmark all bookmarks or only bookmarks marked with flag > or D.
+If no args unmark all.
+If `del' is non--nil unmark only bookmarks with flag D.
+If `mark' is non--nil unmark only bookmarks with flag >."
   (with-current-buffer "*Bookmark List*"
     (save-excursion
       (goto-char (point-min))
@@ -1902,7 +1912,7 @@ With a prefix argument, do not include remote files or directories."
     (let ((last-alist (or alist bookmarkp-latest-bookmark-alist)))
       (catch 'break
         (dolist (i last-alist)
-          (when (member (car i) bookmarkp-bookmark-marked-list)
+          (when (bookmarkp-bookmark-marked-p i)
             (throw 'break t)))))))
 
 ;;;###autoload
@@ -1984,7 +1994,6 @@ With a prefix argument, do not include remote files or directories."
           (goto-char (point-min))
           (when (re-search-forward "^>" (point-max) t)
             (forward-line 0)))
-      ;(bookmark-bmenu-check-position)
       (setq bookmark-bmenu-toggle-filenames  hide-em)
       (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show)))))
 
