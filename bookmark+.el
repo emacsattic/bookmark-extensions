@@ -309,7 +309,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.0")
+(defconst bookmarkp-version-number "2.4.1")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -515,6 +515,12 @@ If nil show only beginning of region."
 (defcustom bookmarkp-bookmark-name-length-max 70
   "*Maximum number of characters used to name a bookmark with region."
   :type 'integer :group 'bookmarkp)
+
+(defcustom bookmarkp-visit-flag t
+  "*Non--nil mean record the number of visit of bookmark
+and sort the bookmark list by most visited."
+  :type 'boolean :group 'bookmarkp)
+
 
 ;;(@* "Internal Variables")
 ;;; Internal Variables --------------------------------------------------
@@ -801,20 +807,9 @@ See `bookmark-jump-other-window'."
 
   (defun bookmark-maybe-message (fmt &rest args)
     "Apply `message' to FMT and ARGS, but only if the display is fast enough."
-    (when (>= baud-rate 9600) (apply 'message fmt args)))
+    (when (>= baud-rate 9600) (apply 'message fmt args))))
 
 
-  ;; REPLACES ORIGINAL in `bookmark.el'.
-  ;;
-  ;; Bug fix: Use `copy-sequence' instead of `copy-alist'.
-  ;;
-  (defun bookmark-maybe-sort-alist ()
-    "If `bookmark-sort-flag' is non-nil, then return a sorted copy of `bookmark-alist'.
-Otherwise, return `bookmark-alist'."
-    (if bookmark-sort-flag
-        (sort (copy-sequence bookmark-alist)
-              #'(lambda (x y) (string-lessp (car x) (car y))))
-      bookmark-alist)))
 
 ;;(@* "Core Replacements (`bookmark-*' except `bookmark-bmenu-*')")
 ;;; Core Replacements (`bookmark-*' except `bookmark-bmenu-*') -------
@@ -880,13 +875,14 @@ pertains to the location within the buffer."
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
                                                 (t  bookmarkp-non-file-filename)))))
-      (buffer-name . ,buf)
-      (front-context-string . ,fcs)
-      (rear-context-string . ,rcs)
-      (front-context-region-string . ,fcrs)
-      (rear-context-region-string . ,ecrs)
-      (position . ,beg)
-      (end-position . ,end))))
+        (buffer-name . ,buf)
+        (front-context-string . ,fcs)
+        (rear-context-string . ,rcs)
+        (front-context-region-string . ,fcrs)
+        (rear-context-region-string . ,ecrs)
+        (visit . 0)
+        (position . ,beg)
+        (end-position . ,end))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1053,10 +1049,54 @@ DISPLAY-FUNCTION is the function that displays the bookmark."
     (when win (set-window-point win (point))))
   ;; VANILLA EMACS FIXME: we used to only run `bookmark-after-jump-hook' in
   ;; `bookmark-jump' itself, but in none of the other commands.
+  (when bookmarkp-visit-flag            ; Increment visit entry.
+    (bookmarkp-increment-visit bookmark))
   (run-hooks 'bookmark-after-jump-hook)
   (when bookmark-automatically-show-annotations
     (bookmark-show-annotation bookmark)))
 
+
+(defun bookmarkp-increment-visit (bmk)
+  "Increment visit entry of bmk.
+If bmk have no visit entry, add one with value 0."
+  (let ((cur-val (bookmark-prop-get bmk 'visit)))
+    (if cur-val
+        (bookmark-prop-set bmk 'visit (1+ cur-val))
+        (bookmark-prop-set bmk 'visit 0))))
+
+
+(defun bookmarkp-sort-alist-maybe-by-most-visited ()
+  "Sort bookmarks by most visited if they have visit flag.
+Else sort them with string-lessp."
+  (let ((bmk-alist (copy-sequence bookmark-alist))
+        visit-alist alist)
+    (dolist (i bmk-alist)
+      (if (assoc 'visit i)
+          (push i visit-alist)
+          (push i alist)))
+    (if visit-alist
+        (setq bmk-alist
+              (append
+               (sort visit-alist #'(lambda (x y) (> (cdr (assoc 'visit x)) (cdr (assoc 'visit y)))))
+               (sort alist #'(lambda (x y) (string-lessp (car x) (car y))))))
+        (setq bmk-alist (sort alist #'(lambda (x y) (string-lessp (car x) (car y))))))))
+
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; If `bookmarkp-visit-flag' is non--nil sort by most visited.
+;; In this case sort is done with `bookmarkp-sort-alist-maybe-by-most-visited'.
+;;
+(defun bookmark-maybe-sort-alist ()
+  "If `bookmark-sort-flag' is non-nil, then return a sorted copy of `bookmark-alist'.
+Otherwise, return `bookmark-alist'. If `bookmarkp-visit-flag' is non--nil
+sort by most frequently visited unless bookmark have no visit flag."
+  (if bookmark-sort-flag
+      (if bookmarkp-visit-flag
+          (bookmarkp-sort-alist-maybe-by-most-visited)
+          (sort (copy-sequence bookmark-alist)
+                #'(lambda (x y) (string-lessp (car x) (car y)))))
+      bookmark-alist))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
