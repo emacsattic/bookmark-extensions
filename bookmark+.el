@@ -385,7 +385,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.6")
+(defconst bookmarkp-version-number "2.4.7")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1137,7 +1137,7 @@ If bmk have no visit entry, add one with value 0."
         (bookmark-prop-set bmk 'visit 0)))
   (unless batch
     (bookmark-bmenu-surreptitiously-rebuild-list)
-    (setq deactivate-mark nil)))
+    (bookmarkp-maybe-save-bookmark)))
 
 
 ;;;###autoload
