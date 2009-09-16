@@ -67,6 +67,7 @@
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "bookmarkp")
 ;; `bookmarkp-version'
 ;; `bookmarkp-toggle-sorting-by-most-visited'
+;; `bookmarkp-reset-visit-flag'
 ;; `bookmarkp-bmenu-edit-bookmark'
 ;; `bookmarkp-bmenu-list-only-file-bookmarks'
 ;; `bookmarkp-bmenu-list-only-non-file-bookmarks'
@@ -191,6 +192,7 @@
 ;; `bookmark-bmenu-check-position'
 ;; `bookmark--jump-via'
 ;; `bookmark-maybe-sort-alist'
+;; `bookmark-prop-set'
 ;; `bookmark-default-handler'
 ;; `bookmark-location'
 ;; `bookmark-write-file'
@@ -217,7 +219,6 @@
 ;; `bookmark-make-record'
 ;; `bookmark-store'
 ;; `bookmark-prop-get'
-;; `bookmark-prop-set'
 ;; `bookmark-get-handler'
 ;; `bookmark-jump-noselect'
 ;; `bookmark-handle-bookmark'
@@ -383,7 +384,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.2")
+(defconst bookmarkp-version-number "2.4.3")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -817,14 +818,6 @@ discard the old one."
 BOOKMARK is a bookmark name or a bookmark record."
     (cdr (assq prop (bookmark-get-bookmark-record bookmark))))
 
-  (defun bookmark-prop-set (bookmark prop value)
-    "Set property PROP of BOOKMARK to VALUE.
-BOOKMARK is a bookmark name or a bookmark record."
-    (let ((cell  (assq prop (bookmark-get-bookmark-record bookmark))))
-      (if cell
-          (setcdr cell value)
-        (nconc (bookmark-get-bookmark-record bookmark) (list (cons prop value))))))
-
   (defun bookmark-get-handler (bookmark)
     "Return the `handler' entry for BOOKMARK.
 BOOKMARK is a bookmark name or a bookmark record."
@@ -1147,6 +1140,20 @@ If bmk have no visit entry, add one with value 0."
   (setq bookmarkp-visit-flag (not bookmarkp-visit-flag))
   (bookmark-bmenu-surreptitiously-rebuild-list))
 
+(defun bookmarkp-reset-visit-flag ()
+  "Reset visit entry of this bookmark to 0.
+If this bookmark have no visit entry add one with 0 value."
+  (interactive)
+  (with-current-buffer "*Bookmark List*"
+    (let ((bmk (when (bookmark-bmenu-check-position)
+                 (bookmark-bmenu-bookmark))))
+      (bookmark-prop-set bmk 'visit 0)
+      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (or (search-forward bmk (point-max) t)
+          (search-backward bmk (point-min) t)))
+    (bookmark-bmenu-check-position)))
+
+
 (defun bookmarkp-sort-alist-maybe-by-most-visited ()
   "Sort bookmarks by most visited if they have visit flag.
 Else sort them with string-lessp."
@@ -1179,6 +1186,18 @@ sort by most frequently visited unless bookmark have no visit flag."
           (sort (copy-sequence bookmark-alist)
                 #'(lambda (x y) (string-lessp (car x) (car y)))))
       bookmark-alist))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Avoid using `nconc'
+;;
+(defun bookmark-prop-set (bookmark prop val)
+  "Set the property PROP of BOOKMARK to VAL."
+  (let ((bmk (bookmark-get-bookmark bookmark))
+        (cell (assq prop (bookmark-get-bookmark-record bookmark))))
+    (if cell
+        (setcdr cell val)
+        (setcdr bmk (cons (cons prop val) (cdr bmk))))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
