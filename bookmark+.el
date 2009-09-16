@@ -384,7 +384,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.3")
+(defconst bookmarkp-version-number "2.4.4")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -479,6 +479,7 @@
 \\[bookmarkp-bmenu-edit-bookmark]\t- Edit bookmark
 \\[bookmarkp-bmenu-list-only-file-bookmarks]\t- List only file and directory \
 bookmarks (`C-u' for local only)
+\\[bookmarkp-bmenu-reset-alist]\t- Show all bookmarks
 \\[bookmarkp-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
 \\[bookmarkp-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
 \\[bookmarkp-bmenu-list-only-info-bookmarks]\t- List only Info bookmarks
@@ -488,10 +489,10 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-hide-marked]\t- Hide marked bookmarks
 \\[bookmarkp-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
 \\[bookmarkp-mark-all-bookmarks]\t- Mark all bookmarks
-\\[bookmarkp-unmark-all-bookmarks]\t - Unmark all bookmarks
-\\[bookmarkp-unmark-all-marked-flag]\t - Unmark all bookmarks with flag >
-\\[bookmarkp-unmark-all-delete-flag]\t - Unmark all bookmarks with flag D
-\\[bookmarkp-toggle-sorting-by-most-visited]\t - Toggle sorting by visit frequency")
+\\[bookmarkp-unmark-all-bookmarks]\t- Unmark all bookmarks
+\\[bookmarkp-unmark-all-marked-flag]\t- Unmark all bookmarks with flag >
+\\[bookmarkp-unmark-all-delete-flag]\t- Unmark all bookmarks with flag D
+\\[bookmarkp-toggle-sorting-by-most-visited]\t- Toggle sorting by visit frequency")
 
 
 ;;(@* "Faces (Customizable)")
@@ -1137,8 +1138,16 @@ If bmk have no visit entry, add one with value 0."
 (defun bookmarkp-toggle-sorting-by-most-visited ()
   "Turn Off or On sorting by visit frequency."
   (interactive)
-  (setq bookmarkp-visit-flag (not bookmarkp-visit-flag))
-  (bookmark-bmenu-surreptitiously-rebuild-list))
+  (with-current-buffer "*Bookmark List*"
+    (let* ((bmk     (when (bookmark-bmenu-check-position)
+                      (bookmark-bmenu-bookmark)))
+           (bmk-reg (concat "^ +" bmk)))
+      (setq bookmarkp-visit-flag (not bookmarkp-visit-flag))
+      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (or (re-search-forward bmk-reg (point-max) t)
+          (re-search-backward bmk-reg (point-min) t))
+      (forward-line 0)
+      (bookmark-bmenu-check-position))))
 
 (defun bookmarkp-reset-visit-flag ()
   "Reset visit entry of this bookmark to 0.
@@ -1153,6 +1162,7 @@ If this bookmark have no visit entry add one with 0 value."
           (search-backward bmk (point-min) t)))
     (bookmark-bmenu-check-position)))
 
+;; (find-epp (progn (bookmark-prop-set ".emacs.el" 'visit 0) (bookmark-get-bookmark ".emacs.el")))
 
 (defun bookmarkp-sort-alist-maybe-by-most-visited ()
   "Sort bookmarks by most visited if they have visit flag.
