@@ -1140,12 +1140,11 @@ If bmk have no visit entry, add one with value 0."
   (interactive)
   (with-current-buffer "*Bookmark List*"
     (let* ((bmk     (when (bookmark-bmenu-check-position)
-                      (bookmark-bmenu-bookmark)))
-           (bmk-reg (concat "^ +" bmk)))
+                      (bookmark-bmenu-bookmark))))
       (setq bookmarkp-visit-flag (not bookmarkp-visit-flag))
       (bookmark-bmenu-surreptitiously-rebuild-list)
-      (or (re-search-forward bmk-reg (point-max) t)
-          (re-search-backward bmk-reg (point-min) t))
+      (or (search-forward bmk (point-max) t)
+          (search-backward bmk (point-min) t))
       (forward-line 0)
       (bookmark-bmenu-check-position))))
 
