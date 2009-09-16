@@ -60,114 +60,188 @@
 ;;
 ;;  Things Defined Here
 ;;  -------------------
-;;
-;;  Commands defined here:
-;;
-;;    `bookmarkp-bmenu-edit-bookmark', `bookmarkp-bmenu-hide-marked',
-;;    `bookmarkp-bmenu-hide-unmarked',
-;;    `bookmarkp-bmenu-list-only-file-bookmarks',
-;;    `bookmarkp-bmenu-list-only-gnus-bookmarks',
-;;    `bookmarkp-bmenu-list-only-info-bookmarks',
-;;    `bookmarkp-bmenu-list-only-non-file-bookmarks',
-;;    `bookmarkp-bmenu-list-only-region-bookmarks',
-;;    `bookmarkp-bmenu-list-only-w3m-bookmarks',
-;;    `bookmarkp-bmenu-regexp-mark',
-;;    `bookmarkp-fix-bookmark-alist-and-save', `bookmarkp-version'.
-;;
+
+;;  [UPDATE ALL EVAL] (traverse-auto-update-documentation)
+
+;;  * Commands defined here:
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "bookmarkp")
+;; `bookmarkp-version'
+;; `bookmarkp-toggle-sorting-by-most-visited'
+;; `bookmarkp-bmenu-edit-bookmark'
+;; `bookmarkp-bmenu-list-only-file-bookmarks'
+;; `bookmarkp-bmenu-list-only-non-file-bookmarks'
+;; `bookmarkp-bmenu-list-only-info-bookmarks'
+;; `bookmarkp-bmenu-list-only-w3m-bookmarks'
+;; `bookmarkp-bmenu-list-only-gnus-bookmarks'
+;; `bookmarkp-bmenu-list-only-region-bookmarks'
+;; `bookmarkp-mark-all-bookmarks'
+;; `bookmarkp-unmark-all-delete-flag'
+;; `bookmarkp-unmark-all-marked-flag'
+;; `bookmarkp-unmark-all-bookmarks'
+;; `bookmarkp-bmenu-quit'
+;; `bookmarkp-bmenu-wipe-marked-and-show-all'
+;; `bookmarkp-bmenu-regexp-mark'
+;; `bookmarkp-bmenu-hide-marked'
+;; `bookmarkp-bmenu-hide-unmarked'
+;; `bookmarkp-bmenu-reset-alist'
+;; `bookmarkp-fix-bookmark-alist-and-save'
+
+;;  * Commands redefined here:(from `bookmark.el')
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "^bookmark-")
+;; `bookmark-set'
+;; `bookmark-yank-word'
+;; `bookmark-bmenu-mark'
+;; `bookmark-jump'
+;; `bookmark-jump-other-window'
+;; `bookmark-relocate'
+;; `bookmark-insert-location'
+;; `bookmark-rename'
+;; `bookmark-insert'
+;; `bookmark-delete'
+;; `bookmark-bmenu-list'
+;; `bookmark-bmenu-other-window'
+;; `bookmark-bmenu-execute-deletions'
+;; `bookmark-bmenu-rename'
+
 ;;  * User options defined here:
-;;
-;;    `bookmarkp-handle-region-function',
-;;    `bookmarkp-region-search-size',
-;;    `bookmarkp-save-new-location-flag',
-;;    `bookmarkp-su-or-sudo-regexp', `bookmarkp-use-region-flag',
-;;    `bookmarkp-w3m-allow-multi-tabs'.
-;;
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'user-variable)
+;; `bookmarkp-use-region-flag'
+;; `bookmarkp-region-search-size'
+;; `bookmarkp-save-new-location-flag'
+;; `bookmarkp-handle-region-function'
+;; `bookmarkp-su-or-sudo-regexp'
+;; `bookmarkp-w3m-allow-multi-tabs'
+;; `bookmarkp-show-end-of-region'
+;; `bookmarkp-bookmark-name-length-max'
+;; `bookmarkp-visit-flag'
+
 ;;  * Faces defined here:
-;;
-;;    `bookmarkp-local-directory', `bookmarkp-local-file-with-region',
-;;    `bookmarkp-local-file-without-region', `bookmarkp-gnus',
-;;    `bookmarkp-info', `bookmarkp-non-file', `bookmarkp-remote-file',
-;;    `bookmarkp-su-or-sudo', `bookmarkp-w3m'.
-;;
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
+;; `bookmarkp-gnus'
+;; `bookmarkp-info'
+;; `bookmarkp-local-directory'
+;; `bookmarkp-local-file-with-region'
+;; `bookmarkp-local-file-without-region'
+;; `bookmarkp-non-file'
+;; `bookmarkp-remote-file'
+;; `bookmarkp-su-or-sudo'
+;; `bookmarkp-w3m'
+
 ;;  * Non-interactive functions defined here:
-;;
-;;    `bookmark-make-record-function', (Emacs 20-22),
-;;    `bookmarkp-bmenu-propertize-item', `bookmarkp-edit-bookmark',
-;;    `bookmarkp-file-alist-only', `bookmarkp-file-bookmark-p',
-;;    `bookmarkp-get-buffer-name', `bookmarkp-get-end-position',
-;;    `bookmarkp-gnus-alist-only', `bookmarkp-gnus-bookmark-p',
-;;    `bookmarkp-goto-position', `bookmarkp-handle-region-default',
-;;    `bookmarkp-info-alist-only', `bookmarkp-info-bookmark-p',
-;;    `bookmarkp-jump-gnus', `bookmarkp-jump-w3m',
-;;    `bookmarkp-jump-w3m-new-session',
-;;    `bookmarkp-jump-w3m-only-one-tab',
-;;    `bookmarkp-line-number-at-pos',
-;;    `bookmarkp-local-directory-bookmark-p',
-;;    `bookmarkp-local-file-alist-only',
-;;    `bookmarkp-local-file-bookmark-p', `bookmarkp-make-gnus-record',
-;;    `bookmarkp-make-w3m-record', `bookmarkp-maybe-save-bookmark',
-;;    `bookmarkp-menu-jump-other-window' (Emacs 20, 21),
-;;    `bookmarkp-non-file-alist-only',
-;;    `bookmarkp-non-file-bookmark-p',
-;;    `bookmarkp-position-after-whitespace',
-;;    `bookmarkp-position-before-whitespace',
-;;    `bookmarkp-record-end-context-region-string',
-;;    `bookmarkp-record-front-context-region-string',
-;;    `bookmarkp-record-front-context-string',
-;;    `bookmarkp-record-rear-context-string',
-;;    `bookmarkp-region-alist-only', `bookmarkp-region-bookmark-p',
-;;    `bookmarkp-region-record-front-context-string',
-;;    `bookmarkp-region-record-rear-context-string',
-;;    `bookmarkp-remote-file-alist-only',
-;;    `bookmarkp-remote-file-bookmark-p', `bookmarkp-remove-if',
-;;    `bookmarkp-remove-if-not', `bookmarkp-replace-regexp-in-string',
-;;    `bookmarkp-root-or-sudo-logged-p',
-;;    `bookmarkp-save-new-region-location',
-;;    `bookmarkp-w3m-alist-only', `bookmarkp-w3m-bookmark-p',
-;;    `bookmarkp-w3m-set-new-buffer-name', `old-bookmark-insert',
-;;    `old-bookmark-insert-location', `old-bookmark-relocate',
-;;    `old-bookmark-rename'.
-;;
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "bookmarkp")
+;; `bookmarkp-increment-visit'
+;; `bookmarkp-sort-alist-maybe-by-most-visited'
+;; `bookmarkp-maybe-save-bookmark'
+;; `bookmarkp-edit-bookmark'
+;; `bookmarkp-bmenu-propertize-item'
+;; `bookmarkp-region-bookmark-p'
+;; `bookmarkp-gnus-bookmark-p'
+;; `bookmarkp-w3m-bookmark-p'
+;; `bookmarkp-info-bookmark-p'
+;; `bookmarkp-file-bookmark-p'
+;; `bookmarkp-non-file-bookmark-p'
+;; `bookmarkp-remote-file-bookmark-p'
+;; `bookmarkp-local-file-bookmark-p'
+;; `bookmarkp-local-directory-bookmark-p'
+;; `bookmarkp-bookmark-marked-p'
+;; `bookmarkp-region-alist-only'
+;; `bookmarkp-gnus-alist-only'
+;; `bookmarkp-w3m-alist-only'
+;; `bookmarkp-info-alist-only'
+;; `bookmarkp-remote-file-alist-only'
+;; `bookmarkp-local-file-alist-only'
+;; `bookmarkp-file-alist-only'
+;; `bookmarkp-non-file-alist-only'
+;; `bookmarkp-marked-bookmarks-only'
+;; `bookmarkp-non-marked-bookmarks-only'
+;; `bookmarkp-restore-all-mark'
+;; `bookmarkp-unmark-all-bookmarks1'
+;; `bookmarkp-current-list-have-marked-p'
+;; `bookmarkp-remove-if'
+;; `bookmarkp-remove-if-not'
+;; `bookmarkp-replace-regexp-in-string'
+;; `bookmarkp-get-buffer-name'
+;; `bookmarkp-get-end-position'
+;; `bookmarkp-root-or-sudo-logged-p'
+;; `bookmarkp-region-record-front-context-string'
+;; `bookmarkp-record-front-context-string'
+;; `bookmarkp-region-record-rear-context-string'
+;; `bookmarkp-record-rear-context-string'
+;; `bookmarkp-record-front-context-region-string'
+;; `bookmarkp-record-end-context-region-string'
+;; `bookmarkp-position-after-whitespace'
+;; `bookmarkp-position-before-whitespace'
+;; `bookmarkp-save-new-region-location'
+;; `bookmarkp-handle-region-default'
+;; `bookmarkp-line-number-at-pos'
+;; `bookmarkp-goto-position'
+;; `bookmarkp-make-w3m-record'
+;; `bookmarkp-w3m-set-new-buffer-name'
+;; `bookmarkp-jump-w3m-new-session'
+;; `bookmarkp-jump-w3m-only-one-tab'
+;; `bookmarkp-jump-w3m'
+;; `bookmarkp-make-gnus-record'
+;; `bookmarkp-jump-gnus'
+
+;;  * Non-interactive functions redefined here:(From `bookmark.el')
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "^bookmark-")
+;; `bookmark-bmenu-mode'
+;; `bookmark-completing-read'
+;; `bookmark-make-record-default'
+;; `bookmark-bmenu-check-position'
+;; `bookmark--jump-via'
+;; `bookmark-maybe-sort-alist'
+;; `bookmark-default-handler'
+;; `bookmark-location'
+;; `bookmark-write-file'
+;; `bookmark-bmenu-surreptitiously-rebuild-list'
+;; `bookmark-bmenu-hide-filenames'
+
+;;  * Functions defined here for emacs versions < 23
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-function :prefix "^bookmarkp-")
+;; `bookmarkp-menu-jump-other-window'
+
 ;;  * Internal variables defined here:
-;;
-;;    `bookmark-make-record-function' (Emacs 20-22),
-;;    `bookmarkp-jump-display-function',
-;;    `bookmarkp-non-file-filename', `bookmarkp-version-number',
-;;    `bookmarkp-latest-bookmark-alist'.
-;;
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "bookmarkp")
+;; `bookmarkp-jump-display-function'
+;; `bookmarkp-latest-bookmark-alist'
+;; `bookmarkp-bookmark-marked-list'
+;; `bookmarkp-bmenu-before-hide-unmarked-list'
+;; `bookmarkp-bmenu-before-hide-marked-list'
+
 ;;  ***** NOTE: The following functions defined in `bookmark.el'
-;;              have been REDEFINED OR ADVISED HERE:
-;;
-;;   `bookmark-bmenu-execute-deletions',
-;;   `bookmark-bmenu-hide-filenames', `bookmark-bmenu-list',
-;;   `bookmark-bmenu-mode', `bookmark-bmenu-other-window',
-;;   `bookmark-bmenu-rename',
-;;   `bookmark-bmenu-surreptitiously-rebuild-list',
-;;   `bookmark-completing-read', `bookmark-default-handler',
-;;   `bookmark-delete', `bookmark-get-bookmark' (Emacs 20-22),
-;;   `bookmark-get-bookmark-record' (Emacs 20-22),
-;;   `bookmark-get-handler' (Emacs 20-22), `bookmark-handle-bookmark'
-;;   (Emacs 20-22),`bookmark-insert', `bookmark-insert-location',
-;;   `bookmark-jump', `bookmark-jump-noselect',
-;;   `bookmark-jump-other-window', `bookmark--jump-via',
-;;   `bookmark-location', `bookmark-make-record' (Emacs 20-22),
-;;   `bookmark-make-record-default', `bookmark-maybe-message' (Emacs
-;;   20, 21), `bookmark-maybe-sort-alist' (Emacs 20, 21),
-;;   `bookmark-prop-get' (Emacs 20, 21), `bookmark-prop-set' (Emacs
-;;   20, 21), `bookmark-relocate', `bookmark-rename', `bookmark-set',
-;;   `bookmark-store', `bookmark-yank-word', `bookmark-write-file'.
-;;
-;;
+;;              have been REDEFINED OR ADVISED HERE for emacs versions < 23:
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-function :prefix "^bookmark-")
+;; `bookmark-get-bookmark'
+;; `bookmark-get-bookmark-record'
+;; `bookmark-make-record'
+;; `bookmark-store'
+;; `bookmark-prop-get'
+;; `bookmark-prop-set'
+;; `bookmark-get-handler'
+;; `bookmark-jump-noselect'
+;; `bookmark-handle-bookmark'
+;; `bookmark-maybe-message'
+
 ;;  ***** NOTE: The following functions defined in `info.el'
 ;;              have been REDEFINED HERE (Emacs 20-22):
-;;
-;;   `Info-bookmark-jump', `Info-bookmark-make-record'.
-;;
-;;
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-function :prefix "^Info-")
+;; `Info-bookmark-make-record'
+;; `Info-bookmark-jump'
+
 ;;  ***** NOTE: The following variables defined in `bookmark.el'
-;;              have been REDEFINED HERE:
-;;
-;;   `bookmark-alist' (doc string only).
+;;              have been REDEFINED HERE for emacs versions < 23
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-variable :prefix "^bookmark-")
+;; `bookmark-make-record-function'
+
+;;  ***** NOTE: The following variables defined in `bookmark.el'
+;;              have been REDEFINED HERE.
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "^bookmark-")
+;; `bookmark-make-record-function'
+;; `bookmark-alist'
+
+;;  *** END auto-documentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;(@* "Documentation")
 ;;
@@ -309,7 +383,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.1")
+(defconst bookmarkp-version-number "2.4.2")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -383,6 +457,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "S" 'bookmarkp-toggle-sorting-by-most-visited)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-r" 'bookmark-bmenu-relocate) ; Was `R' in vanilla.
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
@@ -413,7 +489,8 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-mark-all-bookmarks]\t- Mark all bookmarks
 \\[bookmarkp-unmark-all-bookmarks]\t - Unmark all bookmarks
 \\[bookmarkp-unmark-all-marked-flag]\t - Unmark all bookmarks with flag >
-\\[bookmarkp-unmark-all-delete-flag]\t - Unmark all bookmarks with flag D")
+\\[bookmarkp-unmark-all-delete-flag]\t - Unmark all bookmarks with flag D
+\\[bookmarkp-toggle-sorting-by-most-visited]\t - Toggle sorting by visit frequency")
 
 
 ;;(@* "Faces (Customizable)")
@@ -1064,6 +1141,11 @@ If bmk have no visit entry, add one with value 0."
         (bookmark-prop-set bmk 'visit (1+ cur-val))
         (bookmark-prop-set bmk 'visit 0))))
 
+(defun bookmarkp-toggle-sorting-by-most-visited ()
+  "Turn Off or On sorting by visit frequency."
+  (interactive)
+  (setq bookmarkp-visit-flag (not bookmarkp-visit-flag))
+  (bookmark-bmenu-surreptitiously-rebuild-list))
 
 (defun bookmarkp-sort-alist-maybe-by-most-visited ()
   "Sort bookmarks by most visited if they have visit flag.
