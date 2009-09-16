@@ -68,6 +68,7 @@
 ;; `bookmarkp-version'
 ;; `bookmarkp-toggle-sorting-by-most-visited'
 ;; `bookmarkp-reset-visit-flag'
+;; `bookmarkp-bmenu-show-number-of-visit'
 ;; `bookmarkp-bmenu-edit-bookmark'
 ;; `bookmarkp-bmenu-list-only-file-bookmarks'
 ;; `bookmarkp-bmenu-list-only-non-file-bookmarks'
@@ -384,7 +385,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.5")
+(defconst bookmarkp-version-number "2.4.6")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1114,26 +1115,30 @@ Returns non-nil if on a line with a bookmark and
   "Helper function for `bookmark-jump(-other-window)'.
 BOOKMARK is a bookmark name or a bookmark record.
 DISPLAY-FUNCTION is the function that displays the bookmark."
+  (when bookmarkp-visit-flag            ; Increment visit entry.
+    (bookmarkp-increment-visit bookmark))
   (setq bookmarkp-jump-display-function  display-function)
   (bookmark-handle-bookmark bookmark)
   (let ((win  (get-buffer-window (current-buffer) 0)))
     (when win (set-window-point win (point))))
   ;; VANILLA EMACS FIXME: we used to only run `bookmark-after-jump-hook' in
   ;; `bookmark-jump' itself, but in none of the other commands.
-  (when bookmarkp-visit-flag            ; Increment visit entry.
-    (bookmarkp-increment-visit bookmark))
   (run-hooks 'bookmark-after-jump-hook)
   (when bookmark-automatically-show-annotations
     (bookmark-show-annotation bookmark)))
 
 
-(defun bookmarkp-increment-visit (bmk)
+(defun bookmarkp-increment-visit (bmk &optional batch)
   "Increment visit entry of bmk.
 If bmk have no visit entry, add one with value 0."
   (let ((cur-val (bookmark-prop-get bmk 'visit)))
     (if cur-val
         (bookmark-prop-set bmk 'visit (1+ cur-val))
-        (bookmark-prop-set bmk 'visit 0))))
+        (bookmark-prop-set bmk 'visit 0)))
+  (unless batch
+    (bookmark-bmenu-surreptitiously-rebuild-list)
+    (setq deactivate-mark nil)))
+
 
 ;;;###autoload
 (defun bookmarkp-toggle-sorting-by-most-visited ()
