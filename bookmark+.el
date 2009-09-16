@@ -384,7 +384,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.4")
+(defconst bookmarkp-version-number "2.4.5")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1135,6 +1135,7 @@ If bmk have no visit entry, add one with value 0."
         (bookmark-prop-set bmk 'visit (1+ cur-val))
         (bookmark-prop-set bmk 'visit 0))))
 
+;;;###autoload
 (defun bookmarkp-toggle-sorting-by-most-visited ()
   "Turn Off or On sorting by visit frequency."
   (interactive)
@@ -1148,6 +1149,7 @@ If bmk have no visit entry, add one with value 0."
       (forward-line 0)
       (bookmark-bmenu-check-position))))
 
+;;;###autoload
 (defun bookmarkp-reset-visit-flag ()
   "Reset visit entry of this bookmark to 0.
 If this bookmark have no visit entry add one with 0 value."
@@ -1162,6 +1164,14 @@ If this bookmark have no visit entry add one with 0 value."
     (bookmark-bmenu-check-position)))
 
 ;; (find-epp (progn (bookmark-prop-set ".emacs.el" 'visit 0) (bookmark-get-bookmark ".emacs.el")))
+
+;;;###autoload
+(defun bookmarkp-bmenu-show-number-of-visit ()
+  (interactive)
+  (let* ((bmk (when (bookmark-bmenu-check-position)
+               (bookmark-bmenu-bookmark)))
+         (nvisit (bookmark-prop-get bmk 'visit)))
+    (message "%s have been visited %s times" bmk nvisit)))
 
 (defun bookmarkp-sort-alist-maybe-by-most-visited ()
   "Sort bookmarks by most visited if they have visit flag.
