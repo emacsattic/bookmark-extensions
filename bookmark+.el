@@ -66,8 +66,10 @@
 ;;  * Commands defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "bookmarkp")
 ;; `bookmarkp-version'
-;; `bookmarkp-toggle-sorting-by-most-visited'
 ;; `bookmarkp-reset-visit-flag'
+;; `bookmarkp-bmenu-sort-by-last-time-visited'
+;; `bookmarkp-bmenu-sort-by-visit-frequency'
+;; `bookmarkp-bmenu-sort-alphabetically'
 ;; `bookmarkp-bmenu-show-number-of-visit'
 ;; `bookmarkp-bmenu-edit-bookmark'
 ;; `bookmarkp-bmenu-list-only-file-bookmarks'
@@ -76,16 +78,16 @@
 ;; `bookmarkp-bmenu-list-only-w3m-bookmarks'
 ;; `bookmarkp-bmenu-list-only-gnus-bookmarks'
 ;; `bookmarkp-bmenu-list-only-region-bookmarks'
+;; `bookmarkp-bmenu-quit'
+;; `bookmarkp-bmenu-wipe-marked-and-show-all'
+;; `bookmarkp-bmenu-reset-alist'
+;; `bookmarkp-bmenu-regexp-mark'
+;; `bookmarkp-bmenu-hide-marked'
+;; `bookmarkp-bmenu-hide-unmarked'
 ;; `bookmarkp-mark-all-bookmarks'
 ;; `bookmarkp-unmark-all-delete-flag'
 ;; `bookmarkp-unmark-all-marked-flag'
 ;; `bookmarkp-unmark-all-bookmarks'
-;; `bookmarkp-bmenu-quit'
-;; `bookmarkp-bmenu-wipe-marked-and-show-all'
-;; `bookmarkp-bmenu-regexp-mark'
-;; `bookmarkp-bmenu-hide-marked'
-;; `bookmarkp-bmenu-hide-unmarked'
-;; `bookmarkp-bmenu-reset-alist'
 ;; `bookmarkp-fix-bookmark-alist-and-save'
 
 ;;  * Commands redefined here:(from `bookmark.el')
@@ -115,7 +117,7 @@
 ;; `bookmarkp-w3m-allow-multi-tabs'
 ;; `bookmarkp-show-end-of-region'
 ;; `bookmarkp-bookmark-name-length-max'
-;; `bookmarkp-visit-flag'
+;; `bookmarkp-sort-method'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
@@ -131,10 +133,16 @@
 
 ;;  * Non-interactive functions defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "bookmarkp")
-;; `bookmarkp-increment-visit'
-;; `bookmarkp-sort-alist-maybe-by-most-visited'
 ;; `bookmarkp-maybe-save-bookmark'
 ;; `bookmarkp-edit-bookmark'
+;; `bookmarkp-increment-visit'
+;; `bookmarkp-add-or-update-time'
+;; `bookmarkp-sort-1'
+;; `bookmarkp-sort-alist-by-time'
+;; `bookmarkp-sort-by-time-p'
+;; `bookmarkp-sort-alist-by-visit-frequency'
+;; `bookmarkp-sort-visited-p'
+;; `bookmarkp-sort-alist-alphabetically'
 ;; `bookmarkp-bmenu-propertize-item'
 ;; `bookmarkp-region-bookmark-p'
 ;; `bookmarkp-gnus-bookmark-p'
@@ -385,7 +393,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.13")
+(defconst bookmarkp-version-number "2.4.14")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1665,8 +1673,18 @@ If bmk have no visit entry, add one with value 0."
     (bookmark-bmenu-surreptitiously-rebuild-list))
   (bookmarkp-maybe-save-bookmark))
 
+(defun bookmarkp-current-sec-time ()
+  "Return current time in seconds.
+For compatibility with older emacs."
+  (let ((ct   (current-time)))
+    (if (< emacs-major-version 23)
+        (+ (* (float (nth 0 ct)) (expt 2 16)) (nth 1 ct))
+        (float-time))))
+
 (defun bookmarkp-add-or-update-time (bmk &optional batch)
-  (let ((time (float-time)))
+  "Update time entry of bmk.
+If bmk have no time entry, add one with current time."
+  (let* ((time (bookmarkp-current-sec-time)))
     (bookmark-prop-set bmk 'time time))
   (unless batch
     (bookmark-bmenu-surreptitiously-rebuild-list))
@@ -1676,17 +1694,18 @@ If bmk have no visit entry, add one with value 0."
 ;; (find-epp (progn (bookmarkp-add-or-update-time ".emacs.el") (bookmark-get-bookmark ".emacs.el")))
 
 
-(defun bookmarkp-sort-1 (method)
+(defun bookmarkp-sort-1 (method &optional batch)
   "Turn Off or On sorting by visit frequency."
   (with-current-buffer "*Bookmark List*"
     (let* ((bmk     (when (bookmark-bmenu-check-position)
                       (bookmark-bmenu-bookmark))))
       (setq bookmarkp-sort-method method)
-      (bookmark-bmenu-surreptitiously-rebuild-list)
-      (or (search-forward bmk (point-max) t)
-          (search-backward bmk (point-min) t))
-      (forward-line 0)
-      (bookmark-bmenu-check-position))))
+      (unless batch
+        (bookmark-bmenu-surreptitiously-rebuild-list)
+        (or (search-forward bmk (point-max) t)
+            (search-backward bmk (point-min) t))
+        (forward-line 0)
+        (bookmark-bmenu-check-position)))))
 
 
 ;;;###autoload
