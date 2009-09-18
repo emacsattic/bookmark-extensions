@@ -385,7 +385,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.10")
+(defconst bookmarkp-version-number "2.4.11")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1699,9 +1699,16 @@ Else sort them with string-lessp."
           (push i alpha-alist)))
     (setq bmk-alist
           (append
-           (sort visit-alist #'(lambda (x y) (> (cdr (assq 'visit x)) (cdr (assq 'visit y)))))
+           (sort visit-alist 'bookmarkp-sort-visited-p)
            (bookmarkp-sort-alist-alphabetically alpha-alist)))))
 
+(defun bookmarkp-sort-visited-p (x y)
+  "Predicate for sorting bookmarks with visit entry."
+  (let ((val1 (cdr (assq 'visit x)))
+        (val2 (cdr (assq 'visit y))))
+    (if (eq val1 val2)
+        (string-lessp (car x) (car y)))
+        (> val1 val2)))
 
 (defun bookmarkp-sort-alist-alphabetically (&optional alist)
   "Sort alist alphabetically with `string-lessp' as predicate."
