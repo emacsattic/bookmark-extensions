@@ -385,7 +385,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.12")
+(defconst bookmarkp-version-number "2.4.13")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -459,9 +459,9 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\S-V" 'bookmarkp-sort-by-visit-frequency)
+(define-key bookmark-bmenu-mode-map "\S-V" 'bookmarkp-bmenu-sort-by-visit-frequency)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\S-T" 'bookmarkp-sort-by-last-time-visited)
+(define-key bookmark-bmenu-mode-map "\S-T" 'bookmarkp-bmenu-sort-by-last-time-visited)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-A" 'bookmarkp-bmenu-sort-alphabetically)
 ;;;###autoload
@@ -1724,8 +1724,8 @@ Else sort them with string-lessp."
   (let ((val1 (cdr (assq 'time x)))
         (val2 (cdr (assq 'time y))))
     (if (eq val1 val2)
-        (string-lessp (car x) (car y)))
-        (> val1 val2)))
+        (string-lessp (car x) (car y))
+        (> val1 val2))))
 
 (defun bookmarkp-sort-alist-by-visit-frequency (&optional bmk-seq)
   "Sort bookmarks by visit frequency if they have visit flag.
@@ -1746,8 +1746,8 @@ Else sort them with string-lessp."
   (let ((val1 (cdr (assq 'visit x)))
         (val2 (cdr (assq 'visit y))))
     (if (eq val1 val2)
-        (string-lessp (car x) (car y)))
-        (> val1 val2)))
+        (string-lessp (car x) (car y))
+        (> val1 val2))))
 
 (defun bookmarkp-sort-alist-alphabetically (&optional alist)
   "Sort alist alphabetically with `string-lessp' as predicate."
