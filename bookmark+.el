@@ -393,7 +393,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.15")
+(defconst bookmarkp-version-number "2.4.16")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -942,19 +942,20 @@ candidate."
 The cursor must be at the position where the bookmark is to be set.
 If POINT-ONLY is non-nil, return only the subset of the record that
 pertains to the location within the buffer."
-  (let* ((isregion  (and transient-mark-mode mark-active (not (eq (mark) (point)))))
-         (isdired   (car (rassq (current-buffer) dired-buffers)))
-         (beg       (if isregion (region-beginning) (point)))
-         (end       (if isregion (region-end) (point)))
-         (buf       (buffer-name))
-         (fcs       (if isregion
+  (let* ((isregion (and transient-mark-mode mark-active (not (eq (mark) (point)))))
+         (isdired  (car (rassq (current-buffer) dired-buffers)))
+         (beg      (if isregion (region-beginning) (point)))
+         (end      (if isregion (region-end) (point)))
+         (buf      (buffer-name))
+         (fcs      (if isregion
                         (bookmarkp-region-record-front-context-string beg end)
                       (bookmarkp-record-front-context-string beg)))
-         (rcs       (if isregion
+         (rcs      (if isregion
                         (bookmarkp-region-record-rear-context-string beg)
                       (bookmarkp-record-rear-context-string beg)))
-         (fcrs      (when isregion (bookmarkp-record-front-context-region-string beg end)))
-         (ecrs      (when isregion (bookmarkp-record-end-context-region-string end))))
+         (fcrs     (when isregion (bookmarkp-record-front-context-region-string beg end)))
+         (ecrs     (when isregion (bookmarkp-record-end-context-region-string end)))
+         (ctime    (bookmarkp-current-sec-time)))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
@@ -965,6 +966,7 @@ pertains to the location within the buffer."
         (front-context-region-string . ,fcrs)
         (rear-context-region-string . ,ecrs)
         (visit . 0)
+        (time . ,ctime)
         (position . ,beg)
         (end-position . ,end))))
 
