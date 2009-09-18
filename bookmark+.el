@@ -1151,11 +1151,10 @@ Otherwise, return `bookmark-alist'.
 If `bookmarkp-visit-flag' is non--nil sort by visit frequency.
 Else sort alphabetically."
   (if bookmark-sort-flag
-      (cond ((eq bookmarkp-sort-method 'visit)
-             (bookmarkp-sort-alist-by-visit-frequency alist))
-            ((eq bookmarkp-sort-method 'time)
-             (bookmarkp-sort-alist-by-time alist))
-            (t (bookmarkp-sort-alist-alphabetically alist)))
+      (case bookmarkp-sort-method
+        ('visit (bookmarkp-sort-alist-by-method 'visit 'bookmarkp-sort-visited-p alist))
+        ('time (bookmarkp-sort-alist-by-method 'time 'bookmarkp-sort-by-time-p alist))
+        (t (bookmarkp-sort-alist-alphabetically alist)))
       bookmark-alist))
 
 
@@ -1723,20 +1722,26 @@ If this bookmark have no visit entry add one with 0 value."
     (bookmark-bmenu-check-position)))
 
 
-(defun bookmarkp-sort-alist-by-time (&optional bmk-seq)
-  "Sort bookmarks by visit frequency if they have visit flag.
-Else sort them with string-lessp."
-  (setq bookmarkp-visit-flag nil)
-  (let ((bmk-alist (or bmk-seq (copy-sequence bookmark-alist)))
-        time-alist alpha-alist)
+(defun bookmarkp-sort-alist-by-method (method fn &optional alist)
+  "Sort bookmarks using method `method'.
+`method' can be one of \'visit or \'time."
+  (let ((bmk-alist (or alist (copy-sequence bookmark-alist)))
+        method-alist alpha-alist)
     (dolist (i bmk-alist)
-      (if (assq 'time i)
-          (push i time-alist)
-          (push i alpha-alist)))
-    (setq bmk-alist
-          (append
-           (sort time-alist 'bookmarkp-sort-by-time-p)
-           (bookmarkp-sort-alist-alphabetically alpha-alist)))))
+      (if (assq method i) (push i method-alist) (push i alpha-alist)))
+    (setq bmk-alist (append
+                     (sort method-alist fn)
+                     (bookmarkp-sort-alist-alphabetically alpha-alist)))))
+
+
+(defun bookmarkp-sort-visited-p (x y)
+  "Predicate for sorting bookmarks with visit entry."
+  (let ((val1 (cdr (assq 'visit x)))
+        (val2 (cdr (assq 'visit y))))
+    (if (eq val1 val2)
+        (string-lessp (car x) (car y))
+        (> val1 val2))))
+
 
 (defun bookmarkp-sort-by-time-p (x y)
   "Predicate for sorting bookmarks with visit entry."
@@ -1746,27 +1751,6 @@ Else sort them with string-lessp."
         (string-lessp (car x) (car y))
         (> val1 val2))))
 
-(defun bookmarkp-sort-alist-by-visit-frequency (&optional bmk-seq)
-  "Sort bookmarks by visit frequency if they have visit flag.
-Else sort them with string-lessp."
-  (let ((bmk-alist (or bmk-seq (copy-sequence bookmark-alist)))
-        visit-alist alpha-alist)
-    (dolist (i bmk-alist)
-      (if (assq 'visit i)
-          (push i visit-alist)
-          (push i alpha-alist)))
-    (setq bmk-alist
-          (append
-           (sort visit-alist 'bookmarkp-sort-visited-p)
-           (bookmarkp-sort-alist-alphabetically alpha-alist)))))
-
-(defun bookmarkp-sort-visited-p (x y)
-  "Predicate for sorting bookmarks with visit entry."
-  (let ((val1 (cdr (assq 'visit x)))
-        (val2 (cdr (assq 'visit y))))
-    (if (eq val1 val2)
-        (string-lessp (car x) (car y))
-        (> val1 val2))))
 
 (defun bookmarkp-sort-alist-alphabetically (&optional alist)
   "Sort alist alphabetically with `string-lessp' as predicate."
