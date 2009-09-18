@@ -385,7 +385,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.8")
+(defconst bookmarkp-version-number "2.4.9")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -459,7 +459,7 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "S" 'bookmarkp-toggle-sorting-by-most-visited)
+(define-key bookmark-bmenu-mode-map "S" 'bookmarkp-toggle-sorting-by-visit-frequency)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-r" 'bookmark-bmenu-relocate) ; Was `R' in vanilla.
 ;;;###autoload
@@ -1133,16 +1133,17 @@ DISPLAY-FUNCTION is the function that displays the bookmark."
 ;; If `bookmarkp-visit-flag' is non--nil sort by most visited.
 ;; In this case sort is done with `bookmarkp-sort-alist-maybe-by-most-visited'.
 ;;
-(defun bookmark-maybe-sort-alist ()
+(defun bookmark-maybe-sort-alist (&optional alist)
   "If `bookmark-sort-flag' is non-nil, then return a sorted copy of `bookmark-alist'.
-Otherwise, return `bookmark-alist'. If `bookmarkp-visit-flag' is non--nil
-sort by most frequently visited unless bookmark have no visit flag."
+Otherwise, return `bookmark-alist'.
+If `bookmarkp-visit-flag' is non--nil sort by visit frequency.
+Else sort alphabetically."
   (if bookmark-sort-flag
       (if bookmarkp-visit-flag
-          (bookmarkp-sort-alist-maybe-by-most-visited)
-          (sort (copy-sequence bookmark-alist)
-                #'(lambda (x y) (string-lessp (car x) (car y)))))
+          (bookmarkp-sort-alist-by-visit-frequency alist)
+          (bookmarkp-sort-alist-alphabetically alist))
       bookmark-alist))
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1155,6 +1156,8 @@ sort by most frequently visited unless bookmark have no visit flag."
     (if cell
         (setcdr cell val)
         (setcdr bmk (cons (cons prop val) (cdr bmk))))))
+
+;; (find-epp (progn (bookmark-prop-set ".emacs.el" 'visit 0) (bookmark-get-bookmark ".emacs.el")))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1658,7 +1661,7 @@ If bmk have no visit entry, add one with value 0."
 
 
 ;;;###autoload
-(defun bookmarkp-toggle-sorting-by-most-visited ()
+(defun bookmarkp-toggle-sorting-by-visit-frequency ()
   "Turn Off or On sorting by visit frequency."
   (interactive)
   (with-current-buffer "*Bookmark List*"
@@ -1685,25 +1688,28 @@ If this bookmark have no visit entry add one with 0 value."
           (search-backward bmk (point-min) t)))
     (bookmark-bmenu-check-position)))
 
-;; (find-epp (progn (bookmark-prop-set ".emacs.el" 'visit 0) (bookmark-get-bookmark ".emacs.el")))
 
-(defun bookmarkp-sort-alist-maybe-by-most-visited ()
-  "Sort bookmarks by most visited if they have visit flag.
+(defun bookmarkp-sort-alist-by-visit-frequency (&optional bmk-seq)
+  "Sort bookmarks by visit frequency if they have visit flag.
 Else sort them with string-lessp."
-  (let ((bmk-alist (copy-sequence bookmark-alist))
-        visit-alist alist)
+  (let ((bmk-alist (or bmk-seq (copy-sequence bookmark-alist)))
+        visit-alist alpha-alist)
     (dolist (i bmk-alist)
-      (if (assoc 'visit i)
+      (if (assq 'visit i)
           (push i visit-alist)
-          (push i alist)))
-    (if visit-alist
-        (setq bmk-alist
-              (append
-               (sort visit-alist #'(lambda (x y) (> (cdr (assoc 'visit x)) (cdr (assoc 'visit y)))))
-               (sort alist #'(lambda (x y) (string-lessp (car x) (car y))))))
-        (setq bmk-alist (sort alist #'(lambda (x y) (string-lessp (car x) (car y))))))))
+          (push i alpha-alist)))
+    (setq bmk-alist
+          (append
+           (sort visit-alist #'(lambda (x y) (> (cdr (assq 'visit x)) (cdr (assq 'visit y)))))
+           (bookmarkp-sort-alist-alphabetically alpha-alist)))))
 
 
+(defun bookmarkp-sort-alist-alphabetically (&optional alist)
+  "Sort alist alphabetically with `string-lessp' as predicate."
+  (let ((bmk-alist (or alist (copy-sequence bookmark-alist))))
+    (sort bmk-alist #'(lambda (x y) (string-lessp (car x) (car y))))))
+
+  
 ;; Menu-List Functions (`bookmarkp-bmenu-*') -------------------------
 
 ;;;###autoload
