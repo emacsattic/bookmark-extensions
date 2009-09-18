@@ -385,7 +385,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.9")
+(defconst bookmarkp-version-number "2.4.10")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1115,8 +1115,7 @@ Returns non-nil if on a line with a bookmark and
   "Helper function for `bookmark-jump(-other-window)'.
 BOOKMARK is a bookmark name or a bookmark record.
 DISPLAY-FUNCTION is the function that displays the bookmark."
-  (when bookmarkp-visit-flag            ; Increment visit entry.
-    (bookmarkp-increment-visit bookmark))
+  (bookmarkp-increment-visit bookmark) ; Increment visit entry.
   (setq bookmarkp-jump-display-function  display-function)
   (bookmark-handle-bookmark bookmark)
   (let ((win  (get-buffer-window (current-buffer) 0)))
@@ -1656,8 +1655,8 @@ If bmk have no visit entry, add one with value 0."
         (bookmark-prop-set bmk 'visit (1+ cur-val))
         (bookmark-prop-set bmk 'visit 0)))
   (unless batch
-    (bookmark-bmenu-surreptitiously-rebuild-list)
-    (bookmarkp-maybe-save-bookmark)))
+    (bookmark-bmenu-surreptitiously-rebuild-list))
+  (bookmarkp-maybe-save-bookmark))
 
 
 ;;;###autoload
