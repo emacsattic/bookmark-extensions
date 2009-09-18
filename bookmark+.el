@@ -1670,7 +1670,7 @@ If bmk have no visit entry, add one with value 0."
     (bookmark-prop-set bmk 'time time))
   (unless batch
     (bookmark-bmenu-surreptitiously-rebuild-list))
-  (bookmarkp-maybe-save-bookmark)))
+  (bookmarkp-maybe-save-bookmark))
 
 ;; (find-epp (progn (bookmarkp-add-or-update-time "/home/thierry") (bookmark-get-bookmark "/home/thierry")))
 ;; (find-epp (progn (bookmarkp-add-or-update-time ".emacs.el") (bookmark-get-bookmark ".emacs.el")))
