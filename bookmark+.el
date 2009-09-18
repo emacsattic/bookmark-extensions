@@ -393,7 +393,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.16")
+(defconst bookmarkp-version-number "2.4.17")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1153,10 +1153,9 @@ Otherwise, return `bookmark-alist'.
 If `bookmarkp-visit-flag' is non--nil sort by visit frequency.
 Else sort alphabetically."
   (if bookmark-sort-flag
-      (case bookmarkp-sort-method
-        ('visit (bookmarkp-sort-alist-by-method 'visit 'bookmarkp-sort-visited-p alist))
-        ('time (bookmarkp-sort-alist-by-method 'time 'bookmarkp-sort-by-time-p alist))
-        (t (bookmarkp-sort-alist-alphabetically alist)))
+      (if bookmarkp-sort-method
+          (bookmarkp-sort-alist-by-method alist)
+          (bookmarkp-sort-alist-alphabetically alist))
       bookmark-alist))
 
 
@@ -1724,15 +1723,17 @@ If this bookmark have no visit entry add one with 0 value."
     (bookmark-bmenu-check-position)))
 
 
-(defun bookmarkp-sort-alist-by-method (method fn &optional alist)
-  "Sort bookmarks using method `method'.
-`method' can be one of \'visit or \'time."
+(defun bookmarkp-sort-alist-by-method (&optional alist)
+  "Sort bookmarks using method `bookmarkp-sort-method'."
   (let ((bmk-alist (or alist (copy-sequence bookmark-alist)))
+        (pred (case bookmarkp-sort-method
+                ('visit 'bookmarkp-sort-visited-p)
+                ('time  'bookmarkp-sort-by-time-p)))
         method-alist alpha-alist)
     (dolist (i bmk-alist)
-      (if (assq method i) (push i method-alist) (push i alpha-alist)))
+      (if (assq bookmarkp-sort-method i) (push i method-alist) (push i alpha-alist)))
     (setq bmk-alist (append
-                     (sort method-alist fn)
+                     (sort method-alist pred)
                      (bookmarkp-sort-alist-alphabetically alpha-alist)))))
 
 
