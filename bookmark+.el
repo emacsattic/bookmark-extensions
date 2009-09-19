@@ -80,7 +80,8 @@
 ;; `bookmarkp-bmenu-list-only-region-bookmarks'
 ;; `bookmarkp-bmenu-quit'
 ;; `bookmarkp-bmenu-wipe-marked-and-show-all'
-;; `bookmarkp-bmenu-reset-alist'
+;; `bookmarkp-bmenu-list-all-bookmarks'
+;; `bookmarkp-bmenu-refresh-alist'
 ;; `bookmarkp-bmenu-regexp-mark'
 ;; `bookmarkp-bmenu-hide-marked'
 ;; `bookmarkp-bmenu-hide-unmarked'
@@ -136,14 +137,15 @@
 ;; `bookmarkp-maybe-save-bookmark'
 ;; `bookmarkp-edit-bookmark'
 ;; `bookmarkp-increment-visit'
+;; `bookmarkp-current-sec-time'
 ;; `bookmarkp-add-or-update-time'
-;; `bookmarkp-sort-1'
-;; `bookmarkp-sort-alist-by-time'
-;; `bookmarkp-sort-by-time-p'
-;; `bookmarkp-sort-alist-by-visit-frequency'
+;; `bookmarkp-sort-alist-by-method'
 ;; `bookmarkp-sort-visited-p'
+;; `bookmarkp-sort-by-time-p'
 ;; `bookmarkp-sort-alist-alphabetically'
+;; `bookmarkp-bmenu-sort-1'
 ;; `bookmarkp-bmenu-propertize-item'
+;; `bookmarkp-bmenu-list-all-bookmarks'
 ;; `bookmarkp-region-bookmark-p'
 ;; `bookmarkp-gnus-bookmark-p'
 ;; `bookmarkp-w3m-bookmark-p'
@@ -265,7 +267,7 @@
 ;;
 ;;    - You can bookmark a buffer that is not associated with a file.
 ;;
-;;    - You can bookmark a region in a W3m buffer or a Gnus message.
+;;    - You can bookmark a region in a W3m buffer.
 ;;
 ;;    - For any bookmark (except Gnus), you can bookmark a region of
 ;;      text, not just a position.  By default, when you jump to a
@@ -393,7 +395,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.18")
+(defconst bookmarkp-version-number "2.4.19")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1680,9 +1682,9 @@ If bmk have no visit entry, add one with value 0."
   "Return current time in seconds.
 For compatibility with older emacs."
   (let ((ct   (current-time)))
-    (if (< emacs-major-version 23)
-        (+ (* (float (nth 0 ct)) (expt 2 16)) (nth 1 ct))
-        (float-time))))
+    (if (fboundp 'float-time)
+        (float-time)
+        (+ (* (float (nth 0 ct)) (expt 2 16)) (nth 1 ct)))))
 
 (defun bookmarkp-add-or-update-time (bmk &optional batch)
   "Update time entry of bmk.
