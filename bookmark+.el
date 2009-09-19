@@ -395,7 +395,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.20")
+(defconst bookmarkp-version-number "2.4.21")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -473,7 +473,7 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-T" 'bookmarkp-bmenu-sort-by-last-time-visited)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\S-A" 'bookmarkp-bmenu-sort-alphabetically)
+(define-key bookmark-bmenu-mode-map "\S-S" 'bookmarkp-bmenu-sort-alphabetically)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-r" 'bookmark-bmenu-relocate) ; Was `R' in vanilla.
 ;;;###autoload
