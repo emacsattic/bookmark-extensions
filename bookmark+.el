@@ -393,7 +393,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.17")
+(defconst bookmarkp-version-number "2.4.18")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -437,7 +437,7 @@
 (define-key bookmark-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "." 'bookmarkp-bmenu-reset-alist)
+(define-key bookmark-bmenu-mode-map "." 'bookmarkp-bmenu-list-all-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U") nil) ; Emacs20
 ;;;###autoload
@@ -477,6 +477,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "g" 'bookmarkp-bmenu-refresh-alist)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "%" nil) ; Emacs20
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "%m" 'bookmarkp-bmenu-regexp-mark)
@@ -492,7 +494,8 @@
 \\[bookmarkp-bmenu-edit-bookmark]\t- Edit bookmark
 \\[bookmarkp-bmenu-list-only-file-bookmarks]\t- List only file and directory \
 bookmarks (`C-u' for local only)
-\\[bookmarkp-bmenu-reset-alist]\t- Show all bookmarks
+\\[bookmarkp-bmenu-list-all-bookmarks]\t- Show all bookmarks
+\\[bookmarkp-bmenu-refresh-alist]\t- Refresh current list
 \\[bookmarkp-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
 \\[bookmarkp-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
 \\[bookmarkp-bmenu-list-only-info-bookmarks]\t- List only Info bookmarks
@@ -1693,21 +1696,6 @@ If bmk have no time entry, add one with current time."
 ;; (find-epp (progn (bookmarkp-add-or-update-time "/home/thierry") (bookmark-get-bookmark "/home/thierry")))
 ;; (find-epp (progn (bookmarkp-add-or-update-time ".emacs.el") (bookmark-get-bookmark ".emacs.el")))
 
-
-(defun bookmarkp-sort-1 (method &optional batch)
-  "Turn Off or On sorting by visit frequency."
-  (with-current-buffer "*Bookmark List*"
-    (let* ((bmk     (when (bookmark-bmenu-check-position)
-                      (bookmark-bmenu-bookmark))))
-      (setq bookmarkp-sort-method method)
-      (unless batch
-        (bookmark-bmenu-surreptitiously-rebuild-list)
-        (or (search-forward bmk (point-max) t)
-            (search-backward bmk (point-min) t))
-        (forward-line 0)
-        (bookmark-bmenu-check-position)))))
-
-
 ;;;###autoload
 (defun bookmarkp-reset-visit-flag ()
   "Reset visit entry of this bookmark to 0.
@@ -1763,20 +1751,34 @@ If this bookmark have no visit entry add one with 0 value."
   
 ;; Menu-List Functions (`bookmarkp-bmenu-*') -------------------------
 
+(defun bookmarkp-bmenu-sort-1 (method &optional batch)
+  "Set sorting method to `method' and rebuild alist.
+Try to follow position of last bookmark in menu-list."
+  (with-current-buffer "*Bookmark List*"
+    (let* ((bmk     (when (bookmark-bmenu-check-position)
+                      (bookmark-bmenu-bookmark))))
+      (setq bookmarkp-sort-method method)
+      (unless batch
+        (bookmark-bmenu-surreptitiously-rebuild-list)
+        (or (search-forward bmk (point-max) t)
+            (search-backward bmk (point-min) t))
+        (forward-line 0)
+        (bookmark-bmenu-check-position)))))
+
 ;;;###autoload
 (defun bookmarkp-bmenu-sort-by-last-time-visited ()
   (interactive)
-  (bookmarkp-sort-1 'time))
+  (bookmarkp-bmenu-sort-1 'time))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-sort-by-visit-frequency ()
   (interactive)
-  (bookmarkp-sort-1 'visit))
+  (bookmarkp-bmenu-sort-1 'visit))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-sort-alphabetically ()
   (interactive)
-  (bookmarkp-sort-1 nil))
+  (bookmarkp-bmenu-sort-1 nil))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-show-number-of-visit ()
@@ -1929,7 +1931,6 @@ With a prefix argument, do not include remote files or directories."
   (setq bookmarkp-bmenu-before-hide-unmarked-list nil)
   (quit-window))
 
-
 ;;;###autoload
 (defun bookmarkp-bmenu-wipe-marked-and-show-all ()
   "Remove all marks and run `bookmark-bmenu-list'."
@@ -1937,14 +1938,20 @@ With a prefix argument, do not include remote files or directories."
   (setq bookmarkp-bookmark-marked-list nil)
   (bookmark-bmenu-list))
 
-
 ;;;###autoload
-(defun bookmarkp-bmenu-reset-alist ()
+(defun bookmarkp-bmenu-list-all-bookmarks ()
+  "Show all bookmarks without removing marks if some."
   (interactive)
   (when (equal (buffer-name (current-buffer)) "*Bookmark List*")
     (bookmark-bmenu-list)))
 
-
+;;;###autoload
+(defun bookmarkp-bmenu-refresh-alist ()
+  (interactive)
+  (when (equal (buffer-name (current-buffer)) "*Bookmark List*")
+    (bookmark-bmenu-surreptitiously-rebuild-list)
+    (bookmark-bmenu-check-position)))
+  
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
   "Mark bookmarks that match REGEXP."
@@ -2167,6 +2174,9 @@ A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-non-file-bookmark-p bookmark-alist))
 
 ;; (find-epp (bookmarkp-non-file-alist-only))
+
+
+;;; Marked bookmarks
 
 (defun bookmarkp-marked-bookmarks-only ()
   "Return the list of marked bookmarks."
