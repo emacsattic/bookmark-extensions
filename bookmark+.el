@@ -395,7 +395,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.22")
+(defconst bookmarkp-version-number "2.4.23")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2229,21 +2229,21 @@ A new list is returned (no side effects)."
 (defun bookmarkp-unmark-all-delete-flag ()
   "Unmark all bookmarks marked with flag D."
   (interactive)
-  (bookmarkp-unmark-all-bookmarks1 'del))
+  (bookmarkp-unmark-all-bookmarks-1 'del))
 
 ;;;###autoload
 (defun bookmarkp-unmark-all-marked-flag ()
   "Unmark all bookmarks marked with flag >."
   (interactive)
-  (bookmarkp-unmark-all-bookmarks1 nil 'mark))
+  (bookmarkp-unmark-all-bookmarks-1 nil 'mark))
 
 ;;;###autoload
 (defun bookmarkp-unmark-all-bookmarks ()
   "Unmark all bookmarks marked with flag > or D."
   (interactive)
-  (bookmarkp-unmark-all-bookmarks1))
+  (bookmarkp-unmark-all-bookmarks-1))
     
-(defun bookmarkp-unmark-all-bookmarks1 (&optional del mark)
+(defun bookmarkp-unmark-all-bookmarks-1 (&optional del mark)
   "Unmark all bookmarks or only bookmarks marked with flag > or D.
 If no args unmark all.
 If `del' is non--nil unmark only bookmarks with flag D.
@@ -2260,10 +2260,12 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                     (or (re-search-forward "^>" (point-max) t)
                         (re-search-forward "^D" (point-max) t))))
         (when (bookmark-bmenu-check-position)
-          (bookmark-bmenu-unmark)))))
-  (setq bookmarkp-bookmark-marked-list nil))
+          (let ((bmk (bookmark-bmenu-bookmark)))
+            (setq bookmarkp-bookmark-marked-list
+                  (remove bmk bookmarkp-bookmark-marked-list)))
+          (bookmark-bmenu-unmark))))))
 
-          
+
 (defun bookmarkp-current-list-have-marked-p (&optional alist)
   "Return non--nil if `bookmarkp-latest-bookmark-alist' have marked bookmarks."
   (when bookmarkp-bookmark-marked-list
