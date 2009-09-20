@@ -395,7 +395,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.21")
+(defconst bookmarkp-version-number "2.4.22")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1433,6 +1433,7 @@ candidate.  In this way, you can delete multiple bookmarks."
 ;; Improved performances when saving `bookmark-alist' by inserting
 ;; little chunk of code one by one instead of letting `pp' parse the whole
 ;; `bookmark-alist' in one time, what is very long.
+;; Remove text properties in bookmark title if some.
 ;;
 (defun bookmark-write-file (file)
   "Write `bookmark-alist' to `bookmark-default-file'."
@@ -1444,7 +1445,12 @@ candidate.  In this way, you can delete multiple bookmarks."
           (print-level   nil))
       (bookmark-insert-file-format-version-stamp)
       (progn (insert "(")
-             (dolist (i  bookmark-alist) (pp i (current-buffer)))
+             (dolist (i  bookmark-alist)
+               (let* ((str (car i))
+                      (len (length str)))
+                 (set-text-properties 0 len nil str)
+                 (setcar i str)
+                 (pp i (current-buffer))))
              (insert ")"))
       (let ((version-control  (cond ((null bookmark-version-control) nil)
                                     ((eq 'never bookmark-version-control) 'never)
