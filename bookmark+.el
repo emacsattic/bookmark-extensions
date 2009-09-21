@@ -395,7 +395,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.24")
+(defconst bookmarkp-version-number "2.4.25")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1997,6 +1997,7 @@ With a prefix argument, do not include remote files or directories."
              bookmarkp-bmenu-before-hide-marked-list))
     (let ((hide-em         bookmark-bmenu-toggle-filenames)
           (bookmark-alist  bookmarkp-latest-bookmark-alist)
+          (bookmarkp-bmenu-called-from-inside-flag t)
           status)
       (when hide-em (bookmark-bmenu-hide-filenames))
       (setq bookmark-bmenu-toggle-filenames nil)
@@ -2029,6 +2030,7 @@ With a prefix argument, do not include remote files or directories."
   (when (bookmarkp-current-list-have-marked-p)
     (let ((hide-em         bookmark-bmenu-toggle-filenames)
           (bookmark-alist  bookmarkp-latest-bookmark-alist)
+          (bookmarkp-bmenu-called-from-inside-flag t)
           status)
       (when hide-em (bookmark-bmenu-hide-filenames))
       (setq bookmark-bmenu-toggle-filenames  nil)
