@@ -395,7 +395,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.23")
+(defconst bookmarkp-version-number "2.4.24")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -426,8 +426,6 @@
 ;;;###autoload
 (define-key bookmark-map "q" 'bookmark-jump-other-window)
 ;;;###autoload
-(define-key bookmark-map "A" 'bookmarkp-bmenu-wipe-marked-and-show-all)
-;;;###autoload
 (define-key bookmark-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
 ;;;###autoload
 (define-key bookmark-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
@@ -438,18 +436,20 @@
 ;;;###autoload
 (define-key bookmark-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 
+;; *-bmenu-mode-map
+
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "." 'bookmarkp-bmenu-list-all-bookmarks)
+(define-key bookmark-bmenu-mode-map "." 'bookmarkp-bmenu-show-all-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U") nil) ; Emacs20
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-unmark-all-bookmarks)
+(define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-bmenu-unmark-all-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U D") 'bookmarkp-unmark-all-delete-flag)
+(define-key bookmark-bmenu-mode-map (kbd "U D") 'bookmarkp-bmenu-unmark-all-delete-flag)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U >") 'bookmarkp-unmark-all-marked-flag)
+(define-key bookmark-bmenu-mode-map (kbd "U >") 'bookmarkp-bmenu-unmark-all-marked-flag)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\M-m" 'bookmarkp-mark-all-bookmarks)
+(define-key bookmark-bmenu-mode-map "\M-m" 'bookmarkp-bmenu-mark-all-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "q" 'bookmarkp-bmenu-quit)
 ;;;###autoload
@@ -459,9 +459,9 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "<" 'bookmarkp-bmenu-hide-unmarked)
+(define-key bookmark-bmenu-mode-map ">" 'bookmarkp-bmenu-hide-unmarked)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map ">" 'bookmarkp-bmenu-hide-marked)
+(define-key bookmark-bmenu-mode-map "<" 'bookmarkp-bmenu-hide-marked)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 ;;;###autoload
@@ -496,7 +496,7 @@
 \\[bookmarkp-bmenu-edit-bookmark]\t- Edit bookmark
 \\[bookmarkp-bmenu-list-only-file-bookmarks]\t- List only file and directory \
 bookmarks (`C-u' for local only)
-\\[bookmarkp-bmenu-list-all-bookmarks]\t- Show all bookmarks
+\\[bookmarkp-bmenu-show-all-bookmarks]\t- Show all bookmarks
 \\[bookmarkp-bmenu-refresh-alist]\t- Refresh current list
 \\[bookmarkp-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
 \\[bookmarkp-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
@@ -639,6 +639,9 @@ and sort the bookmark list by most visited."
 
 (defvar bookmarkp-bmenu-before-hide-marked-list nil
   "Store the list like it was before hiding marked bookmarks.")
+
+(defvar bookmarkp-bmenu-called-from-inside-flag nil
+  "Signal `bookmark-bmenu-list' is called from bmenu-list buffer.")
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
 ;;
@@ -1513,6 +1516,8 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
 `bookmarkp-latest-bookmark-alist' is not reset to `bookmark-alist'."
   (interactive)
   (bookmark-maybe-load-default-file)
+  (unless bookmarkp-bmenu-called-from-inside-flag
+    (setq bookmarkp-bookmark-marked-list nil))
   (unless filteredp (setq bookmarkp-latest-bookmark-alist bookmark-alist))
   (if (interactive-p)
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
@@ -1872,7 +1877,8 @@ Try to follow position of last bookmark in menu-list."
   "Display a list of file and directory bookmarks (only).
 With a prefix argument, do not include remote files or directories."
   (interactive "P")
-  (let ((bookmark-alist  (bookmarkp-file-alist-only arg)))
+  (let ((bookmark-alist  (bookmarkp-file-alist-only arg))
+        (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively
      #'(lambda ()
@@ -1883,7 +1889,8 @@ With a prefix argument, do not include remote files or directories."
 (defun bookmarkp-bmenu-list-only-non-file-bookmarks ()
   "Display (only) the non-file bookmarks."
   (interactive)
-  (let ((bookmark-alist (bookmarkp-non-file-alist-only)))
+  (let ((bookmark-alist (bookmarkp-non-file-alist-only))
+        (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
@@ -1894,7 +1901,8 @@ With a prefix argument, do not include remote files or directories."
 (defun bookmarkp-bmenu-list-only-info-bookmarks ()
   "Display (only) the Info bookmarks."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-info-alist-only)))
+  (let ((bookmark-alist  (bookmarkp-info-alist-only))
+        (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
@@ -1905,7 +1913,8 @@ With a prefix argument, do not include remote files or directories."
 (defun bookmarkp-bmenu-list-only-w3m-bookmarks ()
   "Display (only) the w3m bookmarks."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-w3m-alist-only)))
+  (let ((bookmark-alist  (bookmarkp-w3m-alist-only))
+        (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
@@ -1916,7 +1925,8 @@ With a prefix argument, do not include remote files or directories."
 (defun bookmarkp-bmenu-list-only-gnus-bookmarks ()
   "Display (only) the Gnus bookmarks."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-gnus-alist-only)))
+  (let ((bookmark-alist  (bookmarkp-gnus-alist-only))
+        (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
@@ -1927,7 +1937,8 @@ With a prefix argument, do not include remote files or directories."
 (defun bookmarkp-bmenu-list-only-region-bookmarks ()
   "Display (only) the bookmarks that record a region."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-region-alist-only)))
+  (let ((bookmark-alist  (bookmarkp-region-alist-only))
+        (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (call-interactively #'(lambda ()
                             (interactive)
@@ -1943,26 +1954,21 @@ With a prefix argument, do not include remote files or directories."
   (setq bookmarkp-bmenu-before-hide-unmarked-list nil)
   (quit-window))
 
-;;;###autoload
-(defun bookmarkp-bmenu-wipe-marked-and-show-all ()
-  "Remove all marks and run `bookmark-bmenu-list'."
-  (interactive)
-  (setq bookmarkp-bookmark-marked-list nil)
-  (bookmark-bmenu-list))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-all-bookmarks ()
+(defun bookmarkp-bmenu-show-all-bookmarks ()
   "Show all bookmarks without removing marks if some."
   (interactive)
-  (when (equal (buffer-name (current-buffer)) "*Bookmark List*")
+  (let ((bookmarkp-bmenu-called-from-inside-flag t))
     (bookmark-bmenu-list)))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-refresh-alist ()
   (interactive)
   (when (equal (buffer-name (current-buffer)) "*Bookmark List*")
-    (bookmark-bmenu-surreptitiously-rebuild-list)
-    (bookmark-bmenu-check-position)))
+    (let ((bookmarkp-bmenu-called-from-inside-flag t))
+      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (bookmark-bmenu-check-position))))
   
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
@@ -2214,7 +2220,7 @@ A new list is returned (no side effects)."
 ;; (find-epp bookmarkp-bookmark-marked-list)
 
 ;;;###autoload
-(defun bookmarkp-mark-all-bookmarks ()
+(defun bookmarkp-bmenu-mark-all-bookmarks ()
   "Mark all bookmarks with flag >."
   (interactive)
   (with-current-buffer "*Bookmark List*"
@@ -2226,24 +2232,24 @@ A new list is returned (no side effects)."
           (bookmark-bmenu-mark))))))
 
 ;;;###autoload
-(defun bookmarkp-unmark-all-delete-flag ()
+(defun bookmarkp-bmenu-unmark-all-delete-flag ()
   "Unmark all bookmarks marked with flag D."
   (interactive)
   (bookmarkp-unmark-all-bookmarks-1 'del))
 
 ;;;###autoload
-(defun bookmarkp-unmark-all-marked-flag ()
+(defun bookmarkp-bmenu-unmark-all-marked-flag ()
   "Unmark all bookmarks marked with flag >."
   (interactive)
   (bookmarkp-unmark-all-bookmarks-1 nil 'mark))
 
 ;;;###autoload
-(defun bookmarkp-unmark-all-bookmarks ()
+(defun bookmarkp-bmenu-unmark-all-bookmarks ()
   "Unmark all bookmarks marked with flag > or D."
   (interactive)
   (bookmarkp-unmark-all-bookmarks-1))
     
-(defun bookmarkp-unmark-all-bookmarks-1 (&optional del mark)
+(defun bookmarkp-bmenu-unmark-all-bookmarks-1 (&optional del mark)
   "Unmark all bookmarks or only bookmarks marked with flag > or D.
 If no args unmark all.
 If `del' is non--nil unmark only bookmarks with flag D.
