@@ -66,9 +66,8 @@
 ;;  * Commands defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "bookmarkp")
 ;; `bookmarkp-version'
-;; `bookmarkp-reset-visit-flag'
-;; `bookmarkp-bmenu-sort-by-last-time-visited'
 ;; `bookmarkp-bmenu-sort-by-visit-frequency'
+;; `bookmarkp-bmenu-sort-by-last-time-visited'
 ;; `bookmarkp-bmenu-sort-alphabetically'
 ;; `bookmarkp-bmenu-show-number-of-visit'
 ;; `bookmarkp-bmenu-edit-bookmark'
@@ -79,16 +78,15 @@
 ;; `bookmarkp-bmenu-list-only-gnus-bookmarks'
 ;; `bookmarkp-bmenu-list-only-region-bookmarks'
 ;; `bookmarkp-bmenu-quit'
-;; `bookmarkp-bmenu-wipe-marked-and-show-all'
-;; `bookmarkp-bmenu-list-all-bookmarks'
+;; `bookmarkp-bmenu-show-all-bookmarks'
 ;; `bookmarkp-bmenu-refresh-alist'
 ;; `bookmarkp-bmenu-regexp-mark'
 ;; `bookmarkp-bmenu-hide-marked'
 ;; `bookmarkp-bmenu-hide-unmarked'
-;; `bookmarkp-mark-all-bookmarks'
-;; `bookmarkp-unmark-all-delete-flag'
-;; `bookmarkp-unmark-all-marked-flag'
-;; `bookmarkp-unmark-all-bookmarks'
+;; `bookmarkp-bmenu-mark-all-bookmarks'
+;; `bookmarkp-bmenu-unmark-all-delete-flag'
+;; `bookmarkp-bmenu-unmark-all-marked-flag'
+;; `bookmarkp-bmenu-unmark-all-bookmarks'
 ;; `bookmarkp-fix-bookmark-alist-and-save'
 
 ;;  * Commands redefined here:(from `bookmark.el')
@@ -118,7 +116,7 @@
 ;; `bookmarkp-w3m-allow-multi-tabs'
 ;; `bookmarkp-show-end-of-region'
 ;; `bookmarkp-bookmark-name-length-max'
-;; `bookmarkp-sort-method'
+;; `bookmarkp-bmenu-sort-function'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
@@ -139,13 +137,13 @@
 ;; `bookmarkp-increment-visit'
 ;; `bookmarkp-current-sec-time'
 ;; `bookmarkp-add-or-update-time'
-;; `bookmarkp-sort-alist-by-method'
-;; `bookmarkp-sort-visited-p'
-;; `bookmarkp-sort-by-time-p'
-;; `bookmarkp-sort-alist-alphabetically'
+;; `bookmarkp-sort-p-1'
+;; `bookmarkp-visited-more-p'
+;; `bookmarkp-last-time-more-p'
+;; `bookmarkp-alpha-more-p'
+;; `bookmarkp-bmenu-maybe-sort'
 ;; `bookmarkp-bmenu-sort-1'
 ;; `bookmarkp-bmenu-propertize-item'
-;; `bookmarkp-bmenu-list-all-bookmarks'
 ;; `bookmarkp-region-bookmark-p'
 ;; `bookmarkp-gnus-bookmark-p'
 ;; `bookmarkp-w3m-bookmark-p'
@@ -167,7 +165,7 @@
 ;; `bookmarkp-marked-bookmarks-only'
 ;; `bookmarkp-non-marked-bookmarks-only'
 ;; `bookmarkp-restore-all-mark'
-;; `bookmarkp-unmark-all-bookmarks1'
+;; `bookmarkp-bmenu-unmark-all-bookmarks-1'
 ;; `bookmarkp-current-list-have-marked-p'
 ;; `bookmarkp-remove-if'
 ;; `bookmarkp-remove-if-not'
@@ -202,7 +200,6 @@
 ;; `bookmark-make-record-default'
 ;; `bookmark-bmenu-check-position'
 ;; `bookmark--jump-via'
-;; `bookmark-maybe-sort-alist'
 ;; `bookmark-prop-set'
 ;; `bookmark-default-handler'
 ;; `bookmark-location'
@@ -221,6 +218,8 @@
 ;; `bookmarkp-bookmark-marked-list'
 ;; `bookmarkp-bmenu-before-hide-unmarked-list'
 ;; `bookmarkp-bmenu-before-hide-marked-list'
+;; `bookmarkp-bmenu-called-from-inside-flag'
+;; `bookmarkp-bmenu-reverse-sort-p'
 
 ;;  ***** NOTE: The following functions defined in `bookmark.el'
 ;;              have been REDEFINED OR ADVISED HERE for emacs versions < 23:
@@ -395,7 +394,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.25")
+(defconst bookmarkp-version-number "2.4.26")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -510,7 +509,9 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-unmark-all-bookmarks]\t- Unmark all bookmarks
 \\[bookmarkp-unmark-all-marked-flag]\t- Unmark all bookmarks with flag >
 \\[bookmarkp-unmark-all-delete-flag]\t- Unmark all bookmarks with flag D
-\\[bookmarkp-toggle-sorting-by-most-visited]\t- Toggle sorting by visit frequency")
+\\[bookmarkp-bmenu-sort-by-visit-frequency]\t- Sort by visit frequency (`C-u' to reverse)
+\\[bookmarkp-bmenu-sort-by-last-time-visited]\t- Sort by last time visited (`C-u' to reverse)
+\\[bookmarkp-bmenu-sort-alphabetically]\t- Sort alphabetically (`C-u' to reverse)")
 
 
 ;;(@* "Faces (Customizable)")
@@ -613,10 +614,14 @@ If nil show only beginning of region."
   "*Maximum number of characters used to name a bookmark with region."
   :type 'integer :group 'bookmarkp)
 
-(defcustom bookmarkp-sort-method 'visit
-  "*Non--nil mean record the number of visit of bookmark
-and sort the bookmark list by most visited."
-  :type 'symbol :group 'bookmarkp)
+(defcustom bookmarkp-bmenu-sort-function 'bookmarkp-visited-more-p
+  "*Prefered function to sort bookmarks.
+Possible values are:
+`bookmarkp-visited-more-p' - sort by visit frequency
+`bookmarkp-last-time-p' - sort by more recents visits
+`bookmarkp-alpha-more-p' - sort alphabetically."
+  :type '(choice (const :tag "None" nil) function) :group 'bookmarkp)
+
 
 
 ;;(@* "Internal Variables")
@@ -642,6 +647,9 @@ and sort the bookmark list by most visited."
 
 (defvar bookmarkp-bmenu-called-from-inside-flag nil
   "Signal `bookmark-bmenu-list' is called from bmenu-list buffer.")
+
+(defvar bookmarkp-bmenu-reverse-sort-p nil
+  "Reverse order of sorting.")
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
 ;;
@@ -1152,23 +1160,6 @@ DISPLAY-FUNCTION is the function that displays the bookmark."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; If `bookmarkp-visit-flag' is non--nil sort by most visited.
-;; In this case sort is done with `bookmarkp-sort-alist-maybe-by-most-visited'.
-;;
-(defun bookmark-maybe-sort-alist (&optional alist)
-  "If `bookmark-sort-flag' is non-nil, then return a sorted copy of `bookmark-alist'.
-Otherwise, return `bookmark-alist'.
-If `bookmarkp-visit-flag' is non--nil sort by visit frequency.
-Else sort alphabetically."
-  (if bookmark-sort-flag
-      (if bookmarkp-sort-method
-          (bookmarkp-sort-alist-by-method alist)
-          (bookmarkp-sort-alist-alphabetically alist))
-      bookmark-alist))
-
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
 ;; Avoid using `nconc'
 ;;
 (defun bookmark-prop-set (bookmark prop val)
@@ -1540,7 +1531,8 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
                 (setq start  (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
                 (bookmarkp-bmenu-propertize-item name start end)
                 (insert "\n")))
-            (bookmark-maybe-sort-alist))
+            (bookmarkp-bmenu-maybe-sort))
+            ;(bookmark-maybe-sort-alist))
     (bookmarkp-restore-all-mark)
     (goto-char (point-min))
     (forward-line 2)
@@ -1709,60 +1701,55 @@ If bmk have no time entry, add one with current time."
 ;; (find-epp (progn (bookmarkp-add-or-update-time "/home/thierry") (bookmark-get-bookmark "/home/thierry")))
 ;; (find-epp (progn (bookmarkp-add-or-update-time ".emacs.el") (bookmark-get-bookmark ".emacs.el")))
 
-;;;###autoload
-(defun bookmarkp-reset-visit-flag ()
-  "Reset visit entry of this bookmark to 0.
-If this bookmark have no visit entry add one with 0 value."
-  (interactive)
-  (with-current-buffer "*Bookmark List*"
-    (let ((bmk (when (bookmark-bmenu-check-position)
-                 (bookmark-bmenu-bookmark))))
-      (bookmark-prop-set bmk 'visit 0)
-      (bookmark-bmenu-surreptitiously-rebuild-list)
-      (or (search-forward bmk (point-max) t)
-          (search-backward bmk (point-min) t)))
-    (bookmark-bmenu-check-position)))
+;;; Sorting bookmarks
+(defun bookmarkp-sort-p-1 (s1 s2)
+  "General predicate for sorting bookmarks.
+Return non-nil if bookmark S1 was visited more often than S2.
+Also: S1 < S2 if S1 was visited but S2 was not.
+      S1 < S2 if S1 precedes S2 alphabetically and
+      neither was visited or both were visited equally."
+  (let* ((sym (case bookmarkp-bmenu-sort-function
+                ('bookmarkp-visited-more-p 'visit)
+                ('bookmarkp-last-time-more-p 'time)
+                (t nil)))
+         (v1  (when sym (cdr (assq sym s1))))
+         (v2  (when sym (cdr (assq sym s2)))))
+    (cond ((and v1 v2)
+           (or (> v1 v2)
+               (and (= v1 v2) (string-lessp (car s1) (car s2)))))
+          (v1 t)   ; Only s1 visited
+          (v2 nil) ; Only s2 visited
+          (t (string-lessp (car s1) (car s2))))))
 
-
-(defun bookmarkp-sort-alist-by-method (&optional alist)
-  "Sort bookmarks using method `bookmarkp-sort-method'."
-  (let ((bmk-alist (or alist (copy-sequence bookmark-alist)))
-        (pred (case bookmarkp-sort-method
-                ('visit 'bookmarkp-sort-visited-p)
-                ('time  'bookmarkp-sort-by-time-p)))
-        method-alist alpha-alist)
-    (dolist (i bmk-alist)
-      (if (assq bookmarkp-sort-method i) (push i method-alist) (push i alpha-alist)))
-    (setq bmk-alist (append
-                     (sort method-alist pred)
-                     (bookmarkp-sort-alist-alphabetically alpha-alist)))))
-
-
-(defun bookmarkp-sort-visited-p (x y)
+(defun bookmarkp-visited-more-p (s1 s2)
   "Predicate for sorting bookmarks with visit entry."
-  (let ((val1 (cdr (assq 'visit x)))
-        (val2 (cdr (assq 'visit y))))
-    (if (eq val1 val2)
-        (string-lessp (car x) (car y))
-        (> val1 val2))))
+  (bookmarkp-sort-p-1 s1 s2))
+
+(defun bookmarkp-last-time-more-p (s1 s2)
+  "Predicate for sorting bookmarks with time entry."
+  (bookmarkp-sort-p-1 s1 s2))
+
+(defun bookmarkp-alpha-more-p (s1 s2)
+  "Predicate for sorting bookmarks alphabetically."
+  (bookmarkp-sort-p-1 s1 s2))
 
 
-(defun bookmarkp-sort-by-time-p (x y)
-  "Predicate for sorting bookmarks with visit entry."
-  (let ((val1 (cdr (assq 'time x)))
-        (val2 (cdr (assq 'time y))))
-    (if (eq val1 val2)
-        (string-lessp (car x) (car y))
-        (> val1 val2))))
-
-
-(defun bookmarkp-sort-alist-alphabetically (&optional alist)
-  "Sort alist alphabetically with `string-lessp' as predicate."
-  (let ((bmk-alist (or alist (copy-sequence bookmark-alist))))
-    (sort bmk-alist #'(lambda (x y) (string-lessp (car x) (car y))))))
-
-  
 ;; Menu-List Functions (`bookmarkp-bmenu-*') -------------------------
+
+(defun bookmarkp-bmenu-maybe-sort (&optional alist)
+  "Sort or reverse-sort using `bookmarkp-bmenu-sort-function'.
+        Sort LIST using `bookmarkp-bmenu-sort-function'.
+        Reverse the result if `bookmarkp-reverse-sort-p' is non-nil.
+        Do nothing if `bookmarkp-bmenu-sort-function' is nil."
+  (let ((bmk-alist (or alist (copy-sequence bookmark-alist))))
+    (when bookmarkp-bmenu-sort-function
+      (sort
+       bmk-alist
+       (if bookmarkp-bmenu-reverse-sort-p
+           (lambda (a b)
+             (not (funcall bookmarkp-bmenu-sort-function a b)))
+           bookmarkp-bmenu-sort-function)))))
+
 
 (defun bookmarkp-bmenu-sort-1 (method &optional batch)
   "Set sorting method to `method' and rebuild alist.
@@ -1770,12 +1757,8 @@ Try to follow position of last bookmark in menu-list."
   (with-current-buffer "*Bookmark List*"
     (let* ((bmk     (when (bookmark-bmenu-check-position)
                       (bookmark-bmenu-bookmark))))
-      (setq bookmarkp-sort-method method)
+      (setq bookmarkp-bmenu-sort-function method)
       (unless batch
-        (case bookmarkp-sort-method
-          ('time (message "Sorting by last time visited"))
-          ('visit (message "Sorting by visit frequency"))
-          (t (message "Sorting Alphabetically")))
         (bookmark-bmenu-surreptitiously-rebuild-list)
         (or (search-forward bmk (point-max) t)
             (search-backward bmk (point-min) t))
@@ -1783,19 +1766,22 @@ Try to follow position of last bookmark in menu-list."
         (bookmark-bmenu-check-position)))))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-sort-by-last-time-visited ()
-  (interactive)
-  (bookmarkp-bmenu-sort-1 'time))
+(defun bookmarkp-bmenu-sort-by-visit-frequency (&optional reversep)
+  (interactive "P")
+  (let ((bookmarkp-bmenu-reverse-sort-p reversep))
+    (bookmarkp-bmenu-sort-1 'bookmarkp-visited-more-p)))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-sort-by-visit-frequency ()
-  (interactive)
-  (bookmarkp-bmenu-sort-1 'visit))
+(defun bookmarkp-bmenu-sort-by-last-time-visited (&optional reversep)
+  (interactive "P")
+  (let ((bookmarkp-bmenu-reverse-sort-p reversep))
+    (bookmarkp-bmenu-sort-1 'bookmarkp-last-time-more-p)))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-sort-alphabetically ()
-  (interactive)
-  (bookmarkp-bmenu-sort-1 nil))
+(defun bookmarkp-bmenu-sort-alphabetically (&optional reversep)
+  (interactive "P")
+  (let ((bookmarkp-bmenu-reverse-sort-p reversep))
+    (bookmarkp-bmenu-sort-1 'bookmarkp-alpha-more-p)))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-show-number-of-visit ()
@@ -2237,19 +2223,19 @@ A new list is returned (no side effects)."
 (defun bookmarkp-bmenu-unmark-all-delete-flag ()
   "Unmark all bookmarks marked with flag D."
   (interactive)
-  (bookmarkp-unmark-all-bookmarks-1 'del))
+  (bookmarkp-bmenu-unmark-all-bookmarks-1 'del))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-unmark-all-marked-flag ()
   "Unmark all bookmarks marked with flag >."
   (interactive)
-  (bookmarkp-unmark-all-bookmarks-1 nil 'mark))
+  (bookmarkp-bmenu-unmark-all-bookmarks-1 nil 'mark))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-unmark-all-bookmarks ()
   "Unmark all bookmarks marked with flag > or D."
   (interactive)
-  (bookmarkp-unmark-all-bookmarks-1))
+  (bookmarkp-bmenu-unmark-all-bookmarks-1))
     
 (defun bookmarkp-bmenu-unmark-all-bookmarks-1 (&optional del mark)
   "Unmark all bookmarks or only bookmarks marked with flag > or D.
