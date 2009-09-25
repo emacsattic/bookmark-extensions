@@ -394,7 +394,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.26")
+(defconst bookmarkp-version-number "2.4.27")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1760,10 +1760,12 @@ Try to follow position of last bookmark in menu-list."
       (setq bookmarkp-bmenu-sort-function method)
       (unless batch
         (bookmark-bmenu-surreptitiously-rebuild-list)
-        (or (search-forward bmk (point-max) t)
-            (search-backward bmk (point-min) t))
+        (goto-char (point-min))
+       (while (not (equal bmk (bookmark-bmenu-bookmark)))
+         (forward-line 1))
         (forward-line 0)
         (bookmark-bmenu-check-position)))))
+
 
 ;;;###autoload
 (defun bookmarkp-bmenu-sort-by-visit-frequency (&optional reversep)
@@ -1802,9 +1804,12 @@ Try to follow position of last bookmark in menu-list."
       (if (not new-data)
           (message "No changes made")
         (bookmark-bmenu-surreptitiously-rebuild-list)
-        (when (or (search-forward new-name (point-max) t)
-                  (search-backward new-name (point-min) t))
-          (beginning-of-line))))))
+        (goto-char (point-min))
+        (while (not (equal new-name (bookmark-bmenu-bookmark)))
+          (forward-line 1))
+        (forward-line 0)
+        (bookmark-bmenu-check-position)))))
+
 
 (defun bookmarkp-bmenu-propertize-item (bookmark-name start end)
   "Add text properties to BOOKMARK-NAME, from START to END."
