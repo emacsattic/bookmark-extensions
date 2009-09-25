@@ -85,6 +85,9 @@
 ;; `bookmarkp-bmenu-hide-unmarked'
 ;; `bookmarkp-bmenu-toggle-marks'
 ;; `bookmarkp-bmenu-mark-all-bookmarks'
+;; `bookmarkp-bmenu-unmark-all-deletion-flags'
+;; `bookmarkp-bmenu-unmark-all-non-deletion-flags'
+;; `bookmarkp-bmenu-unmark-all'
 ;; `bookmarkp-fix-bookmark-alist-and-save'
 
 ;;  * Commands redefined here:(from `bookmark.el')
@@ -164,9 +167,6 @@
 ;; `bookmarkp-marked-bookmarks-only'
 ;; `bookmarkp-non-marked-bookmarks-only'
 ;; `bookmarkp-restore-all-mark'
-;; `bookmarkp-bmenu-unmark-all-deletion-flags'
-;; `bookmarkp-bmenu-unmark-all-non-deletion-flags'
-;; `bookmarkp-bmenu-unmark-all'
 ;; `bookmarkp-bmenu-unmark-all-1'
 ;; `bookmarkp-current-list-have-marked-p'
 ;; `bookmarkp-remove-if'
