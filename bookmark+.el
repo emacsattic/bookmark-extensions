@@ -71,23 +71,23 @@
 ;; `bookmarkp-bmenu-sort-alphabetically'
 ;; `bookmarkp-bmenu-show-number-of-visit'
 ;; `bookmarkp-bmenu-edit-bookmark'
+;; `bookmarkp-bmenu-quit'
 ;; `bookmarkp-bmenu-list-only-file-bookmarks'
 ;; `bookmarkp-bmenu-list-only-non-file-bookmarks'
 ;; `bookmarkp-bmenu-list-only-info-bookmarks'
 ;; `bookmarkp-bmenu-list-only-w3m-bookmarks'
 ;; `bookmarkp-bmenu-list-only-gnus-bookmarks'
 ;; `bookmarkp-bmenu-list-only-region-bookmarks'
-;; `bookmarkp-bmenu-quit'
 ;; `bookmarkp-bmenu-show-all-bookmarks'
 ;; `bookmarkp-bmenu-refresh-alist'
-;; `bookmarkp-bmenu-regexp-mark'
-;; `bookmarkp-bmenu-hide-marked'
-;; `bookmarkp-bmenu-hide-unmarked'
-;; `bookmarkp-bmenu-toggle-marks'
 ;; `bookmarkp-bmenu-mark-all-bookmarks'
 ;; `bookmarkp-bmenu-unmark-all-deletion-flags'
 ;; `bookmarkp-bmenu-unmark-all-non-deletion-flags'
 ;; `bookmarkp-bmenu-unmark-all'
+;; `bookmarkp-bmenu-regexp-mark'
+;; `bookmarkp-bmenu-hide-marked'
+;; `bookmarkp-bmenu-hide-unmarked'
+;; `bookmarkp-bmenu-toggle-marks'
 ;; `bookmarkp-fix-bookmark-alist-and-save'
 
 ;;  * Commands redefined here:(from `bookmark.el')
@@ -146,6 +146,7 @@
 ;; `bookmarkp-bmenu-maybe-sort'
 ;; `bookmarkp-bmenu-sort-1'
 ;; `bookmarkp-bmenu-propertize-item'
+;; `bookmarkp-bmenu-unmark-all-1'
 ;; `bookmarkp-region-bookmark-p'
 ;; `bookmarkp-gnus-bookmark-p'
 ;; `bookmarkp-w3m-bookmark-p'
@@ -167,7 +168,6 @@
 ;; `bookmarkp-marked-bookmarks-only'
 ;; `bookmarkp-non-marked-bookmarks-only'
 ;; `bookmarkp-restore-all-mark'
-;; `bookmarkp-bmenu-unmark-all-1'
 ;; `bookmarkp-current-list-have-marked-p'
 ;; `bookmarkp-remove-if'
 ;; `bookmarkp-remove-if-not'
@@ -1895,6 +1895,18 @@ Try to follow position of last bookmark in menu-list."
 
 
 ;;;###autoload
+(defun bookmarkp-bmenu-quit ()
+  "Reset the marked bookmark lists and quit."
+  (interactive)
+  (setq bookmarkp-bookmark-marked-list nil)
+  (setq bookmarkp-bmenu-before-hide-marked-list nil)
+  (setq bookmarkp-bmenu-before-hide-unmarked-list nil)
+  (quit-window))
+
+
+;;; Filters *-bmenu-* commands
+
+;;;###autoload
 (defun bookmarkp-bmenu-list-only-file-bookmarks (arg)
   "Display a list of file and directory bookmarks (only).
 With a prefix argument, do not include remote files or directories."
@@ -1967,15 +1979,6 @@ With a prefix argument, do not include remote files or directories."
                             (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))))
 
 
-;;;###autoload
-(defun bookmarkp-bmenu-quit ()
-  "Reset the marked bookmark lists and quit."
-  (interactive)
-  (setq bookmarkp-bookmark-marked-list nil)
-  (setq bookmarkp-bmenu-before-hide-marked-list nil)
-  (setq bookmarkp-bmenu-before-hide-unmarked-list nil)
-  (quit-window))
-
 
 ;;;###autoload
 (defun bookmarkp-bmenu-show-all-bookmarks ()
@@ -1991,7 +1994,59 @@ With a prefix argument, do not include remote files or directories."
     (let ((bookmarkp-bmenu-called-from-inside-flag t))
       (bookmark-bmenu-surreptitiously-rebuild-list)
       (bookmark-bmenu-check-position))))
-  
+
+;;; *-bmenu-* Commands and functions for marked bookmarks
+
+;;;###autoload
+(defun bookmarkp-bmenu-mark-all-bookmarks ()
+  "Mark all bookmarks with flag >."
+  (interactive)
+  (with-current-buffer "*Bookmark List*"
+    (goto-char (point-min))
+    (bookmark-bmenu-check-position)
+    (save-excursion
+      (while (not (eobp))
+        (when (bookmark-bmenu-check-position)
+          (bookmark-bmenu-mark))))))
+
+;;;###autoload
+(defun bookmarkp-bmenu-unmark-all-deletion-flags ()
+  "Unmark all bookmarks marked with flag D."
+  (interactive)
+  (bookmarkp-bmenu-unmark-all-1 'del))
+
+;;;###autoload
+(defun bookmarkp-bmenu-unmark-all-non-deletion-flags ()
+  "Unmark all bookmarks marked with flag >."
+  (interactive)
+  (bookmarkp-bmenu-unmark-all-1 nil 'mark))
+
+;;;###autoload
+(defun bookmarkp-bmenu-unmark-all ()
+  "Unmark all bookmarks marked with flag > or D."
+  (interactive)
+  (bookmarkp-bmenu-unmark-all-1))
+    
+(defun bookmarkp-bmenu-unmark-all-1 (&optional del mark)
+  "Unmark all bookmarks or only bookmarks marked with flag > or D.
+If no args unmark all.
+If `del' is non--nil unmark only bookmarks with flag D.
+If `mark' is non--nil unmark only bookmarks with flag >."
+  (with-current-buffer "*Bookmark List*"
+    (save-excursion
+      (goto-char (point-min))
+      (bookmark-bmenu-check-position)
+      (while (cond (mark
+                    (re-search-forward "^>" (point-max) t))
+                   (del
+                    (re-search-forward "^D" (point-max) t))
+                   (t
+                    (or (re-search-forward "^>" (point-max) t)
+                        (re-search-forward "^D" (point-max) t))))
+        (when (bookmark-bmenu-check-position)
+          (bookmark-bmenu-unmark))))))
+
+
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
   "Mark bookmarks that match REGEXP."
@@ -2263,56 +2318,6 @@ A new list is returned (no side effects)."
                 (forward-line 1) (forward-line 0))))))))
 
 ;; (find-epp bookmarkp-bookmark-marked-list)
-
-;;;###autoload
-(defun bookmarkp-bmenu-mark-all-bookmarks ()
-  "Mark all bookmarks with flag >."
-  (interactive)
-  (with-current-buffer "*Bookmark List*"
-    (goto-char (point-min))
-    (bookmark-bmenu-check-position)
-    (save-excursion
-      (while (not (eobp))
-        (when (bookmark-bmenu-check-position)
-          (bookmark-bmenu-mark))))))
-
-;;;###autoload
-(defun bookmarkp-bmenu-unmark-all-deletion-flags ()
-  "Unmark all bookmarks marked with flag D."
-  (interactive)
-  (bookmarkp-bmenu-unmark-all-1 'del))
-
-;;;###autoload
-(defun bookmarkp-bmenu-unmark-all-non-deletion-flags ()
-  "Unmark all bookmarks marked with flag >."
-  (interactive)
-  (bookmarkp-bmenu-unmark-all-1 nil 'mark))
-
-;;;###autoload
-(defun bookmarkp-bmenu-unmark-all ()
-  "Unmark all bookmarks marked with flag > or D."
-  (interactive)
-  (bookmarkp-bmenu-unmark-all-1))
-    
-(defun bookmarkp-bmenu-unmark-all-1 (&optional del mark)
-  "Unmark all bookmarks or only bookmarks marked with flag > or D.
-If no args unmark all.
-If `del' is non--nil unmark only bookmarks with flag D.
-If `mark' is non--nil unmark only bookmarks with flag >."
-  (with-current-buffer "*Bookmark List*"
-    (save-excursion
-      (goto-char (point-min))
-      (bookmark-bmenu-check-position)
-      (while (cond (mark
-                    (re-search-forward "^>" (point-max) t))
-                   (del
-                    (re-search-forward "^D" (point-max) t))
-                   (t
-                    (or (re-search-forward "^>" (point-max) t)
-                        (re-search-forward "^D" (point-max) t))))
-        (when (bookmark-bmenu-check-position)
-          (bookmark-bmenu-unmark))))))
-
 
 (defun bookmarkp-current-list-have-marked-p (&optional alist)
   "Return non--nil if `bookmarkp-latest-bookmark-alist' have marked bookmarks."
