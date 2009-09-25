@@ -396,7 +396,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.32")
+(defconst bookmarkp-version-number "2.4.33")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -991,7 +991,7 @@ pertains to the location within the buffer."
         (rear-context-string . ,rcs)
         (front-context-region-string . ,fcrs)
         (rear-context-region-string . ,ecrs)
-        (visit . 0)
+        (visits . 0)
         (time . ,ctime)
         (position . ,beg)
         (end-position . ,end))))
@@ -1201,7 +1201,7 @@ DISPLAY-FUNCTION is the function that displays the bookmark."
         (setcdr cell val)
         (setcdr bmk (cons (cons prop val) (cdr bmk))))))
 
-;; (find-epp (progn (bookmark-prop-set ".emacs.el" 'visit 0) (bookmark-get-bookmark ".emacs.el")))
+;; (find-epp (progn (bookmark-prop-set ".emacs.el" 'visits 0) (bookmark-get-bookmark ".emacs.el")))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1702,12 +1702,12 @@ BOOKMARK-NAME is the current (old) name of the bookmark to be renamed."
       (list new-name new-filename))))
 
 (defun bookmarkp-increment-visit (bmk &optional batch)
-  "Increment visit entry of bmk.
-If bmk have no visit entry, add one with value 0."
-  (let ((cur-val (bookmark-prop-get bmk 'visit)))
+  "Increment visits entry of bmk.
+If bmk have no visits entry, add one with value 0."
+  (let ((cur-val (bookmark-prop-get bmk 'visits)))
     (if cur-val
-        (bookmark-prop-set bmk 'visit (1+ cur-val))
-        (bookmark-prop-set bmk 'visit 0)))
+        (bookmark-prop-set bmk 'visits (1+ cur-val))
+        (bookmark-prop-set bmk 'visits 0)))
   (unless batch
     (bookmark-bmenu-surreptitiously-rebuild-list))
   (bookmarkp-maybe-save-bookmark))
@@ -1740,7 +1740,7 @@ Also: S1 < S2 if S1 was visited but S2 was not.
       S1 < S2 if S1 precedes S2 alphabetically and
       neither was visited or both were visited equally."
   (let* ((sym (case bookmarkp-bmenu-sort-function
-                ('bookmarkp-visited-more-p   'visit)
+                ('bookmarkp-visited-more-p   'visits)
                 ('bookmarkp-last-time-more-p 'time)
                 (t nil)))
          (v1  (when sym (cdr (assq sym s1))))
@@ -1754,7 +1754,7 @@ Also: S1 < S2 if S1 was visited but S2 was not.
 
 
 (defalias 'bookmarkp-visited-more-p 'bookmarkp-sort-p-1
-  "Predicate for sorting bookmarks with visit entry.")
+  "Predicate for sorting bookmarks with visits entry.")
 
 (defalias 'bookmarkp-last-time-more-p 'bookmarkp-sort-p-1
   "Predicate for sorting bookmarks with time entry.")
@@ -1819,7 +1819,7 @@ Try to follow position of last bookmark in menu-list."
   (interactive)
   (let* ((bmk (when (bookmark-bmenu-check-position)
                (bookmark-bmenu-bookmark)))
-         (nvisit (bookmark-prop-get bmk 'visit)))
+         (nvisit (bookmark-prop-get bmk 'visits)))
     (message "%s have been visited %s times" bmk nvisit)))
 
 ;;;###autoload
