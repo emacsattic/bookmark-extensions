@@ -69,7 +69,6 @@
 ;; `bookmarkp-bmenu-sort-by-visit-frequency'
 ;; `bookmarkp-bmenu-sort-by-last-time-visited'
 ;; `bookmarkp-bmenu-sort-alphabetically'
-;; `bookmarkp-bmenu-show-number-of-visit'
 ;; `bookmarkp-bmenu-edit-bookmark'
 ;; `bookmarkp-bmenu-quit'
 ;; `bookmarkp-bmenu-list-only-file-bookmarks'
@@ -140,9 +139,6 @@
 ;; `bookmarkp-current-sec-time'
 ;; `bookmarkp-add-or-update-time'
 ;; `bookmarkp-sort-p-1'
-;; `bookmarkp-visited-more-p'
-;; `bookmarkp-last-time-more-p'
-;; `bookmarkp-alpha-more-p'
 ;; `bookmarkp-bmenu-maybe-sort'
 ;; `bookmarkp-bmenu-sort-1'
 ;; `bookmarkp-bmenu-propertize-item'
@@ -396,7 +392,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.33")
+(defconst bookmarkp-version-number "2.4.34")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1814,13 +1810,6 @@ Try to follow position of last bookmark in menu-list."
   (let ((bookmarkp-bmenu-reverse-sort-p reversep))
     (bookmarkp-bmenu-sort-1 'bookmarkp-alpha-more-p)))
 
-;;;###autoload
-(defun bookmarkp-bmenu-show-number-of-visit ()
-  (interactive)
-  (let* ((bmk (when (bookmark-bmenu-check-position)
-               (bookmark-bmenu-bookmark)))
-         (nvisit (bookmark-prop-get bmk 'visits)))
-    (message "%s have been visited %s times" bmk nvisit)))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-edit-bookmark ()
