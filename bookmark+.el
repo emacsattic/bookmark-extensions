@@ -446,6 +446,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-bmenu-unmark-all-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "<C-M-delete>") 'bookmarkp-bmenu-unmark-all-bookmarks)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U D") 'bookmarkp-bmenu-unmark-all-delete-flag)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U >") 'bookmarkp-bmenu-unmark-all-marked-flag)
