@@ -396,7 +396,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.31")
+(defconst bookmarkp-version-number "2.4.32")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1740,7 +1740,7 @@ Also: S1 < S2 if S1 was visited but S2 was not.
       S1 < S2 if S1 precedes S2 alphabetically and
       neither was visited or both were visited equally."
   (let* ((sym (case bookmarkp-bmenu-sort-function
-                ('bookmarkp-visited-more-p 'visit)
+                ('bookmarkp-visited-more-p   'visit)
                 ('bookmarkp-last-time-more-p 'time)
                 (t nil)))
          (v1  (when sym (cdr (assq sym s1))))
@@ -1752,17 +1752,15 @@ Also: S1 < S2 if S1 was visited but S2 was not.
           (v2 nil) ; Only s2 visited
           (t (string-lessp (car s1) (car s2))))))
 
-(defun bookmarkp-visited-more-p (s1 s2)
-  "Predicate for sorting bookmarks with visit entry."
-  (bookmarkp-sort-p-1 s1 s2))
 
-(defun bookmarkp-last-time-more-p (s1 s2)
-  "Predicate for sorting bookmarks with time entry."
-  (bookmarkp-sort-p-1 s1 s2))
+(defalias 'bookmarkp-visited-more-p 'bookmarkp-sort-p-1
+  "Predicate for sorting bookmarks with visit entry.")
 
-(defun bookmarkp-alpha-more-p (s1 s2)
-  "Predicate for sorting bookmarks alphabetically."
-  (bookmarkp-sort-p-1 s1 s2))
+(defalias 'bookmarkp-last-time-more-p 'bookmarkp-sort-p-1
+  "Predicate for sorting bookmarks with time entry.")
+
+(defalias 'bookmarkp-alpha-more-p 'bookmarkp-sort-p-1
+  "Predicate for sorting bookmarks alphabetically.")
 
 
 ;; Menu-List Functions (`bookmarkp-bmenu-*') -------------------------
@@ -1783,7 +1781,7 @@ Also: S1 < S2 if S1 was visited but S2 was not.
 
 
 (defun bookmarkp-bmenu-sort-1 (method &optional batch)
-  "Set sorting method to `method' and rebuild alist.
+  "Set `bookmarkp-bmenu-sort-function' to `method' and rebuild alist.
 Try to follow position of last bookmark in menu-list."
   (with-current-buffer "*Bookmark List*"
     (let* ((bmk     (when (bookmark-bmenu-check-position)
