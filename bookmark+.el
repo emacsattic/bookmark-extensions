@@ -85,9 +85,6 @@
 ;; `bookmarkp-bmenu-hide-unmarked'
 ;; `bookmarkp-bmenu-toggle-marks'
 ;; `bookmarkp-bmenu-mark-all-bookmarks'
-;; `bookmarkp-bmenu-unmark-all-delete-flag'
-;; `bookmarkp-bmenu-unmark-all-marked-flag'
-;; `bookmarkp-bmenu-unmark-all-bookmarks'
 ;; `bookmarkp-fix-bookmark-alist-and-save'
 
 ;;  * Commands redefined here:(from `bookmark.el')
@@ -167,7 +164,10 @@
 ;; `bookmarkp-marked-bookmarks-only'
 ;; `bookmarkp-non-marked-bookmarks-only'
 ;; `bookmarkp-restore-all-mark'
-;; `bookmarkp-bmenu-unmark-all-bookmarks-1'
+;; `bookmarkp-bmenu-unmark-all-deletion-flags'
+;; `bookmarkp-bmenu-unmark-all-non-deletion-flags'
+;; `bookmarkp-bmenu-unmark-all'
+;; `bookmarkp-bmenu-unmark-all-1'
 ;; `bookmarkp-current-list-have-marked-p'
 ;; `bookmarkp-remove-if'
 ;; `bookmarkp-remove-if-not'
@@ -396,7 +396,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.30")
+(defconst bookmarkp-version-number "2.4.31")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -448,9 +448,9 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "M-<DEL>") 'bookmarkp-bmenu-unmark-all)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U D") 'bookmarkp-bmenu-unmark-all-delete-flag)
+(define-key bookmark-bmenu-mode-map (kbd "U D") 'bookmarkp-bmenu-unmark-all-deletion-flags)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U >") 'bookmarkp-bmenu-unmark-all-marked-flag)
+(define-key bookmark-bmenu-mode-map (kbd "U >") 'bookmarkp-bmenu-unmark-all-non-deletion-flags)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-m" 'bookmarkp-bmenu-mark-all-bookmarks)
 ;;;###autoload
@@ -2277,13 +2277,13 @@ A new list is returned (no side effects)."
           (bookmark-bmenu-mark))))))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-unmark-all-delete-flag ()
+(defun bookmarkp-bmenu-unmark-all-deletion-flags ()
   "Unmark all bookmarks marked with flag D."
   (interactive)
   (bookmarkp-bmenu-unmark-all-1 'del))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-unmark-all-marked-flag ()
+(defun bookmarkp-bmenu-unmark-all-non-deletion-flags ()
   "Unmark all bookmarks marked with flag >."
   (interactive)
   (bookmarkp-bmenu-unmark-all-1 nil 'mark))
