@@ -83,6 +83,7 @@
 ;; `bookmarkp-bmenu-regexp-mark'
 ;; `bookmarkp-bmenu-hide-marked'
 ;; `bookmarkp-bmenu-hide-unmarked'
+;; `bookmarkp-bmenu-toggle-marks'
 ;; `bookmarkp-bmenu-mark-all-bookmarks'
 ;; `bookmarkp-bmenu-unmark-all-delete-flag'
 ;; `bookmarkp-bmenu-unmark-all-marked-flag'
@@ -94,6 +95,7 @@
 ;; `bookmark-set'
 ;; `bookmark-yank-word'
 ;; `bookmark-bmenu-mark'
+;; `bookmark-bmenu-unmark'
 ;; `bookmark-jump'
 ;; `bookmark-jump-other-window'
 ;; `bookmark-relocate'
@@ -394,7 +396,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.27")
+(defconst bookmarkp-version-number "2.4.28")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -450,6 +452,10 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-m" 'bookmarkp-bmenu-mark-all-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "\M-t" 'bookmark-bmenu-toggle-filenames) ; Was `t' in Vanilla
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "t" 'bookmarkp-bmenu-toggle-marks)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "q" 'bookmarkp-bmenu-quit)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "E" 'bookmarkp-bmenu-edit-bookmark)
@@ -496,6 +502,8 @@
 \\[bookmarkp-bmenu-list-only-file-bookmarks]\t- List only file and directory \
 bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-show-all-bookmarks]\t- Show all bookmarks
+\\[bookmark-bmenu-toggle-filenames]\t- Toggle filenames
+\\[bookmarkp-bmenu-toggle-marks]\t- Toggle marks
 \\[bookmarkp-bmenu-refresh-alist]\t- Refresh current list
 \\[bookmarkp-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
 \\[bookmarkp-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
@@ -1114,6 +1122,27 @@ Newline characters are stripped out."
       (delete-char 1)
       (insert ?>)
       (forward-line 1))))
+
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Remove marked bookmark of `bookmarkp-bookmark-marked-list'.
+;; Don't call a second time `bookmark-bmenu-check-position'.
+;;
+;;;###autoload
+(defun bookmark-bmenu-unmark (&optional backup)
+  "Cancel all requested operations on bookmark on this line and move down.
+Optional BACKUP means move up."
+  (interactive "P")
+  (beginning-of-line)
+  (when (bookmark-bmenu-check-position)
+    (let ((inhibit-read-only t)
+          (bmk (bookmark-bmenu-bookmark)))
+      (delete-char 1)
+      (insert " ")
+      (setq bookmarkp-bookmark-marked-list
+            (remove bmk bookmarkp-bookmark-marked-list)))
+    (forward-line (if backup -1 1))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -2048,6 +2077,27 @@ With a prefix argument, do not include remote files or directories."
 
 ;; (find-epp bookmarkp-latest-bookmark-alist)
 
+;;;###autoload
+(defun bookmarkp-bmenu-toggle-marks ()
+  "Toggle mark on each bookmark in menu-list."
+  (interactive)
+  (let ((hide-em bookmark-bmenu-toggle-filenames))
+    (when hide-em (bookmark-bmenu-hide-filenames))
+    (setq bookmark-bmenu-toggle-filenames  nil)
+    (with-current-buffer "*Bookmark List*"
+      (save-excursion
+        (goto-char (point-min))
+        (if (bookmarkp-current-list-have-marked-p)
+            (while (not (eobp))
+              (let ((bmk (bookmark-bmenu-bookmark)))
+                (if (member bmk bookmarkp-bookmark-marked-list)
+                    (bookmark-bmenu-unmark)
+                    (bookmark-bmenu-mark))))
+            (bookmarkp-bmenu-mark-all-bookmarks))))
+    (setq bookmark-bmenu-toggle-filenames  hide-em)
+    (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames 'show))))
+
+
 ;; Predicates --------------------------------------------------------
 
 (defun bookmarkp-region-bookmark-p (bookmark)
@@ -2259,9 +2309,6 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                     (or (re-search-forward "^>" (point-max) t)
                         (re-search-forward "^D" (point-max) t))))
         (when (bookmark-bmenu-check-position)
-          (let ((bmk (bookmark-bmenu-bookmark)))
-            (setq bookmarkp-bookmark-marked-list
-                  (remove bmk bookmarkp-bookmark-marked-list)))
           (bookmark-bmenu-unmark))))))
 
 
