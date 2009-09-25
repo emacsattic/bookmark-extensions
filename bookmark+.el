@@ -396,7 +396,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.29")
+(defconst bookmarkp-version-number "2.4.30")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -444,9 +444,9 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U") nil) ; Emacs20
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-bmenu-unmark-all-bookmarks)
+(define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-bmenu-unmark-all)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "M-<DEL>") 'bookmarkp-bmenu-unmark-all-bookmarks)
+(define-key bookmark-bmenu-mode-map (kbd "M-<DEL>") 'bookmarkp-bmenu-unmark-all)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U D") 'bookmarkp-bmenu-unmark-all-delete-flag)
 ;;;###autoload
@@ -2280,21 +2280,21 @@ A new list is returned (no side effects)."
 (defun bookmarkp-bmenu-unmark-all-delete-flag ()
   "Unmark all bookmarks marked with flag D."
   (interactive)
-  (bookmarkp-bmenu-unmark-all-bookmarks-1 'del))
+  (bookmarkp-bmenu-unmark-all-1 'del))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-unmark-all-marked-flag ()
   "Unmark all bookmarks marked with flag >."
   (interactive)
-  (bookmarkp-bmenu-unmark-all-bookmarks-1 nil 'mark))
+  (bookmarkp-bmenu-unmark-all-1 nil 'mark))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-unmark-all-bookmarks ()
+(defun bookmarkp-bmenu-unmark-all ()
   "Unmark all bookmarks marked with flag > or D."
   (interactive)
-  (bookmarkp-bmenu-unmark-all-bookmarks-1))
+  (bookmarkp-bmenu-unmark-all-1))
     
-(defun bookmarkp-bmenu-unmark-all-bookmarks-1 (&optional del mark)
+(defun bookmarkp-bmenu-unmark-all-1 (&optional del mark)
   "Unmark all bookmarks or only bookmarks marked with flag > or D.
 If no args unmark all.
 If `del' is non--nil unmark only bookmarks with flag D.
