@@ -392,7 +392,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.34")
+(defconst bookmarkp-version-number "2.4.35")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -511,10 +511,10 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
 \\[bookmarkp-bmenu-hide-marked]\t- Hide marked bookmarks
 \\[bookmarkp-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
-\\[bookmarkp-mark-all-bookmarks]\t- Mark all bookmarks
-\\[bookmarkp-unmark-all-bookmarks]\t- Unmark all bookmarks
-\\[bookmarkp-unmark-all-marked-flag]\t- Unmark all bookmarks with flag >
-\\[bookmarkp-unmark-all-delete-flag]\t- Unmark all bookmarks with flag D
+\\[bookmarkp-bmenu-mark-all-bookmarks]\t- Mark all bookmarks
+\\[bookmarkp-bmenu-unmark-all]\t- Unmark all bookmarks
+\\[bookmarkp-bmenu-unmark-all-non-deletion-flags]\t- Unmark all bookmarks with flag >
+\\[bookmarkp-bmenu-unmark-all-deletion-flags]\t- Unmark all bookmarks with flag D
 \\[bookmarkp-bmenu-sort-by-visit-frequency]\t- Sort by visit frequency (`C-u' to reverse)
 \\[bookmarkp-bmenu-sort-by-last-time-visited]\t- Sort by last time visited (`C-u' to reverse)
 \\[bookmarkp-bmenu-sort-alphabetically]\t- Sort alphabetically (`C-u' to reverse)")
