@@ -392,7 +392,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.37")
+(defconst bookmarkp-version-number "2.4.38")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -512,7 +512,7 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-hide-marked]\t- Hide marked bookmarks
 \\[bookmarkp-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
 \\[bookmarkp-bmenu-mark-all-bookmarks]\t- Mark all bookmarks
-\\[bookmarkp-bmenu-unmark-all]\t- Unmark all bookmarks
+\\[bookmarkp-bmenu-unmark-all]\t- Unmark all bookmarks (`C-u' for interactive use)
 \\[bookmarkp-bmenu-unmark-all-non-deletion-flags]\t- Unmark all bookmarks with flag >
 \\[bookmarkp-bmenu-unmark-all-deletion-flags]\t- Unmark all bookmarks with flag D
 \\[bookmarkp-bmenu-sort-by-visit-frequency]\t- Sort by visit frequency (`C-u' to reverse)
