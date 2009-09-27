@@ -392,7 +392,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.36")
+(defconst bookmarkp-version-number "2.4.37")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1749,14 +1749,14 @@ Also: S1 < S2 if S1 was visited but S2 was not.
           (t (string-lessp (car s1) (car s2))))))
 
 
-(defalias 'bookmarkp-visited-more-p 'bookmarkp-sort-p-1
-  "Predicate for sorting bookmarks with visits entry.")
+;; Predicate for sorting bookmarks with visits entry.
+(defalias 'bookmarkp-visited-more-p 'bookmarkp-sort-p-1)
+  
+;; Predicate for sorting bookmarks with time entry.
+(defalias 'bookmarkp-last-time-more-p 'bookmarkp-sort-p-1)
 
-(defalias 'bookmarkp-last-time-more-p 'bookmarkp-sort-p-1
-  "Predicate for sorting bookmarks with time entry.")
-
-(defalias 'bookmarkp-alpha-more-p 'bookmarkp-sort-p-1
-  "Predicate for sorting bookmarks alphabetically.")
+;; Predicate for sorting bookmarks alphabetically.
+(defalias 'bookmarkp-alpha-more-p 'bookmarkp-sort-p-1)
 
 
 ;; Menu-List Functions (`bookmarkp-bmenu-*') -------------------------
