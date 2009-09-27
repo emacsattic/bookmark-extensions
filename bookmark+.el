@@ -392,7 +392,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.35")
+(defconst bookmarkp-version-number "2.4.36")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2010,9 +2010,12 @@ With a prefix argument, do not include remote files or directories."
 
 ;;;###autoload
 (defun bookmarkp-bmenu-unmark-all ()
-  "Unmark all bookmarks marked with flag > or D."
+  "Unmark all bookmarks marked with flag > or D.
+Called with prefix arg provide an interactive interface."
   (interactive)
-  (bookmarkp-bmenu-unmark-all-1))
+  (if current-prefix-arg
+      (bookmarkp-bmenu-unmark-all-2)
+      (bookmarkp-bmenu-unmark-all-1)))
     
 (defun bookmarkp-bmenu-unmark-all-1 (&optional del mark)
   "Unmark all bookmarks or only bookmarks marked with flag > or D.
@@ -2032,6 +2035,30 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                         (re-search-forward "^D" (point-max) t))))
         (when (bookmark-bmenu-check-position)
           (bookmark-bmenu-unmark))))))
+
+
+;;;###autoload
+(defun bookmarkp-bmenu-unmark-all-2 ()
+  "Provide an interactive interface to unmark bookmarks."
+  (interactive)
+  (with-current-buffer "*Bookmark List*"
+    (let (action)
+      (save-excursion
+        (goto-char (point-min))
+        (bookmark-bmenu-check-position)
+        (catch 'break
+          (while 1
+            (catch 'continue
+              (setq action (read-event "(n)ext (s)kip (a)ll (q)uit"))
+              (case action
+                (?n (when (bookmark-bmenu-check-position)
+                      (bookmark-bmenu-unmark) (throw 'continue nil)))
+                (?s (forward-line 1) (throw 'continue nil))
+                (?a (throw 'break
+                      (while (re-search-forward "^>" (point-max) t)
+                        (when (bookmark-bmenu-check-position)
+                          (bookmark-bmenu-unmark)))))
+                (?q (throw 'break nil))))))))))
 
 
 ;;;###autoload
