@@ -143,6 +143,7 @@
 ;; `bookmarkp-bmenu-sort-1'
 ;; `bookmarkp-bmenu-propertize-item'
 ;; `bookmarkp-bmenu-unmark-all-1'
+;; `bookmarkp-bmenu-unmark-all-2'
 ;; `bookmarkp-region-bookmark-p'
 ;; `bookmarkp-gnus-bookmark-p'
 ;; `bookmarkp-w3m-bookmark-p'
@@ -392,7 +393,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.38")
+(defconst bookmarkp-version-number "2.4.39")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2040,7 +2041,6 @@ If `mark' is non--nil unmark only bookmarks with flag >."
 ;;;###autoload
 (defun bookmarkp-bmenu-unmark-all-2 ()
   "Provide an interactive interface to unmark bookmarks."
-  (interactive)
   (with-current-buffer "*Bookmark List*"
     (let (action)
       (save-excursion
