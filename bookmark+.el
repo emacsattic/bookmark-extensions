@@ -1990,33 +1990,61 @@ With a prefix argument, do not include remote files or directories."
   "Mark all bookmarks with flag >."
   (interactive)
   (with-current-buffer "*Bookmark List*"
-    (goto-char (point-min))
-    (bookmark-bmenu-check-position)
-    (save-excursion
-      (while (not (eobp))
-        (when (bookmark-bmenu-check-position)
-          (bookmark-bmenu-mark))))))
+    (let ((hide-em         bookmark-bmenu-toggle-filenames))
+      (when hide-em (bookmark-bmenu-hide-filenames))
+      (setq bookmark-bmenu-toggle-filenames  nil)
+      (goto-char (point-min))
+      (bookmark-bmenu-check-position)
+      (save-excursion
+        (while (not (eobp))
+          (when (bookmark-bmenu-check-position)
+            (bookmark-bmenu-mark))))
+      (setq bookmark-bmenu-toggle-filenames  hide-em)
+      (when bookmark-bmenu-toggle-filenames
+        (bookmark-bmenu-toggle-filenames 'show)))))
+
 
 ;;;###autoload
 (defun bookmarkp-bmenu-unmark-all-deletion-flags ()
   "Unmark all bookmarks marked with flag D."
   (interactive)
-  (bookmarkp-bmenu-unmark-all-1 'del))
+  (let ((hide-em bookmark-bmenu-toggle-filenames))
+    (when hide-em (bookmark-bmenu-hide-filenames))
+    (setq bookmark-bmenu-toggle-filenames  nil)
+    (bookmarkp-bmenu-unmark-all-1 'del)
+    (setq bookmark-bmenu-toggle-filenames  hide-em)
+    (when bookmark-bmenu-toggle-filenames
+      (bookmark-bmenu-toggle-filenames 'show)))))
+
 
 ;;;###autoload
 (defun bookmarkp-bmenu-unmark-all-non-deletion-flags ()
   "Unmark all bookmarks marked with flag >."
   (interactive)
-  (bookmarkp-bmenu-unmark-all-1 nil 'mark))
+  (let ((hide-em bookmark-bmenu-toggle-filenames))
+    (when hide-em (bookmark-bmenu-hide-filenames))
+    (setq bookmark-bmenu-toggle-filenames  nil)
+    (bookmarkp-bmenu-unmark-all-1 nil 'mark)
+    (setq bookmark-bmenu-toggle-filenames  hide-em)
+    (when bookmark-bmenu-toggle-filenames
+      (bookmark-bmenu-toggle-filenames 'show))))
+
 
 ;;;###autoload
 (defun bookmarkp-bmenu-unmark-all ()
   "Unmark all bookmarks marked with flag > or D.
 Called with prefix arg provide an interactive interface."
   (interactive)
-  (if current-prefix-arg
-      (bookmarkp-bmenu-unmark-all-2)
-      (bookmarkp-bmenu-unmark-all-1)))
+  (let ((hide-em         bookmark-bmenu-toggle-filenames))
+    (when hide-em (bookmark-bmenu-hide-filenames))
+    (setq bookmark-bmenu-toggle-filenames  nil)
+    (if current-prefix-arg
+        (bookmarkp-bmenu-unmark-all-2)
+        (bookmarkp-bmenu-unmark-all-1))
+    (setq bookmark-bmenu-toggle-filenames  hide-em)
+    (when bookmark-bmenu-toggle-filenames
+      (bookmark-bmenu-toggle-filenames 'show))))
+
     
 (defun bookmarkp-bmenu-unmark-all-1 (&optional del mark)
   "Unmark all bookmarks or only bookmarks marked with flag > or D.
@@ -2049,8 +2077,7 @@ If `mark' is non--nil unmark only bookmarks with flag >."
         (catch 'break
           (while 1
             (catch 'continue
-              (setq action (read-event
-                            (propertize "(n)ext (s)kip (a)ll (q)uit" 'face '((:foreground "cyan")))))
+              (setq action (read-event "(n)ext (s)kip (a)ll (q)uit"))
               (case action
                 (?n (when (bookmark-bmenu-check-position)
                       (bookmark-bmenu-unmark) (throw 'continue nil)))
@@ -2060,6 +2087,7 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                         (when (bookmark-bmenu-check-position)
                           (bookmark-bmenu-unmark)))))
                 (?q (throw 'break nil))))))))))
+
 
 
 ;;;###autoload
