@@ -2049,7 +2049,8 @@ If `mark' is non--nil unmark only bookmarks with flag >."
         (catch 'break
           (while 1
             (catch 'continue
-              (setq action (read-event "(n)ext (s)kip (a)ll (q)uit"))
+              (setq action (read-event
+                            (propertize "(n)ext (s)kip (a)ll (q)uit" 'face '((:foreground "cyan")))))
               (case action
                 (?n (when (bookmark-bmenu-check-position)
                       (bookmark-bmenu-unmark) (throw 'continue nil)))
