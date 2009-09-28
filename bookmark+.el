@@ -393,7 +393,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.4.39")
+(defconst bookmarkp-version-number "2.4.40")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1784,6 +1784,10 @@ Try to follow position of last bookmark in menu-list."
     (let* ((bmk     (when (bookmark-bmenu-check-position)
                       (bookmark-bmenu-bookmark))))
       (setq bookmarkp-bmenu-sort-function method)
+      (case method
+        ('bookmarkp-visited-more-p (message "Sorting by visit frequency"))
+        ('bookmarkp-last-time-more-p (message "Sorting by last time visited"))
+        ('bookmarkp-alpha-more-p (message "Sorting alphabetically")))
       (unless batch
         (bookmark-bmenu-surreptitiously-rebuild-list)
         (goto-char (point-min))
