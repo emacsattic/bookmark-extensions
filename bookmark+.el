@@ -2014,7 +2014,7 @@ With a prefix argument, do not include remote files or directories."
     (bookmarkp-bmenu-unmark-all-1 'del)
     (setq bookmark-bmenu-toggle-filenames  hide-em)
     (when bookmark-bmenu-toggle-filenames
-      (bookmark-bmenu-toggle-filenames 'show)))))
+      (bookmark-bmenu-toggle-filenames 'show))))
 
 
 ;;;###autoload
