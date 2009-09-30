@@ -1812,8 +1812,7 @@ Also: S1 < S2 if S1 was visited but S2 was not.
   "Set `bookmarkp-bmenu-sort-function' to `method' and rebuild alist.
 Try to follow position of last bookmark in menu-list."
   (with-current-buffer "*Bookmark List*"
-    (let* ((bmk     (when (bookmark-bmenu-check-position)
-                      (bookmark-bmenu-bookmark))))
+    (let ((bmk (when (bookmark-bmenu-check-position) (bookmark-bmenu-bookmark))))
       (setq bookmarkp-bmenu-sort-function method)
       (case method
         ('bookmarkp-visited-more-p (message "Sorting by visit frequency"))
@@ -1821,11 +1820,16 @@ Try to follow position of last bookmark in menu-list."
         ('bookmarkp-alpha-more-p (message "Sorting alphabetically")))
       (unless batch
         (bookmark-bmenu-surreptitiously-rebuild-list)
-        (goto-char (point-min))
-       (while (not (equal bmk (bookmark-bmenu-bookmark)))
-         (forward-line 1))
-        (forward-line 0)
-        (bookmark-bmenu-check-position)))))
+        (let ((hide-em         bookmark-bmenu-toggle-filenames))
+          (when hide-em (bookmark-bmenu-hide-filenames))
+          (setq bookmark-bmenu-toggle-filenames  nil)
+          (goto-char (point-min))
+          (while (not (equal bmk (bookmark-bmenu-bookmark)))
+            (forward-line 1))
+          (forward-line 0)
+          (setq bookmark-bmenu-toggle-filenames  hide-em)
+          (when bookmark-bmenu-toggle-filenames
+            (bookmark-bmenu-toggle-filenames 'show)))))))
 
 
 ;;;###autoload
