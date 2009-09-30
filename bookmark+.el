@@ -1144,6 +1144,37 @@ Optional BACKUP means move up."
     (forward-line (if backup -1 1))))
 
 
+;;; Persistent `bookmark-alist'
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;;
+(defun bookmark-maybe-load-default-file ()
+  (when (and (not bookmarks-already-loaded)
+             (null bookmark-alist))
+    (load "~/.emacs-bmk.elc")
+    (setq bookmarks-already-loaded t)))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;;
+(defun bookmark-save ()
+  (bookmark-maybe-load-default-file)
+  (bookmarkp-dump-object-to-file 'bookmark-alist "~/.emacs-bmk.el")
+  (setq bookmark-alist-modification-count 0))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;;
+;;;###autoload
+(defun bookmark-bmenu-save ()
+  "Save the current list into a bookmark file.
+With a prefix arg, prompts for a file to save them in."
+  (interactive)
+  (save-excursion
+    (save-window-excursion
+      (bookmark-save))))
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Return t instead of returning `bookmark-alist'
@@ -2098,8 +2129,7 @@ If `mark' is non--nil unmark only bookmarks with flag >."
 (defun bookmarkp-bmenu-regexp-mark (regexp)
   "Mark bookmarks that match REGEXP."
   (interactive "sRegexp: ")
-  (let ((hide-em         bookmark-bmenu-toggle-filenames)
-        (bookmark-alist  bookmarkp-latest-bookmark-alist))
+  (let ((hide-em bookmark-bmenu-toggle-filenames))
     (when hide-em (bookmark-bmenu-hide-filenames))
     (setq bookmark-bmenu-toggle-filenames  nil)
     (with-current-buffer "*Bookmark List*"
@@ -2377,6 +2407,22 @@ A new list is returned (no side effects)."
 
 
 ;; General Utility Functions -----------------------------------------
+
+(defun bookmarkp-dump-object-to-file (obj file)
+  "Save symbol object `obj' to the byte compiled version of `file'.
+`obj' can be any lisp object, list, hash-table, etc...
+`file' is an elisp file with ext *.el.
+Loading the *.elc file will restitute object."
+  (require 'cl) ; Be sure we use the CL version of `eval-when-compile'.
+  (if (file-exists-p file)
+      (error "File already exists.")
+      (with-temp-file file
+        (erase-buffer)
+        (let* ((str-obj (symbol-name obj))
+               (fmt-obj (format "(setq %s (eval-when-compile %s))" str-obj str-obj)))
+          (insert fmt-obj)))
+      (byte-compile-file file) (delete-file file)
+      (message "`%s' dumped to %sc" obj file)))
 
 (defun bookmarkp-remove-if (pred xs)
   "A copy of list XS with no elements that satisfy predicate PRED."
