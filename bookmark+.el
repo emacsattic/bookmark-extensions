@@ -397,7 +397,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.6")
+(defconst bookmarkp-version-number "2.5.7")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2157,8 +2157,13 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                         (while (re-search-forward "^>" (point-max) t)
                           (when (bookmark-bmenu-check-position)
                             (bookmark-bmenu-unmark) (setq count (1+ count))))
-                        (message "%s bookmarks unmarked" count))))
-                (?q (throw 'break (when count (message "%s bookmarks unmarked" count))))))))))))
+                        (message "%s bookmarks unmarked %s remaining"
+                                 count (- (length bookmark-alist) count)))))
+                (?q (throw 'break
+                      (when count
+                        (message "%s bookmarks unmarked %s remaining"
+                                 count (- (length bookmark-alist) count)))))))))))))
+
 
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
