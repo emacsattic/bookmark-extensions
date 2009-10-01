@@ -629,6 +629,8 @@ Possible values are:
 `bookmarkp-alpha-more-p' - sort alphabetically."
   :type '(choice (const :tag "None" nil) function) :group 'bookmarkp)
 
+(defvar bookmarkp-use-development-setting nil
+  "*Use experimental code of bookmark+ when non--nil.")
 
 
 ;;(@* "Internal Variables")
@@ -1144,36 +1146,54 @@ Optional BACKUP means move up."
     (forward-line (if backup -1 1))))
 
 
-;;; Persistent `bookmark-alist'
-
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
+;; Don't set or use `bookmark-bmenu-bookmark-column' - use column 2 always.
 ;;
-(defun bookmark-maybe-load-default-file ()
-  (when (and (not bookmarks-already-loaded)
-             (null bookmark-alist))
-    (load "~/.emacs-bmk.elc")
-    (setq bookmarks-already-loaded t)))
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;;
-(defun bookmark-save ()
-  (bookmark-maybe-load-default-file)
-  (bookmarkp-dump-object-to-file 'bookmark-alist "~/.emacs-bmk.el")
-  (setq bookmark-alist-modification-count 0))
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;;
-;;;###autoload
-(defun bookmark-bmenu-save ()
-  "Save the current list into a bookmark file.
-With a prefix arg, prompts for a file to save them in."
-  (interactive)
+(defun bookmark-bmenu-bookmark ()
+  "Return the name of the bookmark on this line."
+  (bookmark-bmenu-check-position)
+  (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-hide-filenames))
   (save-excursion
     (save-window-excursion
-      (bookmark-save))))
+      (beginning-of-line)
+      (move-to-column 2 t)
+      (prog1 (buffer-substring-no-properties (point) (save-excursion (end-of-line) (point)))
+        (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))))))
+
+;;; Persistent `bookmark-alist'
+
+(when bookmarkp-use-development-setting
+  ;; REPLACES ORIGINAL in `bookmark.el'.
+  ;;
+  ;;
+  (defun bookmark-maybe-load-default-file ()
+    "Load bookmark-alist from compiled file."
+    (when (and (not bookmarks-already-loaded)
+               (null bookmark-alist))
+      (load "~/.emacs-bmk.elc")
+      (setq bookmarks-already-loaded t)))
+
+  ;; REPLACES ORIGINAL in `bookmark.el'.
+  ;;
+  ;;
+  (defun bookmark-save ()
+    "Save bookmark-alist to a compiled file.
+Warning:EXPERIMENTAL."
+    (bookmark-maybe-load-default-file)
+    (bookmarkp-dump-object-to-file 'bookmark-alist "~/.emacs-bmk.el")
+    (setq bookmark-alist-modification-count 0))
+
+  ;; REPLACES ORIGINAL in `bookmark.el'.
+  ;;
+  ;;
+;;;###autoload
+  (defun bookmark-bmenu-save ()
+    "Save the current list."
+    (interactive)
+    (save-excursion
+      (save-window-excursion
+        (bookmark-save)))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
