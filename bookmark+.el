@@ -393,7 +393,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.3")
+(defconst bookmarkp-version-number "2.5.4")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1583,16 +1583,18 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
               (let ((annotation  (bookmark-get-annotation
                                   (bookmark-name-from-full-record full-record)))
                     (name        (bookmark-name-from-full-record full-record))
+                    (marked      (bookmarkp-bookmark-marked-p full-record))
                     (end         (point))
                     start)
-                (insert (if (and annotation (not (string-equal annotation "")))  " *"  "  ")
+                (insert (cond ((and annotation (not (string-equal annotation "")) marked) ">*")
+                              ((and annotation (not (string-equal annotation "")))  " *")
+                              (marked "> ")
+                              (t "  "))
                         name)
                 (setq start  (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
                 (bookmarkp-bmenu-propertize-item name start end)
                 (insert "\n")))
             (bookmarkp-bmenu-maybe-sort))
-            ;(bookmark-maybe-sort-alist))
-    (bookmarkp-restore-all-mark)
     (goto-char (point-min))
     (forward-line 2)
     (bookmark-bmenu-mode)
@@ -2385,18 +2387,6 @@ A new list is returned (no side effects)."
   "Return the list of not marked bookmarks."
   (bookmarkp-remove-if #'bookmarkp-bookmark-marked-p bookmark-alist))
 
-(defun bookmarkp-restore-all-mark ()
-  "Put back the mark on marked bookmarks when changing filter."
-  (when bookmarkp-bookmark-marked-list
-    (with-current-buffer "*Bookmark List*"
-      (goto-char (point-min))
-      (forward-line 2)
-      (while (not (eobp))
-        (when (bookmark-bmenu-check-position)
-          (let ((bmk (bookmark-bmenu-bookmark)))
-            (if (and bmk (member bmk bookmarkp-bookmark-marked-list))
-                (bookmark-bmenu-mark)
-                (forward-line 1) (forward-line 0))))))))
 
 ;; (find-epp bookmarkp-bookmark-marked-list)
 
