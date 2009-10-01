@@ -164,8 +164,8 @@
 ;; `bookmarkp-non-file-alist-only'
 ;; `bookmarkp-marked-bookmarks-only'
 ;; `bookmarkp-non-marked-bookmarks-only'
-;; `bookmarkp-restore-all-mark'
 ;; `bookmarkp-current-list-have-marked-p'
+;; `bookmarkp-dump-object-to-file'
 ;; `bookmarkp-remove-if'
 ;; `bookmarkp-remove-if-not'
 ;; `bookmarkp-replace-regexp-in-string'
@@ -197,6 +197,7 @@
 ;; `bookmark-bmenu-mode'
 ;; `bookmark-completing-read'
 ;; `bookmark-make-record-default'
+;; `bookmark-bmenu-bookmark'
 ;; `bookmark-bmenu-check-position'
 ;; `bookmark--jump-via'
 ;; `bookmark-prop-set'
@@ -212,6 +213,7 @@
 
 ;;  * Internal variables defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "bookmarkp")
+;; `bookmarkp-use-development-setting'
 ;; `bookmarkp-jump-display-function'
 ;; `bookmarkp-latest-bookmark-alist'
 ;; `bookmarkp-bookmark-marked-list'
@@ -232,6 +234,8 @@
 ;; `bookmark-jump-noselect'
 ;; `bookmark-handle-bookmark'
 ;; `bookmark-maybe-message'
+;; `bookmark-maybe-load-default-file'
+;; `bookmark-save'
 
 ;;  ***** NOTE: The following functions defined in `info.el'
 ;;              have been REDEFINED HERE (Emacs 20-22):
@@ -393,7 +397,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.4")
+(defconst bookmarkp-version-number "2.5.5")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -629,8 +633,9 @@ Possible values are:
 `bookmarkp-alpha-more-p' - sort alphabetically."
   :type '(choice (const :tag "None" nil) function) :group 'bookmarkp)
 
-(defvar bookmarkp-use-development-setting nil
-  "*Use experimental code of bookmark+ when non--nil.")
+(defcustom bookmarkp-use-development-setting nil
+  "*Use experimental code of bookmark+ when non--nil."
+  :type 'boolean :group 'bookmarkp)
 
 
 ;;(@* "Internal Variables")
