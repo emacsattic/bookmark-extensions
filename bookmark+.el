@@ -397,7 +397,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.5")
+(defconst bookmarkp-version-number "2.5.6")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2136,25 +2136,29 @@ If `mark' is non--nil unmark only bookmarks with flag >."
 (defun bookmarkp-bmenu-unmark-all-2 ()
   "Provide an interactive interface to unmark bookmarks."
   (with-current-buffer "*Bookmark List*"
-    (let (action)
+    (let ((prompt "(n)ext (s)kip (a)ll (q)uit")
+          action
+          (count 0))
       (save-excursion
         (goto-char (point-min))
         (bookmark-bmenu-check-position)
         (catch 'break
           (while 1
             (catch 'continue
-              (setq action (read-event (propertize "(n)ext (s)kip (a)ll (q)uit" 'face '((:foreground "cyan")))))
+              (when (fboundp 'propertize)
+                (setq prompt (propertize prompt 'face '((:foreground "cyan")))))
+              (setq action (read-event prompt))
               (case action
                 (?n (when (bookmark-bmenu-check-position)
-                      (bookmark-bmenu-unmark) (throw 'continue nil)))
+                      (bookmark-bmenu-unmark) (setq count (1+ count)) (throw 'continue nil)))
                 (?s (forward-line 1) (throw 'continue nil))
                 (?a (throw 'break
-                      (while (re-search-forward "^>" (point-max) t)
-                        (when (bookmark-bmenu-check-position)
-                          (bookmark-bmenu-unmark)))))
-                (?q (throw 'break nil))))))))))
-
-
+                      (progn
+                        (while (re-search-forward "^>" (point-max) t)
+                          (when (bookmark-bmenu-check-position)
+                            (bookmark-bmenu-unmark) (setq count (1+ count))))
+                        (message "%s bookmarks unmarked" count))))
+                (?q (throw 'break (when count (message "%s bookmarks unmarked" count))))))))))))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
