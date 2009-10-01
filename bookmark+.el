@@ -397,7 +397,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.7")
+(defconst bookmarkp-version-number "2.5.8")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1605,12 +1605,11 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
     (add-text-properties (point-min) (point) '(font-lock-face bookmark-menu-heading))
     (mapcar (lambda (full-record)
               ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
-              (let ((annotation  (bookmark-get-annotation
-                                  (bookmark-name-from-full-record full-record)))
-                    (name        (bookmark-name-from-full-record full-record))
-                    (marked      (bookmarkp-bookmark-marked-p full-record))
-                    (start       (+ 2 (point)))
-                    end)
+              (let* ((name        (bookmark-name-from-full-record full-record))
+                     (annotation  (bookmark-get-annotation name))
+                     (marked      (bookmarkp-bookmark-marked-p full-record))
+                     (start       (+ 2 (point)))
+                     end)
                 (insert (cond ((and annotation (not (string-equal annotation "")) marked) ">*")
                               ((and annotation (not (string-equal annotation "")))  " *")
                               (marked "> ")
@@ -1839,7 +1838,8 @@ Also: S1 < S2 if S1 was visited but S2 was not.
   "Set `bookmarkp-bmenu-sort-function' to `method' and rebuild alist.
 Try to follow position of last bookmark in menu-list."
   (with-current-buffer "*Bookmark List*"
-    (let ((bmk (when (bookmark-bmenu-check-position) (bookmark-bmenu-bookmark))))
+    (let ((bmk (when (bookmark-bmenu-check-position) (bookmark-bmenu-bookmark)))
+          (bookmarkp-bmenu-called-from-inside-flag t))
       (setq bookmarkp-bmenu-sort-function method)
       (case method
         ('bookmarkp-visited-more-p (message "Sorting by visit frequency"))
