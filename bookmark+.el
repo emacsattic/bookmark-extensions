@@ -118,6 +118,7 @@
 ;; `bookmarkp-show-end-of-region'
 ;; `bookmarkp-bookmark-name-length-max'
 ;; `bookmarkp-bmenu-sort-function'
+;; `bookmarkp-use-development-setting'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
@@ -213,7 +214,6 @@
 
 ;;  * Internal variables defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "bookmarkp")
-;; `bookmarkp-use-development-setting'
 ;; `bookmarkp-jump-display-function'
 ;; `bookmarkp-latest-bookmark-alist'
 ;; `bookmarkp-bookmark-marked-list'
@@ -235,7 +235,6 @@
 ;; `bookmark-handle-bookmark'
 ;; `bookmark-maybe-message'
 ;; `bookmark-maybe-load-default-file'
-;; `bookmark-save'
 
 ;;  ***** NOTE: The following functions defined in `info.el'
 ;;              have been REDEFINED HERE (Emacs 20-22):
@@ -397,7 +396,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.8")
+(defconst bookmarkp-version-number "2.5.9")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2654,8 +2653,7 @@ If region was relocated, save it if user confirms saving."
            (setq deactivate-mark  nil)
            (when bookmarkp-show-end-of-region
              (let ((end-win (save-excursion
-                              (goto-line (+ (bookmarkp-line-number-at-pos)
-                                            (window-height)))
+                              (forward-line (window-height))
                               (end-of-line)
                               (point))))
                ;; Bounce point and mark.
