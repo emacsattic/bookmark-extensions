@@ -397,7 +397,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.10")
+(defconst bookmarkp-version-number "2.5.11")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1550,7 +1550,7 @@ candidate.  In this way, you can delete multiple bookmarks."
 ;; 1. Rebuild `bookmark-alist' using the last filtered alist in use.
 ;; 2. Update the menu-list title.
 ;;
-(defun bookmark-bmenu-surreptitiously-rebuild-list ()
+(defun bookmark-bmenu-surreptitiously-rebuild-list (&optional toggle-off)
   "Rebuild the Bookmark List if it exists.
 Don't affect the buffer ring order."
   (when (get-buffer "*Bookmark List*")
@@ -1561,7 +1561,7 @@ Don't affect the buffer ring order."
                                  (goto-char (point-min))
                                  (buffer-substring (line-beginning-position)
                                                    (line-end-position)))))
-          (bookmark-bmenu-list title 'filteredp))))))
+          (bookmark-bmenu-list title 'filteredp toggle-off))))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1570,7 +1570,7 @@ Don't affect the buffer ring order."
 ;; 2. Handles also region bookmarks and buffer (non-file) bookmarks.
 ;;
 ;;;###autoload
-(defun bookmark-bmenu-list (&optional title filteredp)
+(defun bookmark-bmenu-list (&optional title filteredp toggle-off)
   "Display a list of existing bookmarks, in buffer `*Bookmark List*'.
 The following faces are used for the list entries.
 Use `customize-face' if you want to change the appearance.
@@ -1622,8 +1622,9 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
     (goto-char (point-min))
     (forward-line 2)
     (bookmark-bmenu-mode)
-    (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))
-    (when (fboundp 'fit-frame-if-one-window) (fit-frame-if-one-window))))
+    (unless toggle-off
+      (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))
+      (when (fboundp 'fit-frame-if-one-window) (fit-frame-if-one-window)))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1703,7 +1704,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
         (setq bookmarkp-latest-bookmark-alist
               (delete (assoc bmk bookmarkp-latest-bookmark-alist)
                       bookmarkp-latest-bookmark-alist))))
-    (bookmark-bmenu-surreptitiously-rebuild-list)
+    (bookmark-bmenu-surreptitiously-rebuild-list 'toggle-off)
     (setq bookmark-bmenu-toggle-filenames hide-em)
     (when bookmark-bmenu-toggle-filenames
       (bookmark-bmenu-toggle-filenames 'show))
@@ -1846,10 +1847,10 @@ Try to follow position of last bookmark in menu-list."
         ('bookmarkp-last-time-more-p (message "Sorting by last time visited"))
         ('bookmarkp-alpha-more-p (message "Sorting alphabetically")))
       (unless batch
-        (bookmark-bmenu-surreptitiously-rebuild-list)
         (let ((hide-em         bookmark-bmenu-toggle-filenames))
           (when hide-em (bookmark-bmenu-hide-filenames))
           (setq bookmark-bmenu-toggle-filenames  nil)
+          (bookmark-bmenu-surreptitiously-rebuild-list 'toggle-off)
           (goto-char (point-min))
           (while (not (equal bmk (bookmark-bmenu-bookmark)))
             (forward-line 1))
@@ -2103,16 +2104,18 @@ With a prefix argument, do not include remote files or directories."
   "Unmark all bookmarks marked with flag > or D.
 Called with prefix arg provide an interactive interface."
   (interactive)
-  (let ((hide-em         bookmark-bmenu-toggle-filenames))
-    (when hide-em (bookmark-bmenu-hide-filenames))
-    (setq bookmark-bmenu-toggle-filenames  nil)
-    (if current-prefix-arg
-        (bookmarkp-bmenu-unmark-all-2)
-        (bookmarkp-bmenu-unmark-all-1))
-    (setq bookmark-bmenu-toggle-filenames  hide-em)
-    (when bookmark-bmenu-toggle-filenames
-      (bookmark-bmenu-toggle-filenames 'show)))
-  (bookmarkp-count-marked))
+  (if (bookmarkp-current-list-have-marked-p)
+      (let ((hide-em         bookmark-bmenu-toggle-filenames))
+        (when hide-em (bookmark-bmenu-hide-filenames))
+        (setq bookmark-bmenu-toggle-filenames  nil)
+        (if current-prefix-arg
+            (bookmarkp-bmenu-unmark-all-2)
+            (bookmarkp-bmenu-unmark-all-1))
+        (setq bookmark-bmenu-toggle-filenames  hide-em)
+        (when bookmark-bmenu-toggle-filenames
+          (bookmark-bmenu-toggle-filenames 'show))
+        (bookmarkp-count-marked))
+      (message "Nothing to unmark here!")))
 
     
 (defun bookmarkp-bmenu-unmark-all-1 (&optional del mark)
@@ -2143,7 +2146,8 @@ If `mark' is non--nil unmark only bookmarks with flag >."
           action)
       (save-excursion
         (goto-char (point-min))
-        (bookmark-bmenu-check-position)
+        (re-search-forward "^\>" (point-max) t)
+        (forward-line 0)
         (catch 'break
           (while 1
             (catch 'continue
@@ -2159,13 +2163,14 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                         (when (bookmark-bmenu-check-position)
                           (bookmark-bmenu-unmark)))))
                 (?q (throw 'break nil))))))))))
-                
+
 
 (defun bookmarkp-count-marked ()
   "Send message with number of marked and unmarked bookmarks."
   (let* ((marked   (length bookmarkp-bookmark-marked-list))
          (unmarked (- (length bookmark-alist) marked)))
     (message "%s Marked, %s Unmarked" marked unmarked)))
+
 
 ;;;###autoload
 (defun bookmarkp-bmenu-regexp-mark (regexp)
@@ -2210,7 +2215,7 @@ If `mark' is non--nil unmark only bookmarks with flag >."
           (setq bookmark-alist (bookmarkp-non-marked-bookmarks-only))
           (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
           (setq status 'hiden))
-      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (bookmark-bmenu-surreptitiously-rebuild-list 'toggle-off)
       (if (eq status 'hiden)
           (bookmark-bmenu-check-position)
           (goto-char (point-min))
@@ -2243,7 +2248,7 @@ If `mark' is non--nil unmark only bookmarks with flag >."
           (setq bookmark-alist (bookmarkp-marked-bookmarks-only))
           (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
           (setq status 'hiden))
-      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (bookmark-bmenu-surreptitiously-rebuild-list 'toggle-off)
       (if (eq status 'hiden)
           (bookmark-bmenu-check-position)
           (goto-char (point-min))
