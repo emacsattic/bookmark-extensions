@@ -397,7 +397,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.11")
+(defconst bookmarkp-version-number "2.5.12")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -658,6 +658,9 @@ Possible values are:
 
 (defvar bookmarkp-bmenu-before-hide-marked-list nil
   "Store the list like it was before hiding marked bookmarks.")
+
+(defvar bookmarkp-latest-sorted-alist nil
+  "Store the last sorted alist in use on current display.")
 
 (defvar bookmarkp-bmenu-called-from-inside-flag nil
   "Signal `bookmark-bmenu-list' is called from bmenu-list buffer.")
@@ -1153,18 +1156,13 @@ Optional BACKUP means move up."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Don't set or use `bookmark-bmenu-bookmark-column' - use column 2 always.
-;;
+;; Improve performance by using `bookmarkp-latest-sorted-alist'.
+;; 
 (defun bookmark-bmenu-bookmark ()
-  "Return the name of the bookmark on this line."
-  (bookmark-bmenu-check-position)
-  (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-hide-filenames))
-  (save-excursion
-    (save-window-excursion
-      (beginning-of-line)
-      (move-to-column 2 t)
-      (prog1 (buffer-substring-no-properties (point) (save-excursion (end-of-line) (point)))
-        (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))))))
+  "Return a string which is bookmark of this line."
+  (let ((pos (- (line-number-at-pos) 3)))
+    (car (nth pos bookmarkp-latest-sorted-alist))))
+
 
 ;;; Persistent `bookmark-alist'
 
@@ -1640,21 +1638,16 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
         (goto-char (point-min))
         (forward-line 2)
         (setq bookmark-bmenu-hidden-bookmarks  (nreverse bookmark-bmenu-hidden-bookmarks))
-        (save-excursion
-          (goto-char (point-min))
-          (search-forward "Bookmark")
-          (backward-word 1)
-          (setq bookmark-bmenu-bookmark-column  (current-column)))
+        (setq bookmark-bmenu-bookmark-column 2)
         (save-excursion
           (let ((inhibit-read-only t))
             (while bookmark-bmenu-hidden-bookmarks
               (move-to-column bookmark-bmenu-bookmark-column t)
               (bookmark-kill-line)
-              (let ((name (car bookmark-bmenu-hidden-bookmarks))
-                    start
-                    (end  (point)))
-                (insert name)
-                (setq start (save-excursion (re-search-backward "[^ \t]") (1+ (point))))
+              (let ((name  (car bookmark-bmenu-hidden-bookmarks))
+                    (start (point))
+                    end)  
+                (insert name) (setq end (point))
                 (bookmarkp-bmenu-propertize-item name start end))
               (setq bookmark-bmenu-hidden-bookmarks  (cdr bookmark-bmenu-hidden-bookmarks))
               (forward-line 1))))))))
@@ -1820,19 +1813,21 @@ Also: S1 < S2 if S1 was visited but S2 was not.
 
 ;; Menu-List Functions (`bookmarkp-bmenu-*') -------------------------
 
+
 (defun bookmarkp-bmenu-maybe-sort (&optional alist)
   "Sort or reverse-sort using `bookmarkp-bmenu-sort-function'.
         Sort LIST using `bookmarkp-bmenu-sort-function'.
         Reverse the result if `bookmarkp-reverse-sort-p' is non-nil.
         Do nothing if `bookmarkp-bmenu-sort-function' is nil."
   (let ((bmk-alist (or alist (copy-sequence bookmark-alist))))
-    (when bookmarkp-bmenu-sort-function
-      (sort
-       bmk-alist
-       (if bookmarkp-bmenu-reverse-sort-p
-           (lambda (a b)
-             (not (funcall bookmarkp-bmenu-sort-function a b)))
-           bookmarkp-bmenu-sort-function)))))
+    (when (and bmk-alist bookmarkp-bmenu-sort-function)
+      (setq bookmarkp-latest-sorted-alist
+            (sort
+             bmk-alist
+             (if bookmarkp-bmenu-reverse-sort-p
+                 (lambda (a b)
+                   (not (funcall bookmarkp-bmenu-sort-function a b)))
+                 bookmarkp-bmenu-sort-function))))))
 
 
 (defun bookmarkp-bmenu-sort-1 (method &optional batch)
@@ -1852,6 +1847,7 @@ Try to follow position of last bookmark in menu-list."
           (setq bookmark-bmenu-toggle-filenames  nil)
           (bookmark-bmenu-surreptitiously-rebuild-list 'toggle-off)
           (goto-char (point-min))
+          (bookmark-bmenu-check-position)
           (while (not (equal bmk (bookmark-bmenu-bookmark)))
             (forward-line 1))
           (forward-line 0)
