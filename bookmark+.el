@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.13")
+(defconst bookmarkp-version-number "2.5.14")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1248,11 +1248,14 @@ DISPLAY-FUNCTION is the function that displays the bookmark."
 ;;
 (defun bookmark-prop-set (bookmark prop val)
   "Set the property PROP of BOOKMARK to VAL."
-  (let ((bmk (bookmark-get-bookmark bookmark))
-        (cell (assq prop (bookmark-get-bookmark-record bookmark))))
+  (let ((bmk   (bookmark-get-bookmark bookmark))
+        (cell  (assq prop (bookmark-get-bookmark-record bookmark))))
     (if cell
         (setcdr cell val)
-        (setcdr bmk (cons (cons prop val) (cdr bmk))))))
+        (if (consp (car (cadr bmk)))      ; Old format: ("name" ((filename . "f")...))
+            (setcdr bmk (list (cons (cons prop val) (cadr bmk))))
+            (setcdr bmk (cons (cons prop val) (cdr bmk))))))) ; New: ("name" (filename . "f")...)
+
 
 ;; (find-epp (progn (bookmark-prop-set ".emacs.el" 'visits 0) (bookmark-get-bookmark ".emacs.el")))
 
