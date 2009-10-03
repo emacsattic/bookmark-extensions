@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.15")
+(defconst bookmarkp-version-number "2.5.16")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2106,7 +2106,7 @@ If `mark' is non--nil unmark only bookmarks with flag >."
 (defun bookmarkp-bmenu-unmark-all-2 ()
   "Provide an interactive interface to unmark bookmarks."
   (with-current-buffer "*Bookmark List*"
-    (let ((prompt "(n)ext (s)kip (a)ll (q)uit")
+    (let ((prompt "(U)nmark, (I)gnore, (!)All remaining, (Q)uit")
           action)
       (save-excursion
         (goto-char (point-min))
@@ -2119,22 +2119,22 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                 (setq prompt (propertize prompt 'face '((:foreground "cyan")))))
               (setq action (read-event prompt))
               (case action
-                (?n (when (bookmark-bmenu-check-position)
+                (?U (when (bookmark-bmenu-check-position)
                       (bookmark-bmenu-unmark)
                       (if (re-search-forward "^>" nil t)
                           (progn (forward-line 0) (throw 'continue nil))
                           (throw 'break nil))))
-                (?s (if (looking-at "^>")
+                (?I (if (looking-at "^>")
                         (progn (forward-char 1)
                                (if (re-search-forward "^>" nil t)
                                    (progn (forward-line 0) (throw 'continue nil))
                                    (throw 'break nil)))
                         (throw 'break nil)))
-                (?a (throw 'break
+                (?! (throw 'break
                       (while (re-search-forward "^>" (point-max) t)
                         (when (bookmark-bmenu-check-position)
                           (bookmark-bmenu-unmark)))))
-                (?q (throw 'break nil))))))))))
+                (?Q (throw 'break nil))))))))))
 
 
 (defun bookmarkp-count-marked ()
