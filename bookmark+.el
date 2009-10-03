@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.14")
+(defconst bookmarkp-version-number "2.5.15")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1179,10 +1179,7 @@ Optional BACKUP means move up."
       (load "~/.emacs-bmk.elc")
       (setq bookmarks-already-loaded t)))
 
-  ;; REPLACES ORIGINAL in `bookmark.el'.
-  ;;
-  ;;
-  (defun bookmark-save ()
+  (defun bookmarkp-save ()
     "Save bookmark-alist to a compiled file.
 Warning:EXPERIMENTAL."
     (bookmark-maybe-load-default-file)
@@ -1193,12 +1190,15 @@ Warning:EXPERIMENTAL."
   ;;
   ;;
 ;;;###autoload
-  (defun bookmark-bmenu-save ()
-    "Save the current list."
-    (interactive)
+  (defun bookmark-bmenu-save (&optional save-litteraly)
+    "Save the current list in a compiled file.
+with prefix arg save in `bookmark-default-file'."
+    (interactive "P")
     (save-excursion
       (save-window-excursion
-        (bookmark-save)))))
+        (if save-litteraly
+            (bookmark-save)
+            (bookmarkp-save))))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -2120,8 +2120,16 @@ If `mark' is non--nil unmark only bookmarks with flag >."
               (setq action (read-event prompt))
               (case action
                 (?n (when (bookmark-bmenu-check-position)
-                      (bookmark-bmenu-unmark) (throw 'continue nil)))
-                (?s (forward-line 1) (throw 'continue nil))
+                      (bookmark-bmenu-unmark)
+                      (if (re-search-forward "^>" nil t)
+                          (progn (forward-line 0) (throw 'continue nil))
+                          (throw 'break nil))))
+                (?s (if (looking-at "^>")
+                        (progn (forward-char 1)
+                               (if (re-search-forward "^>" nil t)
+                                   (progn (forward-line 0) (throw 'continue nil))
+                                   (throw 'break nil)))
+                        (throw 'break nil)))
                 (?a (throw 'break
                       (while (re-search-forward "^>" (point-max) t)
                         (when (bookmark-bmenu-check-position)
