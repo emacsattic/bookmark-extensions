@@ -2154,7 +2154,8 @@ If `mark' is non--nil unmark only bookmarks with flag >."
           action)
       (save-excursion
         (goto-char (point-min))
-        (re-search-forward "^\>" (point-max) t)
+        (or (re-search-forward "^>" (point-max) t)
+            (re-search-forward "^D" (point-max) t))
         (forward-line 0)
         (catch 'break
           (while 1
@@ -2165,17 +2166,20 @@ If `mark' is non--nil unmark only bookmarks with flag >."
               (case action
                 (?U (when (bookmark-bmenu-check-position)
                       (bookmark-bmenu-unmark)
-                      (if (re-search-forward "^>" nil t)
+                      (if (or (re-search-forward "^>" (point-max) t)
+                              (re-search-forward "^D" (point-max) t))
                           (progn (forward-line 0) (throw 'continue nil))
                           (throw 'break nil))))
-                (?I (if (looking-at "^>")
+                (?I (if (or (looking-at "^>") (looking-at "^D"))
                         (progn (forward-char 1)
-                               (if (re-search-forward "^>" nil t)
+                               (if (or (re-search-forward "^>" (point-max) t)
+                                       (re-search-forward "^D" (point-max) t))
                                    (progn (forward-line 0) (throw 'continue nil))
                                    (throw 'break nil)))
                         (throw 'break nil)))
                 (?! (throw 'break
-                      (while (re-search-forward "^>" (point-max) t)
+                      (while (or (re-search-forward "^>" (point-max) t)
+                                 (re-search-forward "^D" (point-max) t))
                         (when (bookmark-bmenu-check-position)
                           (bookmark-bmenu-unmark)))))
                 (?Q (throw 'break nil))))))))))
