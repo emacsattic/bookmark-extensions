@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.19")
+(defconst bookmarkp-version-number "2.5.20")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2151,7 +2151,7 @@ If `mark' is non--nil unmark only bookmarks with flag >."
 (defun bookmarkp-bmenu-unmark-all-2 ()
   "Provide an interactive interface to unmark bookmarks."
   (with-current-buffer "*Bookmark List*"
-    (let ((prompt "(U)nmark, (I)gnore, (!)Unmark all remaining, (Q)uit")
+    (let ((prompt "(U)nmark, (I)gnore, (P)recedent line, (N)ext line, (!)Unmark all remaining, (Q)uit")
           action)
       (save-excursion
         (goto-char (point-min))
@@ -2175,6 +2175,8 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                                    (progn (forward-line 0) (throw 'continue nil))
                                    (throw 'break nil)))
                         (throw 'break nil)))
+                (?P (forward-line -1) (throw 'continue nil))
+                (?N (forward-line 1) (throw 'continue nil))
                 (?! (throw 'break
                       (while (re-search-forward "^>\\|^D" (point-max) t)
                         (when (bookmark-bmenu-check-position)
