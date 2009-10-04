@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.17")
+(defconst bookmarkp-version-number "2.5.19")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2117,7 +2117,10 @@ With a prefix argument, do not include remote files or directories."
   "Unmark all bookmarks marked with flag > or D.
 Called with prefix arg provide an interactive interface."
   (interactive)
-  (if (bookmarkp-current-list-have-marked-p)
+  (if (or (bookmarkp-current-list-have-marked-p)
+          (save-excursion
+            (goto-char (point-min))
+            (re-search-forward "^>\\|^D" (point-max) t)))
       (progn
         (if current-prefix-arg
             (bookmarkp-bmenu-unmark-all-2)
@@ -2139,9 +2142,7 @@ If `mark' is non--nil unmark only bookmarks with flag >."
                     (re-search-forward "^>" (point-max) t))
                    (del
                     (re-search-forward "^D" (point-max) t))
-                   (t
-                    (or (re-search-forward "^>" (point-max) t)
-                        (re-search-forward "^D" (point-max) t))))
+                   (t (re-search-forward "^>\\|^D" (point-max) t)))
         (when (bookmark-bmenu-check-position)
           (bookmark-bmenu-unmark))))))
 
@@ -2150,12 +2151,11 @@ If `mark' is non--nil unmark only bookmarks with flag >."
 (defun bookmarkp-bmenu-unmark-all-2 ()
   "Provide an interactive interface to unmark bookmarks."
   (with-current-buffer "*Bookmark List*"
-    (let ((prompt "(U)nmark, (I)gnore, (!)All remaining, (Q)uit")
+    (let ((prompt "(U)nmark, (I)gnore, (!)Unmark all remaining, (Q)uit")
           action)
       (save-excursion
         (goto-char (point-min))
-        (or (re-search-forward "^>" (point-max) t)
-            (re-search-forward "^D" (point-max) t))
+        (re-search-forward "^>\\|^D" (point-max) t)
         (forward-line 0)
         (catch 'break
           (while 1
@@ -2166,20 +2166,17 @@ If `mark' is non--nil unmark only bookmarks with flag >."
               (case action
                 (?U (when (bookmark-bmenu-check-position)
                       (bookmark-bmenu-unmark)
-                      (if (or (re-search-forward "^>" (point-max) t)
-                              (re-search-forward "^D" (point-max) t))
+                      (if (re-search-forward "^>\\|^D" (point-max) t)
                           (progn (forward-line 0) (throw 'continue nil))
                           (throw 'break nil))))
-                (?I (if (or (looking-at "^>") (looking-at "^D"))
+                (?I (if (looking-at "^>\\|^D")
                         (progn (forward-char 1)
-                               (if (or (re-search-forward "^>" (point-max) t)
-                                       (re-search-forward "^D" (point-max) t))
+                               (if (re-search-forward "^>\\|^D" (point-max) t)
                                    (progn (forward-line 0) (throw 'continue nil))
                                    (throw 'break nil)))
                         (throw 'break nil)))
                 (?! (throw 'break
-                      (while (or (re-search-forward "^>" (point-max) t)
-                                 (re-search-forward "^D" (point-max) t))
+                      (while (re-search-forward "^>\\|^D" (point-max) t)
                         (when (bookmark-bmenu-check-position)
                           (bookmark-bmenu-unmark)))))
                 (?Q (throw 'break nil))))))))))
