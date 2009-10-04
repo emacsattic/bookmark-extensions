@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.16")
+(defconst bookmarkp-version-number "2.5.17")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1179,24 +1179,68 @@ Optional BACKUP means move up."
       (load "~/.emacs-bmk.elc")
       (setq bookmarks-already-loaded t)))
 
+  ;; REPLACES ORIGINAL in `bookmark.el'.
+  ;;
+  ;;
+  (defun bookmark-save (&optional parg file)
+    "Save currently defined bookmarks.
+     Saves by default in the file defined by the variable
+     `bookmark-default-file'.  With a prefix arg, save it in file FILE
+     \(second argument\).
+     
+     If you are calling this from Lisp, the two arguments are PARG and
+     FILE, and if you just want it to write to the default file, then
+     pass no arguments.  Or pass in nil and FILE, and it will save in FILE
+     instead.  If you pass in one argument, and it is non-nil, then the
+     user will be interactively queried for a file to save in.
+     
+     When you want to load in the bookmarks from a file, use
+     \`bookmark-load\', \\[bookmark-load].  That function will prompt you
+     for a file, defaulting to the file defined by variable
+     `bookmark-default-file'."
+    (interactive "P")
+    (bookmark-maybe-load-default-file)
+    (cond
+      ((and (null parg) (null file))
+       ;;whether interactive or not, write to default file
+       (bookmark-write-file bookmark-default-file)
+       (bookmarkp-save))
+      ((and (null parg) file)
+       ;;whether interactive or not, write to given file
+       (bookmark-write-file file))
+      ((and parg (not file))
+       ;;have been called interactively w/ prefix arg
+       (let ((file (read-file-name "File to save bookmarks in: ")))
+         (bookmark-write-file file)))
+      (t ; someone called us with prefix-arg *and* a file, so just write to file
+       (bookmark-write-file file)))
+    ;; signal that we have synced the bookmark file by setting this to
+    ;; 0.  If there was an error at any point before, it will not get
+    ;; set, which is what we want.
+    (setq bookmark-alist-modification-count 0))
+
   (defun bookmarkp-save ()
     "Save bookmark-alist to a compiled file.
-Warning:EXPERIMENTAL."
+     Warning:EXPERIMENTAL."
     (bookmark-maybe-load-default-file)
     (bookmarkp-dump-object-to-file 'bookmark-alist "~/.emacs-bmk.el")
     (setq bookmark-alist-modification-count 0))
 
+  (defun bookmarkp-reload-file ()
+    "Reset `bookmark-alist' from `bookmark-default-file'."
+    (interactive)
+    (setq bookmark-alist nil)
+    (bookmark-load bookmark-default-file))
+
   ;; REPLACES ORIGINAL in `bookmark.el'.
   ;;
-  ;;
-;;;###autoload
-  (defun bookmark-bmenu-save (&optional save-litteraly)
-    "Save the current list in a compiled file.
-with prefix arg save in `bookmark-default-file'."
+  (defun bookmark-bmenu-save (&optional parg)
+    "Save the current list into a compiled file.
+   With a prefix arg, save to `bookmark-default-file'."
     (interactive "P")
     (save-excursion
       (save-window-excursion
-        (if save-litteraly
+        (if parg
             (bookmark-save)
             (bookmarkp-save))))))
 
