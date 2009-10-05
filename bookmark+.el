@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.21")
+(defconst bookmarkp-version-number "2.5.22")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1162,7 +1162,7 @@ Optional BACKUP means move up."
 ;; 
 (defun bookmark-bmenu-bookmark ()
   "Return a string which is bookmark of this line."
-  (let ((pos (- (line-number-at-pos) 3)))
+  (let ((pos (- (bookmarkp-line-number-at-pos) 3)))
     (car (nth pos bookmarkp-latest-sorted-alist))))
 
 
@@ -2131,9 +2131,9 @@ Called with prefix arg provide an interactive interface."
     
 (defun bookmarkp-bmenu-unmark-all-1 (&optional del mark)
   "Unmark all bookmarks or only bookmarks marked with flag > or D.
-If no args unmark all.
-If `del' is non--nil unmark only bookmarks with flag D.
-If `mark' is non--nil unmark only bookmarks with flag >."
+Whitout args unmark all.
+If DEL is non--nil unmark only bookmarks with flag D.
+If MARK is non--nil unmark only bookmarks with flag >."
   (with-current-buffer "*Bookmark List*"
     (save-excursion
       (goto-char (point-min))
