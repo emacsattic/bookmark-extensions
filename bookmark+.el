@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.20")
+(defconst bookmarkp-version-number "2.5.21")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2185,9 +2185,9 @@ If `mark' is non--nil unmark only bookmarks with flag >."
 
 
 (defun bookmarkp-count-marked ()
-  "Send message with number of marked and unmarked bookmarks."
+  "Send message with number of marked and unmarked bookmarks in current display."
   (let* ((marked   (length bookmarkp-bookmark-marked-list))
-         (unmarked (- (length bookmark-alist) marked)))
+         (unmarked (- (length bookmarkp-latest-bookmark-alist) marked)))
     (message "%s Marked, %s Unmarked" marked unmarked)))
 
 
