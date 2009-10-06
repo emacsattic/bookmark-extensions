@@ -1937,7 +1937,7 @@ Try to follow position of last bookmark in menu-list."
 
 (defun bookmarkp-read-search-input ()
   "Read each keyboard input and add it `bookmarkp-search-pattern'."
-  (setq bookmarkp-search-pattern nil)
+  (setq bookmarkp-search-pattern "")
   (let (char
         (tmp-list ()))
     (catch 'break
