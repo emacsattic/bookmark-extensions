@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.22")
+(defconst bookmarkp-version-number "2.5.23")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -487,6 +487,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-r" 'bookmark-bmenu-relocate) ; Was `R' in vanilla.
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "M-g") 'bookmarkp-bmenu-search)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "g" 'bookmarkp-bmenu-refresh-alist)
@@ -519,6 +521,7 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-hide-marked]\t- Hide marked bookmarks
 \\[bookmarkp-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
 \\[bookmarkp-bmenu-mark-all-bookmarks]\t- Mark all bookmarks
+\\[bookmarkp-bmenu-search]\t- Incremental search in bookmarks
 \\[bookmarkp-bmenu-unmark-all]\t- Unmark all bookmarks (`C-u' for interactive use)
 \\[bookmarkp-bmenu-unmark-all-non-deletion-flags]\t- Unmark all bookmarks with flag >
 \\[bookmarkp-bmenu-unmark-all-deletion-flags]\t- Unmark all bookmarks with flag D
@@ -669,6 +672,12 @@ Possible values are:
 
 (defvar bookmarkp-bmenu-reverse-sort-p nil
   "Reverse order of sorting.")
+
+(defvar bookmarkp-search-pattern ""
+  "Store keyboard input for incremental search.")
+
+(defvar bookmarkp-search-timer nil
+  "Timer used for searching")
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
 ;;
@@ -1880,16 +1889,31 @@ Try to follow position of last bookmark in menu-list."
           (bookmarkp-bmenu-called-from-inside-flag t))
       (setq bookmarkp-bmenu-sort-function method)
       (case method
-        ('bookmarkp-visited-more-p (message "Sorting by visit frequency"))
-        ('bookmarkp-last-time-more-p (message "Sorting by last time visited"))
-        ('bookmarkp-alpha-more-p (message "Sorting alphabetically")))
+        ('bookmarkp-visited-more-p (if bookmarkp-bmenu-reverse-sort-p
+                                       (message "Sorting by visit frequency [REVERSED]")
+                                       (message "Sorting by visit frequency")))
+        ('bookmarkp-last-time-more-p (if bookmarkp-bmenu-reverse-sort-p
+                                         (message "Sorting by last time visited [REVERSED]")
+                                         (message "Sorting by last time visited")))
+        ('bookmarkp-alpha-more-p (if bookmarkp-bmenu-reverse-sort-p
+                                     (message "Sorting alphabetically [REVERSED]")
+                                     (message "Sorting alphabetically"))))
       (unless batch
         (bookmark-bmenu-surreptitiously-rebuild-list)
-        (goto-char (point-min))
-        (bookmark-bmenu-check-position)
-        (while (not (equal bmk (bookmark-bmenu-bookmark)))
-          (forward-line 1))
-        (forward-line 0)))))
+        (bookmarkp-bmenu-goto-bookmark-named bmk)))))
+        ;; (goto-char (point-min))
+        ;; (bookmark-bmenu-check-position)
+        ;; (while (not (equal bmk (bookmark-bmenu-bookmark)))
+        ;;   (forward-line 1))
+        ;; (forward-line 0)))))
+
+(defun bookmarkp-bmenu-goto-bookmark-named (name)
+  "Go to the first bookmark whose name matches NAME."
+    (goto-char (point-min))
+    (bookmark-bmenu-check-position)
+    (while (not (equal name (bookmark-bmenu-bookmark)))
+      (forward-line 1))
+    (forward-line 0))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-sort-by-visit-frequency (&optional reversep)
@@ -1908,6 +1932,57 @@ Try to follow position of last bookmark in menu-list."
   (interactive "P")
   (let ((bookmarkp-bmenu-reverse-sort-p reversep))
     (bookmarkp-bmenu-sort-1 'bookmarkp-alpha-more-p)))
+
+;;; Searching in bookmarks
+
+(defun bookmarkp-read-search-input ()
+  (setq bookmarkp-search-pattern nil)
+  (let (char
+        (tmp-list ()))
+    (catch 'break
+      (while 1
+        (catch 'continue
+          (setq char (read-char
+                        (if (fboundp 'propertize)
+                            (concat (propertize "Pattern: " 'face '((:foreground "cyan")))
+                                    bookmarkp-search-pattern)
+                            (concat "Pattern: " bookmarkp-search-pattern))))
+          (when (not (equal char ""))
+            (case char
+              (?\r (throw 'break nil))
+              (?\d (pop tmp-list)
+                   (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
+                   (throw 'continue nil))
+              (t
+               (push (text-char-description char) tmp-list)
+               (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
+               (throw 'continue nil)))))))))
+
+
+(defun bookmarkp-filtered-alist-by-regexp-only (regexp)
+  (loop for i in bookmark-alist
+     when (string-match regexp (car i)) collect i into new
+     finally return new))
+
+(defun bookmarkp-bmenu-filter-alist-by-regexp (regexp)
+  (let ((bookmark-alist (bookmarkp-filtered-alist-by-regexp-only regexp))
+        (bookmarkp-bmenu-called-from-inside-flag t))
+    (bookmark-bmenu-list "% Bookmark+ Filtered by regexp" 'filteredp)))
+
+;;;###autoload
+(defun bookmarkp-bmenu-search ()
+  (interactive)
+  (unwind-protect
+       (progn
+         (setq bookmarkp-search-timer
+               (run-with-timer 1 1 #'(lambda ()
+                                       (bookmarkp-bmenu-filter-alist-by-regexp bookmarkp-search-pattern))))
+         (bookmarkp-read-search-input))
+    (bookmarkp-bmenu-cancel-search)))
+
+(defun bookmarkp-bmenu-cancel-search ()
+  (cancel-timer bookmarkp-search-timer)
+  (setq bookmarkp-search-timer nil))
 
 
 ;;;###autoload
