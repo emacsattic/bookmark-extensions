@@ -399,7 +399,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.23")
+(defconst bookmarkp-version-number "2.5.24")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1936,6 +1936,7 @@ Try to follow position of last bookmark in menu-list."
 ;;; Searching in bookmarks
 
 (defun bookmarkp-read-search-input ()
+  "Read each keyboard input and add it `bookmarkp-search-pattern'."
   (setq bookmarkp-search-pattern nil)
   (let (char
         (tmp-list ()))
@@ -1960,17 +1961,20 @@ Try to follow position of last bookmark in menu-list."
 
 
 (defun bookmarkp-filtered-alist-by-regexp-only (regexp)
+  "Return a filtered `bookmark-alist' with bookmarks matching REGEXP."
   (loop for i in bookmark-alist
      when (string-match regexp (car i)) collect i into new
      finally return new))
 
 (defun bookmarkp-bmenu-filter-alist-by-regexp (regexp)
+  "Filter `bookmark-alist' with bookmarks matching REGEXP and rebuild list."
   (let ((bookmark-alist (bookmarkp-filtered-alist-by-regexp-only regexp))
         (bookmarkp-bmenu-called-from-inside-flag t))
     (bookmark-bmenu-list "% Bookmark+ Filtered by regexp" 'filteredp)))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-search ()
+  "Incremental search of bookmarks matching `bookmarkp-search-pattern'."
   (interactive)
   (unwind-protect
        (progn
@@ -1981,6 +1985,7 @@ Try to follow position of last bookmark in menu-list."
     (bookmarkp-bmenu-cancel-search)))
 
 (defun bookmarkp-bmenu-cancel-search ()
+  "Cancel timer used for searching in bookmarks."
   (cancel-timer bookmarkp-search-timer)
   (setq bookmarkp-search-timer nil))
 
