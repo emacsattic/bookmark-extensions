@@ -69,6 +69,7 @@
 ;; `bookmarkp-bmenu-sort-by-visit-frequency'
 ;; `bookmarkp-bmenu-sort-by-last-time-visited'
 ;; `bookmarkp-bmenu-sort-alphabetically'
+;; `bookmarkp-bmenu-search'
 ;; `bookmarkp-bmenu-edit-bookmark'
 ;; `bookmarkp-bmenu-quit'
 ;; `bookmarkp-bmenu-list-only-file-bookmarks'
@@ -142,6 +143,11 @@
 ;; `bookmarkp-sort-p-1'
 ;; `bookmarkp-bmenu-maybe-sort'
 ;; `bookmarkp-bmenu-sort-1'
+;; `bookmarkp-bmenu-goto-bookmark-named'
+;; `bookmarkp-read-search-input'
+;; `bookmarkp-filtered-alist-by-regexp-only'
+;; `bookmarkp-bmenu-filter-alist-by-regexp'
+;; `bookmarkp-bmenu-cancel-search'
 ;; `bookmarkp-bmenu-propertize-item'
 ;; `bookmarkp-bmenu-unmark-all-1'
 ;; `bookmarkp-bmenu-unmark-all-2'
@@ -212,6 +218,7 @@
 ;;  * Functions defined here for emacs versions < 23
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-function :prefix "^bookmarkp-")
 ;; `bookmarkp-menu-jump-other-window'
+;; `bookmarkp-save'
 
 ;;  * Internal variables defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "bookmarkp")
@@ -223,6 +230,8 @@
 ;; `bookmarkp-latest-sorted-alist'
 ;; `bookmarkp-bmenu-called-from-inside-flag'
 ;; `bookmarkp-bmenu-reverse-sort-p'
+;; `bookmarkp-search-pattern'
+;; `bookmarkp-search-timer'
 
 ;;  ***** NOTE: The following functions defined in `bookmark.el'
 ;;              have been REDEFINED OR ADVISED HERE for emacs versions < 23:
@@ -237,7 +246,6 @@
 ;; `bookmark-handle-bookmark'
 ;; `bookmark-maybe-message'
 ;; `bookmark-maybe-load-default-file'
-;; `bookmark-save'
 
 ;;  ***** NOTE: The following functions defined in `info.el'
 ;;              have been REDEFINED HERE (Emacs 20-22):
@@ -399,7 +407,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.24")
+(defconst bookmarkp-version-number "2.5.25")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1948,16 +1956,15 @@ Try to follow position of last bookmark in menu-list."
                             (concat (propertize "Pattern: " 'face '((:foreground "cyan")))
                                     bookmarkp-search-pattern)
                             (concat "Pattern: " bookmarkp-search-pattern))))
-          (when (not (equal char ""))
-            (case char
-              (?\r (throw 'break nil))
-              (?\d (pop tmp-list)
-                   (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
-                   (throw 'continue nil))
-              (t
-               (push (text-char-description char) tmp-list)
-               (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
-               (throw 'continue nil)))))))))
+          (case char
+            (?\r (throw 'break nil))
+            (?\d (pop tmp-list)
+                 (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
+                 (throw 'continue nil))
+            (t
+             (push (text-char-description char) tmp-list)
+             (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
+             (throw 'continue nil))))))))
 
 
 (defun bookmarkp-filtered-alist-by-regexp-only (regexp)
