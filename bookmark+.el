@@ -407,7 +407,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.25")
+(defconst bookmarkp-version-number "2.5.26")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1942,23 +1942,26 @@ Try to follow position of last bookmark in menu-list."
     (bookmarkp-bmenu-sort-1 'bookmarkp-alpha-more-p)))
 
 ;;; Searching in bookmarks
-
+;;
+;;  Narrow down `bookmark-alist' with only bookmarks matching regexp.
+;;  Display is updated at each time a character is entered in minibuffer.
+;;
 (defun bookmarkp-read-search-input ()
   "Read each keyboard input and add it `bookmarkp-search-pattern'."
-  (setq bookmarkp-search-pattern "")
+  (setq bookmarkp-search-pattern "")    ; Always reset pattern to empty string
   (let (char
         (tmp-list ()))
     (catch 'break
       (while 1
         (catch 'continue
-          (setq char (read-char
-                        (if (fboundp 'propertize)
+          (setq char (read-char         ; Read character from prompt
+                        (if (fboundp 'propertize) ; Emacs20
                             (concat (propertize "Pattern: " 'face '((:foreground "cyan")))
                                     bookmarkp-search-pattern)
                             (concat "Pattern: " bookmarkp-search-pattern))))
           (case char
-            (?\r (throw 'break nil))
-            (?\d (pop tmp-list)
+            ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break and exit code.
+            (?\d (pop tmp-list)         ; Delete last char of `bookmarkp-search-pattern' with DEL
                  (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
                  (throw 'continue nil))
             (t
@@ -1976,7 +1979,7 @@ Try to follow position of last bookmark in menu-list."
 (defun bookmarkp-bmenu-filter-alist-by-regexp (regexp)
   "Filter `bookmark-alist' with bookmarks matching REGEXP and rebuild list."
   (let ((bookmark-alist (bookmarkp-filtered-alist-by-regexp-only regexp))
-        (bookmarkp-bmenu-called-from-inside-flag t))
+        (bookmarkp-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
     (bookmark-bmenu-list "% Bookmark+ Filtered by regexp" 'filteredp)))
 
 ;;;###autoload
@@ -1986,7 +1989,7 @@ Try to follow position of last bookmark in menu-list."
   (unwind-protect
        (progn
          (setq bookmarkp-search-timer
-               (run-with-timer 1 1 #'(lambda ()
+               (run-with-timer 0 1 #'(lambda ()
                                        (bookmarkp-bmenu-filter-alist-by-regexp bookmarkp-search-pattern))))
          (bookmarkp-read-search-input))
     (bookmarkp-bmenu-cancel-search)))
