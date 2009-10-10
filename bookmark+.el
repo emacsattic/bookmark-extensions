@@ -407,7 +407,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.26")
+(defconst bookmarkp-version-number "2.5.27")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1909,11 +1909,6 @@ Try to follow position of last bookmark in menu-list."
       (unless batch
         (bookmark-bmenu-surreptitiously-rebuild-list)
         (bookmarkp-bmenu-goto-bookmark-named bmk)))))
-        ;; (goto-char (point-min))
-        ;; (bookmark-bmenu-check-position)
-        ;; (while (not (equal bmk (bookmark-bmenu-bookmark)))
-        ;;   (forward-line 1))
-        ;; (forward-line 0)))))
 
 (defun bookmarkp-bmenu-goto-bookmark-named (name)
   "Go to the first bookmark whose name matches NAME."
@@ -1980,6 +1975,7 @@ Try to follow position of last bookmark in menu-list."
   "Filter `bookmark-alist' with bookmarks matching REGEXP and rebuild list."
   (let ((bookmark-alist (bookmarkp-filtered-alist-by-regexp-only regexp))
         (bookmarkp-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Filtered by regexp" 'filteredp)))
 
 ;;;###autoload
