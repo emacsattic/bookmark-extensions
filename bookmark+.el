@@ -120,6 +120,7 @@
 ;; `bookmarkp-bookmark-name-length-max'
 ;; `bookmarkp-bmenu-sort-function'
 ;; `bookmarkp-use-development-setting'
+;; `bookmarkp-search-prompt'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
@@ -140,6 +141,7 @@
 ;; `bookmarkp-increment-visit'
 ;; `bookmarkp-current-sec-time'
 ;; `bookmarkp-add-or-update-time'
+;; `bookmarkp-update-time-and-increment-visits'
 ;; `bookmarkp-sort-p-1'
 ;; `bookmarkp-bmenu-maybe-sort'
 ;; `bookmarkp-bmenu-sort-1'
@@ -407,7 +409,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.30")
+(defconst bookmarkp-version-number "2.5.31")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1295,8 +1297,7 @@ Returns non-nil if on a line with a bookmark and
   "Helper function for `bookmark-jump(-other-window)'.
 BOOKMARK is a bookmark name or a bookmark record.
 DISPLAY-FUNCTION is the function that displays the bookmark."
-  (bookmarkp-increment-visit bookmark)     ; Increment visit entry.
-  (bookmarkp-add-or-update-time bookmark)  ; Update time entry.
+  (bookmarkp-update-time-and-increment-visits bookmark)
   (setq bookmarkp-jump-display-function  display-function)
   (bookmark-handle-bookmark bookmark)
   (let ((win  (get-buffer-window (current-buffer) 0)))
@@ -1812,11 +1813,7 @@ If bmk have no visits entry, add one with value 0."
   (let ((cur-val (bookmark-prop-get bmk 'visits)))
     (if cur-val
         (bookmark-prop-set bmk 'visits (1+ cur-val))
-        (bookmark-prop-set bmk 'visits 0))
-    (unless batch
-      (setq bookmarkp-bmenu-called-from-inside-flag t)
-      (bookmark-bmenu-surreptitiously-rebuild-list))
-    (bookmarkp-maybe-save-bookmark)))
+        (bookmark-prop-set bmk 'visits 0))))
 
 (defun bookmarkp-current-sec-time ()
   "Return current time in seconds.
@@ -1829,12 +1826,18 @@ For compatibility with older emacs."
 (defun bookmarkp-add-or-update-time (bmk &optional batch)
   "Update time entry of bmk.
 If bmk have no time entry, add one with current time."
-  (let* ((time (bookmarkp-current-sec-time)))
-    (bookmark-prop-set bmk 'time time)
-    (unless batch
-      (setq bookmarkp-bmenu-called-from-inside-flag t)
-      (bookmark-bmenu-surreptitiously-rebuild-list))
-    (bookmarkp-maybe-save-bookmark)))
+  (let ((time (bookmarkp-current-sec-time)))
+    (bookmark-prop-set bmk 'time time)))
+
+(defun bookmarkp-update-time-and-increment-visits (bmk &optional batch)
+  "Update time and increment visits entry of BMK.
+Unless batch arg is non--nil update display and increment save counter."
+  (bookmarkp-increment-visit bmk)
+  (bookmarkp-add-or-update-time bmk)
+  (unless batch
+    (setq bookmarkp-bmenu-called-from-inside-flag t)
+    (bookmark-bmenu-surreptitiously-rebuild-list))
+  (bookmarkp-maybe-save-bookmark)))
 
 ;; (find-epp (progn (bookmarkp-add-or-update-time "/home/thierry") (bookmark-get-bookmark "/home/thierry")))
 ;; (find-epp (progn (bookmarkp-add-or-update-time ".emacs.el") (bookmark-get-bookmark ".emacs.el")))
