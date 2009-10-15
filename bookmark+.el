@@ -407,7 +407,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.28")
+(defconst bookmarkp-version-number "2.5.29")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -649,6 +649,11 @@ Possible values are:
 (defcustom bookmarkp-use-development-setting nil
   "*Use experimental code of bookmark+ when non--nil."
   :type 'boolean :group 'bookmarkp)
+
+(defcustom bookmarkp-search-prompt (propertize "Pattern: " 'face '((:foreground "cyan")))
+  "*Prompt used for `bookmarkp-bmenu-search'.
+Don't use `propertize' if you want compatibility with emacs20."
+  :type 'string :group 'bookmarkp)
 
 
 ;;(@* "Internal Variables")
@@ -1935,18 +1940,14 @@ Try to follow position of last bookmark in menu-list."
 ;;  Display is updated at each time a character is entered in minibuffer.
 ;;
 (defun bookmarkp-read-search-input ()
-  "Read each keyboard input and add it `bookmarkp-search-pattern'."
+  "Read each keyboard input and add it to `bookmarkp-search-pattern'."
   (setq bookmarkp-search-pattern "")    ; Always reset pattern to empty string
   (let (char
         (tmp-list ()))
     (catch 'break
       (while 1
         (catch 'continue
-          (setq char (read-char         ; Read character from prompt
-                        (if (fboundp 'propertize) ; Emacs20
-                            (concat (propertize "Pattern: " 'face '((:foreground "cyan")))
-                                    bookmarkp-search-pattern)
-                            (concat "Pattern: " bookmarkp-search-pattern))))
+          (setq char (read-char (concat bookmarkp-search-prompt bookmarkp-search-pattern)))
           (case char
             ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break and exit code.
             (?\d (pop tmp-list)         ; Delete last char of `bookmarkp-search-pattern' with DEL
