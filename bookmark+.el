@@ -1837,7 +1837,7 @@ Unless batch arg is non--nil update display and increment save counter."
   (unless batch
     (setq bookmarkp-bmenu-called-from-inside-flag t)
     (bookmark-bmenu-surreptitiously-rebuild-list))
-  (bookmarkp-maybe-save-bookmark)))
+  (bookmarkp-maybe-save-bookmark))
 
 ;; (find-epp (progn (bookmarkp-add-or-update-time "/home/thierry") (bookmark-get-bookmark "/home/thierry")))
 ;; (find-epp (progn (bookmarkp-add-or-update-time ".emacs.el") (bookmark-get-bookmark ".emacs.el")))
