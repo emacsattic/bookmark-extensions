@@ -407,7 +407,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.29")
+(defconst bookmarkp-version-number "2.5.30")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1812,10 +1812,11 @@ If bmk have no visits entry, add one with value 0."
   (let ((cur-val (bookmark-prop-get bmk 'visits)))
     (if cur-val
         (bookmark-prop-set bmk 'visits (1+ cur-val))
-        (bookmark-prop-set bmk 'visits 0)))
-  (unless batch
-    (bookmark-bmenu-surreptitiously-rebuild-list))
-  (bookmarkp-maybe-save-bookmark))
+        (bookmark-prop-set bmk 'visits 0))
+    (unless batch
+      (setq bookmarkp-bmenu-called-from-inside-flag t)
+      (bookmark-bmenu-surreptitiously-rebuild-list))
+    (bookmarkp-maybe-save-bookmark)))
 
 (defun bookmarkp-current-sec-time ()
   "Return current time in seconds.
@@ -1829,10 +1830,11 @@ For compatibility with older emacs."
   "Update time entry of bmk.
 If bmk have no time entry, add one with current time."
   (let* ((time (bookmarkp-current-sec-time)))
-    (bookmark-prop-set bmk 'time time))
-  (unless batch
-    (bookmark-bmenu-surreptitiously-rebuild-list))
-  (bookmarkp-maybe-save-bookmark))
+    (bookmark-prop-set bmk 'time time)
+    (unless batch
+      (setq bookmarkp-bmenu-called-from-inside-flag t)
+      (bookmark-bmenu-surreptitiously-rebuild-list))
+    (bookmarkp-maybe-save-bookmark)))
 
 ;; (find-epp (progn (bookmarkp-add-or-update-time "/home/thierry") (bookmark-get-bookmark "/home/thierry")))
 ;; (find-epp (progn (bookmarkp-add-or-update-time ".emacs.el") (bookmark-get-bookmark ".emacs.el")))
