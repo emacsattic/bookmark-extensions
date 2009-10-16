@@ -409,7 +409,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.32")
+(defconst bookmarkp-version-number "2.5.33")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1744,31 +1744,32 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
 ;; 2. Update `bookmarkp-latest-bookmark-alist' to reflect deletion.
 ;;
 ;;;###autoload
-(defun bookmark-bmenu-execute-deletions ()
+(defun bookmark-bmenu-execute-deletions (&optional markedp)
   "Delete bookmarks marked with \\<Buffer-menu-mode-map>\\[Buffer-menu-delete] commands."
-  (interactive)
-  (message "Deleting bookmarks...")
-  (let ((o-point (point))
-        (o-str   (unless (looking-at "^D") (bookmark-bmenu-bookmark)))
-        (count 0))
-    (goto-char (point-min))
-    (forward-line 2)
-    (while (re-search-forward "^D" (point-max) t)
-      (let ((bmk (bookmark-bmenu-bookmark))) 
-        (bookmark-delete bmk 'batch) ; pass BATCH arg
-        (setq bookmarkp-latest-bookmark-alist
-              (delete (assoc bmk bookmarkp-latest-bookmark-alist)
-                      bookmarkp-latest-bookmark-alist))
-        (setq count (1+ count))))
-    (setq bookmarkp-bmenu-called-from-inside-flag t)
-    (bookmark-bmenu-surreptitiously-rebuild-list)
-    (if o-str
-        (bookmarkp-bmenu-goto-bookmark-named o-str)
-        (goto-char o-point) (beginning-of-line))
-    (if (> count 0)
-        (message "Deleting %s bookmarks...done" count)
-        (message "Nothing to delete here"))))
-
+  (interactive "P")
+  (when (or (not markedp) (yes-or-no-p "Delete bookmarks marked `>' (not `D') "))
+    (let* ((o-point    (point))
+           (which-mark (if markedp "^>" "^D"))
+           (o-str      (unless (looking-at which-mark) (bookmark-bmenu-bookmark)))
+           (count      0))
+      (message "Deleting bookmarks...")
+      (goto-char (point-min))
+      (forward-line 2)
+      (while (re-search-forward which-mark (point-max) t)
+        (let ((bmk (bookmark-bmenu-bookmark))) 
+          (bookmark-delete bmk 'batch) ; pass BATCH arg
+          (setq bookmarkp-latest-bookmark-alist
+                (delete (assoc bmk bookmarkp-latest-bookmark-alist)
+                        bookmarkp-latest-bookmark-alist))
+          (setq count (1+ count))))
+      (setq bookmarkp-bmenu-called-from-inside-flag t)
+      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (if o-str
+          (bookmarkp-bmenu-goto-bookmark-named o-str)
+          (goto-char o-point) (beginning-of-line))
+      (if (> count 0)
+          (message "Deleting %s bookmarks...done" count)
+          (message "Nothing to delete here")))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
