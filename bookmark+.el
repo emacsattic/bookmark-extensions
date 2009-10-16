@@ -409,7 +409,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.31")
+(defconst bookmarkp-version-number "2.5.32")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1807,7 +1807,7 @@ BOOKMARK-NAME is the current (old) name of the bookmark to be renamed."
       (bookmarkp-maybe-save-bookmark)
       (list new-name new-filename))))
 
-(defun bookmarkp-increment-visit (bmk &optional batch)
+(defun bookmarkp-increment-visits (bmk)
   "Increment visits entry of bmk.
 If bmk have no visits entry, add one with value 0."
   (let ((cur-val (bookmark-prop-get bmk 'visits)))
@@ -1823,7 +1823,7 @@ For compatibility with older emacs."
         (float-time)
         (+ (* (float (nth 0 ct)) (expt 2 16)) (nth 1 ct)))))
 
-(defun bookmarkp-add-or-update-time (bmk &optional batch)
+(defun bookmarkp-add-or-update-time (bmk)
   "Update time entry of bmk.
 If bmk have no time entry, add one with current time."
   (let ((time (bookmarkp-current-sec-time)))
@@ -1832,7 +1832,7 @@ If bmk have no time entry, add one with current time."
 (defun bookmarkp-update-time-and-increment-visits (bmk &optional batch)
   "Update time and increment visits entry of BMK.
 Unless batch arg is non--nil update display and increment save counter."
-  (bookmarkp-increment-visit bmk)
+  (bookmarkp-increment-visits bmk)
   (bookmarkp-add-or-update-time bmk)
   (unless batch
     (setq bookmarkp-bmenu-called-from-inside-flag t)
