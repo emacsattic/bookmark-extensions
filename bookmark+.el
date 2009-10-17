@@ -409,7 +409,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.35")
+(defconst bookmarkp-version-number "2.5.36")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -656,6 +656,10 @@ Possible values are:
   "*Prompt used for `bookmarkp-bmenu-search'.
 Don't use `propertize' if you want compatibility with emacs20."
   :type 'string :group 'bookmarkp)
+
+(defcustom bookmarkp-search-delay 0.6
+  "*Display when searching bookmarks is updated all `bookmarkp-search-delay' seconds."
+  :type 'integer :group 'bookmarkp)
 
 
 ;;(@* "Internal Variables")
@@ -1986,8 +1990,9 @@ Try to follow position of last bookmark in menu-list."
   (unwind-protect
        (progn
          (setq bookmarkp-search-timer
-               (run-with-timer 0 1 #'(lambda ()
-                                       (bookmarkp-bmenu-filter-alist-by-regexp bookmarkp-search-pattern))))
+               (run-with-timer 0 bookmarkp-search-delay
+                               #'(lambda ()
+                                   (bookmarkp-bmenu-filter-alist-by-regexp bookmarkp-search-pattern))))
          (bookmarkp-read-search-input))
     (bookmarkp-bmenu-cancel-search)))
 
