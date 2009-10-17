@@ -409,7 +409,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.34")
+(defconst bookmarkp-version-number "2.5.35")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1661,8 +1661,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
 `bookmarkp-latest-bookmark-alist' is not reset to `bookmark-alist'."
   (interactive)
   (bookmark-maybe-load-default-file)
-  (unless bookmarkp-bmenu-called-from-inside-flag
-    (setq bookmarkp-bookmark-marked-list nil))
+  (unless bookmarkp-bmenu-called-from-inside-flag (setq bookmarkp-bookmark-marked-list nil))
   (unless filteredp (setq bookmarkp-latest-bookmark-alist bookmark-alist))
   (if (interactive-p)
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
@@ -1762,14 +1761,15 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
                   (delete (assoc bmk bookmarkp-latest-bookmark-alist)
                           bookmarkp-latest-bookmark-alist))
             (setq count (1+ count))))
-        (setq bookmarkp-bmenu-called-from-inside-flag t)
-        (bookmark-bmenu-surreptitiously-rebuild-list)
+        (if (> count 0)
+            (progn
+              (setq bookmarkp-bmenu-called-from-inside-flag t)
+              (bookmark-bmenu-surreptitiously-rebuild-list)
+              (message "Deleting %s bookmarks...done" count))
+            (message "Nothing to delete here"))
         (if o-str
             (bookmarkp-bmenu-goto-bookmark-named o-str)
-            (goto-char o-point) (beginning-of-line))
-        (if (> count 0)
-            (message "Deleting %s bookmarks...done" count)
-            (message "Nothing to delete here")))
+            (goto-char o-point) (beginning-of-line)))
       (message "OK, nothing deleted")))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
