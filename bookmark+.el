@@ -121,6 +121,7 @@
 ;; `bookmarkp-bmenu-sort-function'
 ;; `bookmarkp-use-development-setting'
 ;; `bookmarkp-search-prompt'
+;; `bookmarkp-search-delay'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
@@ -138,7 +139,7 @@
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "bookmarkp")
 ;; `bookmarkp-maybe-save-bookmark'
 ;; `bookmarkp-edit-bookmark'
-;; `bookmarkp-increment-visit'
+;; `bookmarkp-increment-visits'
 ;; `bookmarkp-current-sec-time'
 ;; `bookmarkp-add-or-update-time'
 ;; `bookmarkp-update-time-and-increment-visits'
