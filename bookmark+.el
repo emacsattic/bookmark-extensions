@@ -409,7 +409,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.36")
+(defconst bookmarkp-version-number "2.5.37")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1958,7 +1958,9 @@ Try to follow position of last bookmark in menu-list."
     (catch 'break
       (while 1
         (catch 'continue
-          (setq char (read-char (concat bookmarkp-search-prompt bookmarkp-search-pattern)))
+          (condition-case nil
+              (setq char (read-char (concat bookmarkp-search-prompt bookmarkp-search-pattern)))
+            (error (throw 'break nil)))
           (case char
             ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break and exit code.
             (?\d (pop tmp-list)         ; Delete last char of `bookmarkp-search-pattern' with DEL
