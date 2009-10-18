@@ -410,7 +410,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.37")
+(defconst bookmarkp-version-number "2.5.38")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1993,7 +1993,7 @@ Try to follow position of last bookmark in menu-list."
   (unwind-protect
        (progn
          (setq bookmarkp-search-timer
-               (run-with-timer 0 bookmarkp-search-delay
+               (run-with-idle-timer 0 bookmarkp-search-delay
                                #'(lambda ()
                                    (bookmarkp-bmenu-filter-alist-by-regexp bookmarkp-search-pattern))))
          (bookmarkp-read-search-input))
