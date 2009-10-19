@@ -410,7 +410,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.39")
+(defconst bookmarkp-version-number "2.5.40")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -661,6 +661,11 @@ Don't use `propertize' if you want compatibility with emacs20."
 (defcustom bookmarkp-search-delay 0.6
   "*Display when searching bookmarks is updated all `bookmarkp-search-delay' seconds."
   :type 'integer :group 'bookmarkp)
+
+(defcustom bookmarkp-search-start-with-whole-list t
+  "Always start searching a bookmark with the whole bookmark-alist.
+Otherwise use the list currently displayed"
+  :type 'boolean :group 'bookmarkp)
 
 
 ;;(@* "Internal Variables")
@@ -1986,12 +1991,15 @@ Try to follow position of last bookmark in menu-list."
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Filtered by regexp" 'filteredp)))
 
+
 ;;;###autoload
 (defun bookmarkp-bmenu-search ()
   "Incremental search of bookmarks matching `bookmarkp-search-pattern'.
 We make search in the current list displayed i.e `bookmarkp-latest-bookmark-alist'."
   (interactive)
-  (lexical-let ((bmk-list bookmarkp-latest-bookmark-alist))
+  (lexical-let ((bmk-list (if bookmarkp-search-start-with-whole-list
+                              bookmark-alist
+                              bookmarkp-latest-bookmark-alist)))
     (unwind-protect
          (progn
            (setq bookmarkp-search-timer
