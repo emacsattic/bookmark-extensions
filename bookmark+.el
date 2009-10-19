@@ -410,7 +410,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.38")
+(defconst bookmarkp-version-number "2.5.39")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1973,31 +1973,33 @@ Try to follow position of last bookmark in menu-list."
              (throw 'continue nil))))))))
 
 
-(defun bookmarkp-filtered-alist-by-regexp-only (regexp)
-  "Return a filtered `bookmark-alist' with bookmarks matching REGEXP."
-  (loop for i in bookmark-alist
+(defun bookmarkp-filtered-alist-by-regexp-only (regexp alist)
+  "Return a filtered ALIST with (only) bookmarks matching REGEXP."
+  (loop for i in alist
      when (string-match regexp (car i)) collect i into new
      finally return new))
 
-(defun bookmarkp-bmenu-filter-alist-by-regexp (regexp)
-  "Filter `bookmark-alist' with bookmarks matching REGEXP and rebuild list."
-  (let ((bookmark-alist (bookmarkp-filtered-alist-by-regexp-only regexp))
+(defun bookmarkp-bmenu-filter-alist-by-regexp (regexp alist)
+  "Display (only) bookmarks of ALIST matching REGEXP."
+  (let ((bookmark-alist (bookmarkp-filtered-alist-by-regexp-only regexp alist))
         (bookmarkp-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Filtered by regexp" 'filteredp)))
 
 ;;;###autoload
 (defun bookmarkp-bmenu-search ()
-  "Incremental search of bookmarks matching `bookmarkp-search-pattern'."
+  "Incremental search of bookmarks matching `bookmarkp-search-pattern'.
+We make search in the current list displayed i.e `bookmarkp-latest-bookmark-alist'."
   (interactive)
-  (unwind-protect
-       (progn
-         (setq bookmarkp-search-timer
-               (run-with-idle-timer 0 bookmarkp-search-delay
-                               #'(lambda ()
-                                   (bookmarkp-bmenu-filter-alist-by-regexp bookmarkp-search-pattern))))
-         (bookmarkp-read-search-input))
-    (bookmarkp-bmenu-cancel-search)))
+  (lexical-let ((bmk-list bookmarkp-latest-bookmark-alist))
+    (unwind-protect
+         (progn
+           (setq bookmarkp-search-timer
+                 (run-with-idle-timer 0 bookmarkp-search-delay
+                                      #'(lambda ()
+                                          (bookmarkp-bmenu-filter-alist-by-regexp bookmarkp-search-pattern bmk-list))))
+           (bookmarkp-read-search-input))
+      (bookmarkp-bmenu-cancel-search))))
 
 (defun bookmarkp-bmenu-cancel-search ()
   "Cancel timer used for searching in bookmarks."
