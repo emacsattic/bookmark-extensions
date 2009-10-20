@@ -410,7 +410,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.41")
+(defconst bookmarkp-version-number "2.5.42")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -653,9 +653,8 @@ Possible values are:
   "*Use experimental code of bookmark+ when non--nil."
   :type 'boolean :group 'bookmarkp)
 
-(defcustom bookmarkp-search-prompt (propertize "Pattern: " 'face '((:foreground "cyan")))
-  "*Prompt used for `bookmarkp-bmenu-search'.
-Don't use `propertize' if you want compatibility with emacs20."
+(defcustom bookmarkp-search-prompt "Pattern: "
+  "*Prompt used for `bookmarkp-bmenu-search'."
   :type 'string :group 'bookmarkp)
 
 (defcustom bookmarkp-search-delay 0.6
@@ -1955,13 +1954,16 @@ Try to follow position of last bookmark in menu-list."
 (defun bookmarkp-read-search-input ()
   "Read each keyboard input and add it to `bookmarkp-search-pattern'."
   (setq bookmarkp-search-pattern "")    ; Always reset pattern to empty string
-  (let (char
-        (tmp-list ()))
+  (let ((tmp-list ())
+        (prompt   (if (fboundp 'propertize)
+                      (propertize bookmarkp-search-prompt 'face '((:foreground "cyan")))
+                      bookmarkp-search-prompt))
+        char)
     (catch 'break
       (while 1
         (catch 'continue
           (condition-case nil
-              (setq char (read-char (concat bookmarkp-search-prompt bookmarkp-search-pattern)))
+              (setq char (read-char (concat prompt bookmarkp-search-pattern)))
             (error (throw 'break nil)))
           (case char
             ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break and exit code.
@@ -1994,9 +1996,7 @@ Try to follow position of last bookmark in menu-list."
 We make search in the current list displayed i.e `bookmarkp-latest-bookmark-alist'.
 If a prefix arg is given search in the whole `bookmark-alist'."
   (interactive "P")
-  (lexical-let ((bmk-list (if all
-                              bookmark-alist
-                              bookmarkp-latest-bookmark-alist)))
+  (lexical-let ((bmk-list (if all bookmark-alist bookmarkp-latest-bookmark-alist)))
     (unwind-protect
          (progn
            (setq bookmarkp-search-timer
