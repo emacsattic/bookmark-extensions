@@ -410,7 +410,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.42")
+(defconst bookmarkp-version-number "2.5.43")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -683,9 +683,6 @@ Possible values are:
 
 (defvar bookmarkp-bmenu-before-hide-marked-list nil
   "Store the list like it was before hiding marked bookmarks.")
-
-(defvar bookmarkp-latest-sorted-alist nil
-  "Store the last sorted alist in use on current display.")
 
 (defvar bookmarkp-bmenu-called-from-inside-flag nil
   "Signal `bookmark-bmenu-list' is called from bmenu-list buffer.")
@@ -1191,8 +1188,9 @@ Optional BACKUP means move up."
 ;; 
 (defun bookmark-bmenu-bookmark ()
   "Return a string which is bookmark of this line."
-  (let ((pos (- (bookmarkp-line-number-at-pos) 3)))
-    (car (nth pos bookmarkp-latest-sorted-alist))))
+  (save-excursion
+    (forward-line 0) (forward-char 3)
+    (car (last (get-text-property (point) 'help-echo)))))
 
 
 ;;; Persistent `bookmark-alist'
@@ -1890,13 +1888,12 @@ Also: S1 < S2 if S1 was visited but S2 was not.
         Do nothing if `bookmarkp-bmenu-sort-function' is nil."
   (let ((bmk-alist (or alist (copy-sequence bookmark-alist))))
     (when (and bmk-alist bookmarkp-bmenu-sort-function)
-      (setq bookmarkp-latest-sorted-alist
-            (sort
-             bmk-alist
-             (if bookmarkp-bmenu-reverse-sort-p
-                 (lambda (a b)
-                   (not (funcall bookmarkp-bmenu-sort-function a b)))
-                 bookmarkp-bmenu-sort-function))))))
+      (sort
+       bmk-alist
+       (if bookmarkp-bmenu-reverse-sort-p
+           (lambda (a b)
+             (not (funcall bookmarkp-bmenu-sort-function a b)))
+           bookmarkp-bmenu-sort-function)))))
 
 
 (defun bookmarkp-bmenu-sort-1 (method &optional batch)
@@ -2052,34 +2049,34 @@ If a prefix arg is given search in the whole `bookmark-alist'."
     (add-text-properties
      start  end
      (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
-            '(mouse-face highlight follow-link t face bookmarkp-info
-              help-echo "mouse-2: Go to this Info buffer"))
+            `(mouse-face highlight follow-link t face bookmarkp-info
+              help-echo (format "mouse-2: Go to this Info bookmark: %s" ,bookmark-name)))
            (isgnus               ; Gnus
-            '(mouse-face highlight follow-link t face bookmarkp-gnus
-              help-echo "mouse-2: Go to this Gnus buffer"))
+            `(mouse-face highlight follow-link t face bookmarkp-gnus
+              help-echo (format "mouse-2: Go to this Gnus bookmark: %s" ,bookmark-name)))
            (isw3m                ; W3m
             `(mouse-face highlight follow-link t face bookmarkp-w3m
-                         help-echo (format "mouse-2 Goto URL: %s",isfile)))
+                         help-echo (format "mouse-2 Goto w3m bookmark: %s" ,bookmark-name)))
            ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
             `(mouse-face highlight follow-link t face bookmarkp-su-or-sudo
-                         help-echo (format "mouse-2 Goto file: %s",isfile)))
+                         help-echo (format "mouse-2 Goto su/sudo bookmark: %s",bookmark-name)))
            ((and isremote (not issu)) ; Remote file (ssh, ftp)
             `(mouse-face highlight follow-link t face bookmarkp-remote-file
-                         help-echo (format "mouse-2 Goto remote file: %s",isfile)))
+                         help-echo (format "mouse-2 Goto remote bookmark: %s",bookmark-name)))
            ((and isfile (file-directory-p isfile)) ; Local directory
             `(mouse-face highlight follow-link t face bookmarkp-local-directory
-                         help-echo (format "mouse-2 Goto dired: %s",isfile)))
+                         help-echo (format "mouse-2 Goto dired bookmark: %s",bookmark-name)))
            ((and isfile (file-exists-p isfile) isregion) ; Local file with region
             `(mouse-face highlight follow-link t face
                          bookmarkp-local-file-with-region
-                         help-echo (format "mouse-2 Find region in file: %s",isfile)))
+                         help-echo (format "mouse-2 Find bookmark with region : %s" ,bookmark-name)))
            ((and isfile (file-exists-p isfile)) ; Local file without region
             `(mouse-face highlight follow-link t face
                          bookmarkp-local-file-without-region
-                         help-echo (format "mouse-2 Goto file: %s",isfile)))
+                         help-echo (format "mouse-2 Goto bookmark file: %s",bookmark-name)))
            ((and isbuf (if isfile (not (file-exists-p isfile)) (not isfile))) ; No filename
             `(mouse-face highlight follow-link t face bookmarkp-non-file
-                         help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))))
+                         help-echo (format "mouse-2 Goto non--file bookmark: %s",bookmark-name)))))))
 
 
 ;;;###autoload
