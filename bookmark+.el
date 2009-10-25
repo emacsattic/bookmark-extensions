@@ -410,7 +410,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.43")
+(defconst bookmarkp-version-number "2.5.44")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1184,13 +1184,13 @@ Optional BACKUP means move up."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Improve performance by using `bookmarkp-latest-sorted-alist'.
+;; Get bookmark name from `bookmarkp-bookmark-name' property of bookmark.
 ;; 
 (defun bookmark-bmenu-bookmark ()
-  "Return a string which is bookmark of this line."
+  "Return the name of the bookmark on this line."
   (save-excursion
     (forward-line 0) (forward-char 3)
-    (car (last (get-text-property (point) 'help-echo)))))
+    (get-text-property (point) 'bookmarkp-bookmark-name)))
 
 
 ;;; Persistent `bookmark-alist'
@@ -2046,37 +2046,38 @@ If a prefix arg is given search in the whole `bookmark-alist'."
          (ishandler     (bookmark-get-handler bookmark-name))
          (isgnus        (bookmarkp-gnus-bookmark-p bookmark-name))
          (isbuf         (bookmarkp-get-buffer-name bookmark-name)))
+    (put-text-property start end 'bookmarkp-bookmark-name bookmark-name)
     (add-text-properties
      start  end
      (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
-            `(mouse-face highlight follow-link t face bookmarkp-info
-              help-echo (format "mouse-2: Go to this Info bookmark: %s" ,bookmark-name)))
+            '(mouse-face highlight follow-link t face bookmarkp-info
+              help-echo "mouse-2: Go to this Info buffer"))
            (isgnus               ; Gnus
-            `(mouse-face highlight follow-link t face bookmarkp-gnus
-              help-echo (format "mouse-2: Go to this Gnus bookmark: %s" ,bookmark-name)))
+            '(mouse-face highlight follow-link t face bookmarkp-gnus
+              help-echo "mouse-2: Go to this Gnus buffer"))
            (isw3m                ; W3m
             `(mouse-face highlight follow-link t face bookmarkp-w3m
-                         help-echo (format "mouse-2 Goto w3m bookmark: %s" ,bookmark-name)))
+                         help-echo (format "mouse-2 Goto URL: %s",isfile)))
            ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
             `(mouse-face highlight follow-link t face bookmarkp-su-or-sudo
-                         help-echo (format "mouse-2 Goto su/sudo bookmark: %s",bookmark-name)))
+                         help-echo (format "mouse-2 Goto file: %s",isfile)))
            ((and isremote (not issu)) ; Remote file (ssh, ftp)
             `(mouse-face highlight follow-link t face bookmarkp-remote-file
-                         help-echo (format "mouse-2 Goto remote bookmark: %s",bookmark-name)))
+                         help-echo (format "mouse-2 Goto remote file: %s",isfile)))
            ((and isfile (file-directory-p isfile)) ; Local directory
             `(mouse-face highlight follow-link t face bookmarkp-local-directory
-                         help-echo (format "mouse-2 Goto dired bookmark: %s",bookmark-name)))
+                         help-echo (format "mouse-2 Goto dired: %s",isfile)))
            ((and isfile (file-exists-p isfile) isregion) ; Local file with region
             `(mouse-face highlight follow-link t face
                          bookmarkp-local-file-with-region
-                         help-echo (format "mouse-2 Find bookmark with region : %s" ,bookmark-name)))
+                         help-echo (format "mouse-2 Find region in file: %s",isfile)))
            ((and isfile (file-exists-p isfile)) ; Local file without region
             `(mouse-face highlight follow-link t face
                          bookmarkp-local-file-without-region
-                         help-echo (format "mouse-2 Goto bookmark file: %s",bookmark-name)))
+                         help-echo (format "mouse-2 Goto file: %s",isfile)))
            ((and isbuf (if isfile (not (file-exists-p isfile)) (not isfile))) ; No filename
             `(mouse-face highlight follow-link t face bookmarkp-non-file
-                         help-echo (format "mouse-2 Goto non--file bookmark: %s",bookmark-name)))))))
+                         help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))))
 
 
 ;;;###autoload
