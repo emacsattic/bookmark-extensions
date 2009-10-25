@@ -410,7 +410,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.45")
+(defconst bookmarkp-version-number "2.5.46")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1078,8 +1078,7 @@ only the first instance of a bookmark with that name from the list of
 bookmarks.)"
   (interactive (list nil current-prefix-arg))
   (bookmark-maybe-load-default-file)
-  (setq bookmark-current-point   (point)
-        bookmark-current-buffer  (current-buffer))
+  (setq bookmark-current-buffer  (current-buffer))
   (save-excursion (skip-chars-forward " ") (setq bookmark-yank-point (point)))
   (let* ((record  (bookmark-make-record))
          (regionp (and transient-mark-mode mark-active (not (eq (mark) (point)))))
@@ -1118,9 +1117,8 @@ bookmarks.)"
     (when (string-equal bname "") (setq bname  defname))
     (bookmark-store bname (cdr record) parg)
     ;; Ask for an annotation buffer for this bookmark
-    (if bookmark-use-annotations
-        (bookmark-edit-annotation bname)
-      (goto-char bookmark-current-point))))
+    (when bookmark-use-annotations
+      (bookmark-edit-annotation bname))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1505,7 +1503,6 @@ candidate."
   (interactive (list (bookmark-completing-read "Old bookmark name")))
   (bookmark-maybe-historicize-string old)
   (bookmark-maybe-load-default-file)
-  (setq bookmark-current-point (point))
   (save-excursion (skip-chars-forward " ") (setq bookmark-yank-point (point)))
   (setq bookmark-current-buffer (current-buffer))
   (let ((newname  (or new  (read-from-minibuffer
