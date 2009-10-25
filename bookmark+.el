@@ -410,7 +410,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.44")
+(defconst bookmarkp-version-number "2.5.45")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2370,6 +2370,7 @@ If MARK is non--nil unmark only bookmarks with flag >."
   (with-current-buffer "*Bookmark List*"
     (save-excursion
       (goto-char (point-min))
+      (bookmark-bmenu-check-position)
       (if (bookmarkp-current-list-have-marked-p)
           (while (not (eobp))
             (let ((bmk (bookmark-bmenu-bookmark)))
