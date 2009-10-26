@@ -1,25 +1,46 @@
 ;;; bookmark+.el - Extensions to standard library `bookmark.el'.
-;;
+
 ;; Filename: bookmark+.el
-;; Description: Extensions to standard library `bookmark.el'.
-;;
-;; Author: Drew Adams
-;;         Thierry Volpiatto
-;; Maintainer: Drew Adams
-;;             Thierry Volpiatto
+
+;; Author: Drew Adams, Thierry Volpiatto
+;; Maintainer: Thierry Volpiatto
+
 ;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
 ;; Copyright (C) 2009, Thierry Volpiatto, all rights reserved.
+
 ;; Created: Fri Sep 15 07:58:41 2000
-;;
-;; URL: http://www.emacswiki.org/cgi-bin/wiki/bookmark+.el
-;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; This file is NOT part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
+;; Floor, Boston, MA 02110-1301, USA.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; X-URL: http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
+
 ;; Keywords: bookmarks, placeholders, annotations, search, info, w3m, gnus
+
 ;; Compatibility: GNU Emacs: 20.x, 21.x, 22.x, 23.x
-;;
+
 ;; Features that might be required by this library:
-;;
+
 ;;   `bookmark', `ffap', `pp'.
-;;
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
@@ -27,36 +48,6 @@
 ;;    Extensions to standard library `bookmark.el'.
 ;;
 ;;    More description below.
-
-;;(@> "Index")
-;;
-;;  Index
-;;  -----
-;;
-;;  If you have library `linkd.el' and Emacs 22 or later, load
-;;  `linkd.el' and turn on `linkd-mode' now.  It lets you easily
-;;  navigate around the sections of this doc.  Linkd mode will
-;;  highlight this Index, as well as the cross-references and section
-;;  headings throughout this file.  You can get `linkd.el' here:
-;;  http://dto.freeshell.org/notebook/Linkd.html.
-;;
-;;  (@> "Things Defined Here")
-;;  (@> "Documentation")
-;;    (@> "Bookmark+ Features")
-;;    (@> "How To Use Bookmark+")
-;;    (@> "Compatibility with Vanilla Emacs (`bookmark.el')")
-;;    (@> "New Bookmark Structure")
-;;  (@> "Change log")
-;;  (@> "Keymaps")
-;;  (@> "Faces (Customizable)")
-;;  (@> "User Options (Customizable)")
-;;  (@> "Internal Variables")
-;;  (@> "Compatibility Code for Older Emacs Versions")
-;;  (@> "Core Replacements (`bookmark-*' except `bookmark-bmenu-*')")
-;;  (@> "Menu List Replacements (`bookmark-bmenu-*')")
-;;  (@> "Bookmark+ Functions (`bookmarkp-*')")
-
-;;(@* "Things Defined Here")
 ;;
 ;;  Things Defined Here
 ;;  -------------------
@@ -79,7 +70,6 @@
 ;; `bookmarkp-bmenu-list-only-gnus-bookmarks'
 ;; `bookmarkp-bmenu-list-only-region-bookmarks'
 ;; `bookmarkp-bmenu-show-all-bookmarks'
-;; `bookmarkp-bmenu-refresh-alist'
 ;; `bookmarkp-bmenu-mark-all-bookmarks'
 ;; `bookmarkp-bmenu-unmark-all-deletion-flags'
 ;; `bookmarkp-bmenu-unmark-all-non-deletion-flags'
@@ -88,7 +78,6 @@
 ;; `bookmarkp-bmenu-hide-marked'
 ;; `bookmarkp-bmenu-hide-unmarked'
 ;; `bookmarkp-bmenu-toggle-marks'
-;; `bookmarkp-fix-bookmark-alist-and-save'
 
 ;;  * Commands redefined here:(from `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "^bookmark-")
@@ -119,7 +108,6 @@
 ;; `bookmarkp-show-end-of-region'
 ;; `bookmarkp-bookmark-name-length-max'
 ;; `bookmarkp-bmenu-sort-function'
-;; `bookmarkp-use-development-setting'
 ;; `bookmarkp-search-prompt'
 ;; `bookmarkp-search-delay'
 
@@ -176,7 +164,6 @@
 ;; `bookmarkp-marked-bookmarks-only'
 ;; `bookmarkp-non-marked-bookmarks-only'
 ;; `bookmarkp-current-list-have-marked-p'
-;; `bookmarkp-dump-object-to-file'
 ;; `bookmarkp-remove-if'
 ;; `bookmarkp-remove-if-not'
 ;; `bookmarkp-replace-regexp-in-string'
@@ -221,7 +208,6 @@
 ;;  * Functions defined here for emacs versions < 23
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-function :prefix "^bookmarkp-")
 ;; `bookmarkp-menu-jump-other-window'
-;; `bookmarkp-save'
 
 ;;  * Internal variables defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "bookmarkp")
@@ -230,7 +216,6 @@
 ;; `bookmarkp-bookmark-marked-list'
 ;; `bookmarkp-bmenu-before-hide-unmarked-list'
 ;; `bookmarkp-bmenu-before-hide-marked-list'
-;; `bookmarkp-latest-sorted-alist'
 ;; `bookmarkp-bmenu-called-from-inside-flag'
 ;; `bookmarkp-bmenu-reverse-sort-p'
 ;; `bookmarkp-search-pattern'
@@ -248,7 +233,6 @@
 ;; `bookmark-jump-noselect'
 ;; `bookmark-handle-bookmark'
 ;; `bookmark-maybe-message'
-;; `bookmark-maybe-load-default-file'
 
 ;;  ***** NOTE: The following functions defined in `info.el'
 ;;              have been REDEFINED HERE (Emacs 20-22):
@@ -269,13 +253,11 @@
 
 ;;  *** END auto-documentation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;(@* "Documentation")
 ;;
 ;;  Documentation
 ;;  -------------
 ;;
-;;(@* "Bookmark+ Features")
+;;
 ;;  ** Bookmark+ Features **
 ;;
 ;;  In addition to the kinds of bookmarks provided by vanilla Emacs:
@@ -292,7 +274,7 @@
 ;;
 ;;    - Better bookmark relocation, if the contextual text changes.
 ;;
-;;(@* "How To Use Bookmark+")
+;;
 ;;  ** How To Use Bookmark+ **
 ;;
 ;;  Put this library in your `load-path'.
@@ -302,7 +284,7 @@
 ;;  current bookmark candidate during completion in Icicle mode (see
 ;;  Icicles: http://www.emacswiki.org/cgi-bin/wiki/Icicles).
 ;;
-;;(@* "Compatibility with Vanilla Emacs (`bookmark.el')")
+;;
 ;;  ** Compatibility with Vanilla Emacs (`bookmark.el') **
 ;;
 ;;  Library `bookmark+.el' is generally compatible with GNU Emacs
@@ -344,63 +326,21 @@
 ;;  Bottom line: Use `bookmark+.el' to access bookmarks created using
 ;;  `bookmark+.el'.
 ;;
-;;(@* "New Bookmark Structure")
+;;
 ;;  ** New Bookmark Structure **
 ;;
 ;;  The bookmark data structure, variable `bookmark-alist', has been
 ;;  enhanced to support the new bookmark types.  For a description of
 ;;  this enhanced structure, use `C-h v bookmark-alist'.
-
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Change log:
 ;;
-;;(@* "Change log")
-;;
-;; See the change log at: http://mercurial.intuxication.org/hg/bookmark-icicle-region/
-;;
-;; 2009/05/25 dadams
-;;     Added redefinition of bookmark-get-bookmark-record.
-;; 2008/10/16 dadams
-;;     bookmark-jump-other-window: Don't define it for Emacs 23+ (not needed).
-;; 2008/04/04 dadams
-;;     bookmark-jump-other-window: Updated wrt Emacs 22.2.
-;; 2007/10/07 dadams
-;;     Added: bookmark-completing-read, bookmark-delete, bookmark-insert(-location),
-;;            bookmark-jump, bookmark-relocate, bookmark-rename.
-;;     bookmark-jump-other-window: Use new bookmark-completing-read.
-;; 2007/07/13 dadams
-;;     Replaced Emacs version tests to reflect Emacs 22 release.
-;; 2006/03/08 dadams
-;;     bookmark-jump-other-window: Handle nil arg.
-;; 2005/05/17 dadams
-;;     Updated to work with Emacs 22.x.
-;; 2004/11/20 dadams
-;;     Refined to deal with Emacs 21 < 21.3.50 (soon to be 22.x)
-;; 2004/10/26 dadams
-;;     Different menu-bar command, depending on Emacs version.
-;; 2004/09/21 dadams
-;;     Only define bookmark-menu-jump-other-window if < Emacs 22.
+;; See the change log at: http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3, or (at your option)
-;; any later version.
-;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-;; Floor, Boston, MA 02110-1301, USA.
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+
 
 ;;; Code:
 
@@ -410,7 +350,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.46")
+(defconst bookmarkp-version-number "2.5.47")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -427,10 +367,8 @@
 (defvar Info-current-node)              ; Defined in `info.el'.
 (defvar Info-current-file)              ; Defined in `info.el'.
 
-;;;;;;;;;;;;;;;;;;;;;;
- 
-;;(@* "Keymaps")
-;;; Keymaps -------------------------------------------------------
+
+ ;;; Keymaps -------------------------------------------------------
 
 ;;;###autoload
 (define-key ctl-x-map "p" bookmark-map)
@@ -502,8 +440,6 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "g" 'bookmarkp-bmenu-refresh-alist)
-;;;###autoload
 (define-key bookmark-bmenu-mode-map "%" nil) ; Emacs20
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "%m" 'bookmarkp-bmenu-regexp-mark)
@@ -522,7 +458,6 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-show-all-bookmarks]\t- Show all bookmarks
 \\[bookmark-bmenu-toggle-filenames]\t- Toggle filenames
 \\[bookmarkp-bmenu-toggle-marks]\t- Toggle marks
-\\[bookmarkp-bmenu-refresh-alist]\t- Refresh current list
 \\[bookmarkp-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
 \\[bookmarkp-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
 \\[bookmarkp-bmenu-list-only-info-bookmarks]\t- List only Info bookmarks
@@ -540,8 +475,7 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-sort-by-last-time-visited]\t- Sort by last time visited (`C-u' to reverse)
 \\[bookmarkp-bmenu-sort-alphabetically]\t- Sort alphabetically (`C-u' to reverse)")
 
-
-;;(@* "Faces (Customizable)")
+
 ;;; Faces (Customizable) ---------------------------------------------
 
 (defface bookmarkp-gnus
@@ -588,8 +522,8 @@ bookmarks (`C-u' for local only)
     '((t (:foreground "yellow")))
   "*Face used for a bookmarked w3m url."
   :group 'bookmarkp)
- 
-;;(@* "User Options (Customizable)")
+ 
+
 ;;; User Options (Customizable) --------------------------------------
 
 (defgroup bookmark-plus nil
@@ -649,10 +583,6 @@ Possible values are:
 `bookmarkp-alpha-more-p' - sort alphabetically."
   :type '(choice (const :tag "None" nil) function) :group 'bookmarkp)
 
-(defcustom bookmarkp-use-development-setting nil
-  "*Use experimental code of bookmark+ when non--nil."
-  :type 'boolean :group 'bookmarkp)
-
 (defcustom bookmarkp-search-prompt "Pattern: "
   "*Prompt used for `bookmarkp-bmenu-search'."
   :type 'string :group 'bookmarkp)
@@ -662,8 +592,6 @@ Possible values are:
   :type 'integer :group 'bookmarkp)
 
 
-
-;;(@* "Internal Variables")
 ;;; Internal Variables --------------------------------------------------
 
 (defvar bookmarkp-jump-display-function nil
@@ -776,8 +704,8 @@ region is bookmarked, POS represents the region start position.
  GNUS-MESSAGE-ID is the identifier of a Gnus message.
 
 4. For a W3m bookmark, FILENAME is a W3m URL.")
-
-;;(@* "Compatibility Code for Older Emacs Versions")
+
+
 ;;; Compatibility Code for Older Emacs Versions ----------------------
 
 ;;;###autoload
@@ -955,8 +883,6 @@ See `bookmark-jump-other-window'."
     (when (>= baud-rate 9600) (apply 'message fmt args))))
 
 
-
-;;(@* "Core Replacements (`bookmark-*' except `bookmark-bmenu-*')")
 ;;; Core Replacements (`bookmark-*' except `bookmark-bmenu-*') -------
 
 
@@ -1190,84 +1116,6 @@ Optional BACKUP means move up."
     (forward-line 0) (forward-char 3)
     (get-text-property (point) 'bookmarkp-bookmark-name)))
 
-
-;;; Persistent `bookmark-alist'
-
-(when bookmarkp-use-development-setting
-  ;; REPLACES ORIGINAL in `bookmark.el'.
-  ;;
-  ;;
-  (defun bookmark-maybe-load-default-file ()
-    "Load bookmark-alist from compiled file."
-    (when (and (not bookmarks-already-loaded)
-               (null bookmark-alist))
-      (load "~/.emacs-bmk.elc")
-      (setq bookmarks-already-loaded t)))
-
-  ;; REPLACES ORIGINAL in `bookmark.el'.
-  ;;
-  ;;
-  (defun bookmark-save (&optional parg file)
-    "Save currently defined bookmarks.
-     Saves by default in the file defined by the variable
-     `bookmark-default-file'.  With a prefix arg, save it in file FILE
-     \(second argument\).
-     
-     If you are calling this from Lisp, the two arguments are PARG and
-     FILE, and if you just want it to write to the default file, then
-     pass no arguments.  Or pass in nil and FILE, and it will save in FILE
-     instead.  If you pass in one argument, and it is non-nil, then the
-     user will be interactively queried for a file to save in.
-     
-     When you want to load in the bookmarks from a file, use
-     \`bookmark-load\', \\[bookmark-load].  That function will prompt you
-     for a file, defaulting to the file defined by variable
-     `bookmark-default-file'."
-    (interactive "P")
-    (bookmark-maybe-load-default-file)
-    (cond
-      ((and (null parg) (null file))
-       ;;whether interactive or not, write to default file
-       (bookmark-write-file bookmark-default-file)
-       (bookmarkp-save))
-      ((and (null parg) file)
-       ;;whether interactive or not, write to given file
-       (bookmark-write-file file))
-      ((and parg (not file))
-       ;;have been called interactively w/ prefix arg
-       (let ((file (read-file-name "File to save bookmarks in: ")))
-         (bookmark-write-file file)))
-      (t ; someone called us with prefix-arg *and* a file, so just write to file
-       (bookmark-write-file file)))
-    ;; signal that we have synced the bookmark file by setting this to
-    ;; 0.  If there was an error at any point before, it will not get
-    ;; set, which is what we want.
-    (setq bookmark-alist-modification-count 0))
-
-  (defun bookmarkp-save ()
-    "Save bookmark-alist to a compiled file.
-     Warning:EXPERIMENTAL."
-    (bookmark-maybe-load-default-file)
-    (bookmarkp-dump-object-to-file 'bookmark-alist "~/.emacs-bmk.el")
-    (setq bookmark-alist-modification-count 0))
-
-  (defun bookmarkp-reload-file ()
-    "Reset `bookmark-alist' from `bookmark-default-file'."
-    (interactive)
-    (setq bookmark-alist nil)
-    (bookmark-load bookmark-default-file))
-
-  ;; REPLACES ORIGINAL in `bookmark.el'.
-  ;;
-  (defun bookmark-bmenu-save (&optional parg)
-    "Save the current list into a compiled file.
-   With a prefix arg, save to `bookmark-default-file'."
-    (interactive "P")
-    (save-excursion
-      (save-window-excursion
-        (if parg
-            (bookmark-save)
-            (bookmarkp-save))))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1610,8 +1458,8 @@ candidate.  In this way, you can delete multiple bookmarks."
           (file-error (message "Cannot write file `%s'" file)))
         (kill-buffer (current-buffer))
         (bookmark-maybe-message "Saving bookmarks to file `%s'...done" file)))))
-
-;;(@* "Menu List Replacements (`bookmark-bmenu-*')")
+
+
 ;;; Menu List Replacements (`bookmark-bmenu-*') ----------------------
 
 
@@ -1786,8 +1634,8 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
       (when (or (search-forward new-name (point-max) t)
                 (search-backward new-name (point-min) t))
         (beginning-of-line)))))
-
-;;(@* "Bookmark+ Functions (`bookmarkp-*')")
+
+
 ;;; Bookmark+ Functions (`bookmarkp-*') ------------------------------
 
 (defun bookmarkp-maybe-save-bookmark ()
@@ -2170,13 +2018,6 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmarkp-bmenu-called-from-inside-flag t))
     (bookmark-bmenu-list)))
 
-;;;###autoload
-(defun bookmarkp-bmenu-refresh-alist ()
-  (interactive)
-  (when (equal (buffer-name (current-buffer)) "*Bookmark List*")
-    (let ((bookmarkp-bmenu-called-from-inside-flag t))
-      (bookmark-bmenu-surreptitiously-rebuild-list)
-      (bookmark-bmenu-check-position))))
 
 ;;; *-bmenu-* Commands and functions for marked bookmarks
 
@@ -2542,22 +2383,6 @@ A new list is returned (no side effects)."
 
 ;; General Utility Functions -----------------------------------------
 
-(defun bookmarkp-dump-object-to-file (obj file)
-  "Save symbol object OBJ to the byte compiled version of FILE.
-OBJ can be any lisp object, list, hash-table, etc...
-FILE is an elisp file with ext *.el.
-Loading the *.elc file will restitute OBJ."
-  (require 'cl) ; Be sure we use the CL version of `eval-when-compile'.
-  (if (file-exists-p file)
-      (error "File already exists.")
-      (with-temp-file file
-        (erase-buffer)
-        (let* ((str-obj (symbol-name obj))
-               (fmt-obj (format "(setq %s (eval-when-compile %s))" str-obj str-obj)))
-          (insert fmt-obj)))
-      (byte-compile-file file) (delete-file file)
-      (message "`%s' dumped to %sc" obj file)))
-
 (defun bookmarkp-remove-if (pred xs)
   "A copy of list XS with no elements that satisfy predicate PRED."
   (let ((result  ()))
@@ -2579,37 +2404,6 @@ Loading the *.elc file will restitute OBJ."
         (replace-match rep nil nil string)
       string)))
 
-(defun bookmarkp-fix-bookmark-alist-and-save ()
-  "Update format of `bookmark-default-file' created in summer of 2009.
-You DO NOT NEED THIS, unless you happen to have used `bookmark+.el' in
-the summer of 2009 to create non-file bookmarks.  If you did that,
-then some of those bookmarks might cause vanilla Emacs (emacs -Q) to
-raise an error.  You can use this command to fix that problem: it
-modifies your existing `bookmark-default-file' (`.emacs.bmk'), after
-backing up that file (suffixing the name with \"_saveNUMBER\")."
-  (interactive)
-  (require 'cl)                         ; For `gensym'
-  (if (not (yes-or-no-p "This will modify your bookmarks file, after backing it up.  OK? "))
-      (message "OK, nothing done")
-    (bookmark-maybe-load-default-file)
-    (let ((bkup-file  (concat bookmark-default-file "_" (symbol-name (gensym "save")))))
-      (when (condition-case err
-                (progn
-                  (with-current-buffer (find-file-noselect bookmark-default-file)
-                    (write-file bkup-file))
-                  (dolist (bmk  bookmark-alist)
-                    (let ((fn-tail (member '(filename) bmk))
-                          (hdlr    (bookmark-get-handler (car bmk))))
-                      (cond (fn-tail
-                             (setcar fn-tail (cons 'filename bookmarkp-non-file-filename)))
-                            ((and (eq hdlr 'bookmarkp-jump-gnus)
-                                  (not (assoc 'filename bmk)))
-                             (setcdr bmk (cons (cons 'filename bookmarkp-non-file-filename)
-                                               (cdr bmk)))))))
-                  t)                    ; Be sure `dolist' exit with t to allow saving.
-              (error (error "No changes made. %s" (error-message-string err))))
-        (bookmark-save)
-        (message "Bookmarks file fixed.  Old version is `%s'" bkup-file)))))
 
 ;; Other Functions ---------------------------------------------------
 
