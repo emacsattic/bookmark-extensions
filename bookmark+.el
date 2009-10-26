@@ -350,7 +350,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.47")
+(defconst bookmarkp-version-number "2.5.48")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1820,9 +1820,7 @@ Try to follow position of last bookmark in menu-list."
 
 (defun bookmarkp-filtered-alist-by-regexp-only (regexp alist)
   "Return a filtered ALIST with (only) bookmarks matching REGEXP."
-  (loop for i in alist
-     when (string-match regexp (car i)) collect i into new
-     finally return new))
+  (bookmarkp-remove-if-not #'(lambda (x) (string-match regexp (car x))) alist))
 
 (defun bookmarkp-bmenu-filter-alist-by-regexp (regexp alist)
   "Display (only) bookmarks of ALIST matching REGEXP."
