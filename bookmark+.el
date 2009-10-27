@@ -355,7 +355,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.51")
+(defconst bookmarkp-version-number "2.5.52")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -373,7 +373,7 @@
 (defvar Info-current-file)              ; Defined in `info.el'.
 
 
- ;;; Keymaps -------------------------------------------------------
+;;; Keymaps -------------------------------------------------------
 
 ;;;###autoload
 (define-key ctl-x-map "p" bookmark-map)
@@ -1450,10 +1450,13 @@ candidate.  In this way, you can delete multiple bookmarks."
       (bookmark-insert-file-format-version-stamp)
       (progn (insert "(")
              (dolist (i  bookmark-alist)
-               (let* ((str (car i))
-                      (len (length str)))
-                 (set-text-properties 0 len nil str)
-                 (setcar i str)
+               (let* ((str       (car i))
+                      (len-str   (length str))
+                      (fname     (cdr (assoc 'filename i)))
+                      (len-fname (length fname)))
+                 (set-text-properties 0 len-str nil str)
+                 (when fname (set-text-properties 0 len-fname nil fname))
+                 (setcar i str) (setcdr (assoc 'filename i) fname)
                  (pp i (current-buffer))))
              (insert ")"))
       (let ((version-control  (cond ((null bookmark-version-control) nil)
