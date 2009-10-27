@@ -123,6 +123,7 @@
 ;; `bookmarkp-remote-file'
 ;; `bookmarkp-su-or-sudo'
 ;; `bookmarkp-w3m'
+;; `bookmarkp-woman'
 
 ;;  * Non-interactive functions defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "bookmarkp")
@@ -355,7 +356,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.52")
+(defconst bookmarkp-version-number "2.5.53")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -528,6 +529,11 @@ bookmarks (`C-u' for local only)
 
 (defface bookmarkp-w3m
     '((t (:foreground "yellow")))
+  "*Face used for a bookmarked w3m url."
+  :group 'bookmarkp)
+
+(defface bookmarkp-woman
+    '((t (:foreground "Orange4")))
   "*Face used for a bookmarked w3m url."
   :group 'bookmarkp)
 
@@ -1912,8 +1918,8 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            (isw3m                ; W3m
             `(mouse-face highlight follow-link t face bookmarkp-w3m
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))
-           ((eq ishandler 'bookmarkp-jump-woman)
-            `(mouse-face highlight follow-link t face '((:foreground "Orange4"))
+           ((eq ishandler 'bookmarkp-jump-woman) ; Woman pages
+            `(mouse-face highlight follow-link t face bookmarkp-woman
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))
            ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
             `(mouse-face highlight follow-link t face bookmarkp-su-or-sudo
@@ -1957,10 +1963,8 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bookmarkp-file-alist-only arg))
         (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (call-interactively
-     #'(lambda ()
-         (interactive)
-         (bookmark-bmenu-list "% Bookmark+ Files&Directories" 'filteredp)))))
+    (bookmark-bmenu-list "% Bookmark+ Files&Directories" 'filteredp)))
+         
 
 ;;;###autoload
 (defun bookmarkp-bmenu-list-only-non-file-bookmarks ()
@@ -1969,9 +1973,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist (bookmarkp-non-file-alist-only))
         (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (call-interactively #'(lambda ()
-                            (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ Non--Files" 'filteredp)))))
+    (bookmark-bmenu-list "% Bookmark+ Non--Files" 'filteredp)))
 
 
 ;;;###autoload
@@ -1981,9 +1983,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bookmarkp-info-alist-only))
         (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (call-interactively #'(lambda ()
-                            (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ Info" 'filteredp)))))
+    (bookmark-bmenu-list "% Bookmark+ Info" 'filteredp)))
 
 
 ;;;###autoload
@@ -1993,9 +1993,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bookmarkp-w3m-alist-only))
         (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (call-interactively #'(lambda ()
-                            (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ W3m" 'filteredp)))))
+    (bookmark-bmenu-list "% Bookmark+ W3m" 'filteredp)))
 
 
 ;;;###autoload
@@ -2005,9 +2003,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bookmarkp-gnus-alist-only))
         (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (call-interactively #'(lambda ()
-                            (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ Gnus" 'filteredp)))))
+    (bookmark-bmenu-list "% Bookmark+ Gnus" 'filteredp)))
 
 
 ;;;###autoload
@@ -2017,9 +2013,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bookmarkp-region-alist-only))
         (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (call-interactively #'(lambda ()
-                            (interactive)
-                            (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))))
+    (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))
 
 
 ;;;###autoload
