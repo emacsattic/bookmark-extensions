@@ -189,6 +189,8 @@
 ;; `bookmarkp-jump-w3m'
 ;; `bookmarkp-make-gnus-record'
 ;; `bookmarkp-jump-gnus'
+;; `bookmarkp-make-woman-record'
+;; `bookmarkp-jump-woman'
 
 ;;  * Non-interactive functions redefined here:(From `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "^bookmark-")
@@ -350,7 +352,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.49")
+(defconst bookmarkp-version-number "2.5.50")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -2693,6 +2695,7 @@ BOOKMARK is a bookmark name or a bookmark record."
 ;;; Woman support
 
 (defun bookmarkp-make-woman-record ()
+  "Make a bookmark entry for a Woman buffer."
   `(,@(bookmark-make-record-default 'point-only)
       (filename . ,woman-last-file-name)
       (handler . bookmarkp-jump-woman)))
@@ -2703,10 +2706,10 @@ BOOKMARK is a bookmark name or a bookmark record."
                    'bookmarkp-make-woman-record)))
 
 (defun bookmarkp-jump-woman (bookmark)
-  (let* ((file  (bookmark-prop-get bookmark 'filename))
-         (buf
-          (save-window-excursion
-            (woman-find-file file) (current-buffer))))
+  "Default bookmark handler for Woman buffers."
+  (let* ((file (bookmark-prop-get bookmark 'filename))
+         (buf  (save-window-excursion
+                 (woman-find-file file) (current-buffer))))
     (bookmark-default-handler
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
