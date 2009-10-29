@@ -362,7 +362,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.54")
+(defconst bookmarkp-version-number "2.5.55")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1132,9 +1132,10 @@ Optional BACKUP means move up."
 ;; 
 (defun bookmark-bmenu-bookmark ()
   "Return the name of the bookmark on this line."
-  (save-excursion
-    (forward-line 0) (forward-char 3)
-    (get-text-property (point) 'bookmarkp-bookmark-name)))
+  (when (bookmark-bmenu-check-position)
+    (save-excursion
+      (forward-line 0) (forward-char 3)
+      (get-text-property (point) 'bookmarkp-bookmark-name))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1156,6 +1157,17 @@ Returns non-nil if on a line with a bookmark and
           (t
            t))))
 
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Fix bug in emacs-23.1-r1 with `called-interactively-p'
+;; Call *-jump-via that is not interactive to fix that.
+;;
+(defun bookmark-bmenu-this-window ()
+  "Select this line's bookmark in this window."
+  (interactive)
+  (let ((bookmark (bookmark-bmenu-bookmark)))
+  (when (bookmark-bmenu-check-position)
+    (bookmark--jump-via bookmark 'switch-to-buffer))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
