@@ -69,7 +69,7 @@
 ;; `bookmarkp-bmenu-list-only-w3m-bookmarks'
 ;; `bookmarkp-bmenu-list-only-gnus-bookmarks'
 ;; `bookmarkp-bmenu-list-only-region-bookmarks'
-;; `bookmarkp-bmenu-list-only-woman-bookmarks'
+;; `bookmarkp-bmenu-list-only-woman-man-bookmarks'
 ;; `bookmarkp-bmenu-show-all-bookmarks'
 ;; `bookmarkp-bmenu-mark-all-bookmarks'
 ;; `bookmarkp-bmenu-unmark-all-deletion-flags'
@@ -150,6 +150,8 @@
 ;; `bookmarkp-w3m-bookmark-p'
 ;; `bookmarkp-info-bookmark-p'
 ;; `bookmarkp-woman-bookmark-p'
+;; `bookmarkp-man-bookmark-p'
+;; `bookmarkp-woman-man-bookmark-p'
 ;; `bookmarkp-file-bookmark-p'
 ;; `bookmarkp-non-file-bookmark-p'
 ;; `bookmarkp-remote-file-bookmark-p'
@@ -161,6 +163,8 @@
 ;; `bookmarkp-w3m-alist-only'
 ;; `bookmarkp-info-alist-only'
 ;; `bookmarkp-woman-alist-only'
+;; `bookmarkp-man-alist-only'
+;; `bookmarkp-woman-man-alist-only'
 ;; `bookmarkp-remote-file-alist-only'
 ;; `bookmarkp-local-file-alist-only'
 ;; `bookmarkp-file-alist-only'
@@ -195,6 +199,8 @@
 ;; `bookmarkp-jump-gnus'
 ;; `bookmarkp-make-woman-record'
 ;; `bookmarkp-jump-woman'
+;; `bookmarkp-make-man-record'
+;; `bookmarkp-jump-man'
 
 ;;  * Non-interactive functions redefined here:(From `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "^bookmark-")
@@ -356,7 +362,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.53")
+(defconst bookmarkp-version-number "2.5.54")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -430,7 +436,7 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "M" 'bookmarkp-bmenu-list-only-woman-bookmarks)
+(define-key bookmark-bmenu-mode-map "M" 'bookmarkp-bmenu-list-only-woman-man-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "B" 'bookmarkp-bmenu-list-only-non-file-bookmarks)
 ;;;###autoload
@@ -469,7 +475,7 @@ bookmarks (`C-u' for local only)
 \\[bookmarkp-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
 \\[bookmarkp-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
 \\[bookmarkp-bmenu-list-only-info-bookmarks]\t- List only Info bookmarks
-\\[bookmarkp-bmenu-list-only-woman-bookmarks]\t- List only Woman pages
+\\[bookmarkp-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man  pages
 \\[bookmarkp-bmenu-list-only-region-bookmarks]\t- List only region bookmarks
 \\[bookmarkp-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks
 \\[bookmarkp-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
@@ -1918,7 +1924,8 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            (isw3m                ; W3m
             `(mouse-face highlight follow-link t face bookmarkp-w3m
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))
-           ((eq ishandler 'bookmarkp-jump-woman) ; Woman pages
+           ((or (eq ishandler 'bookmarkp-jump-woman) ; Woman pages
+                (eq ishandler 'bookmarkp-jump-man))  ; Man pages
             `(mouse-face highlight follow-link t face bookmarkp-woman
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))
            ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
@@ -2017,13 +2024,13 @@ With a prefix argument, do not include remote files or directories."
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-woman-bookmarks ()
-  "Display (only) the bookmarks that record a woman page."
+(defun bookmarkp-bmenu-list-only-woman-man-bookmarks ()
+  "Display (only) the bookmarks that record a Man or Woman page."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-woman-alist-only))
+  (let ((bookmark-alist  (bookmarkp-woman-man-alist-only))
         (bookmarkp-bmenu-called-from-inside-flag t))
     (setq bookmarkp-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ Woman pages" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark+ Man&Woman pages" 'filteredp)))
 
 
 ;;;###autoload
@@ -2259,9 +2266,20 @@ BOOKMARK is a bookmark name or a bookmark record."
   (eq (bookmark-get-handler bookmark) 'Info-bookmark-jump))
 
 (defun bookmarkp-woman-bookmark-p (bookmark)
-  "Return non-nil if BOOKMARK is an Woman bookmark.
+  "Return non-nil if BOOKMARK is a Woman bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
   (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-woman))
+
+(defun bookmarkp-man-bookmark-p (bookmark)
+  "Return non-nil if BOOKMARK is a Man bookmark.
+BOOKMARK is a bookmark name or a bookmark record."
+  (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-man))
+
+(defun bookmarkp-woman-man-bookmark-p (bookmark)
+  "Return non-nil if BOOKMARK is a Man or Woman bookmark.
+BOOKMARK is a bookmark name or a bookmark record."
+  (or (bookmarkp-man-bookmark-p bookmark)
+      (bookmarkp-woman-bookmark-p bookmark)))
 
 (defun bookmarkp-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a file or directory.
@@ -2336,11 +2354,24 @@ A new list is returned (no side effects)."
 ;; (find-epp (bookmarkp-info-alist-only))
 
 (defun bookmarkp-woman-alist-only ()
-  "`bookmark-alist', filtered to retain only Info bookmarks.
+  "`bookmark-alist', filtered to retain only Woman bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-woman-bookmark-p bookmark-alist))
 
 ;; (find-epp (bookmarkp-woman-alist-only))
+
+(defun bookmarkp-man-alist-only ()
+  "`bookmark-alist', filtered to retain only Man bookmarks.
+A new list is returned (no side effects)."
+  (bookmarkp-remove-if-not #'bookmarkp-man-bookmark-p bookmark-alist))
+
+;; (find-epp (bookmarkp-man-alist-only))
+
+(defun bookmarkp-woman-man-alist-only ()
+  "`bookmark-alist', filtered to retain only Man or Woman bookmarks.
+A new list is returned (no side effects)."
+  (bookmarkp-remove-if-not #'bookmarkp-woman-man-bookmark-p bookmark-alist))
+
 
 (defun bookmarkp-remote-file-alist-only ()
   "`bookmark-alist', filtered to retain only remote-file bookmarks.
@@ -2370,7 +2401,7 @@ A new list is returned (no side effects)."
        (or (bookmarkp-non-file-bookmark-p bookmark)
            (bookmarkp-gnus-bookmark-p bookmark)
            (bookmarkp-w3m-bookmark-p bookmark)
-           (bookmarkp-woman-bookmark-p bookmark)
+           (bookmarkp-woman-man-bookmark-p bookmark)
            (bookmarkp-info-bookmark-p bookmark)
            (and hide-remote (bookmarkp-remote-file-bookmark-p bookmark))))
    bookmark-alist))
@@ -2736,6 +2767,37 @@ BOOKMARK is a bookmark name or a bookmark record."
                  (woman-find-file file) (current-buffer))))
     (bookmark-default-handler
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
+
+;;; Man Support
+
+(defun bookmarkp-make-man-record ()
+  "Make a bookmark entry for a Man buffer."
+  `(,@(bookmark-make-record-default 'point-only)
+      (filename . ,bookmarkp-non-file-filename)
+      (handler . bookmarkp-jump-man)))
+
+
+(add-hook 'Man-mode-hook
+          #'(lambda ()
+              (set (make-local-variable 'bookmark-make-record-function)
+                   'bookmarkp-make-man-record)))
+
+
+(defun bookmarkp-jump-man (bookmark)
+  "Default bookmark handler for Man buffers."
+  (let* ((buf               (bookmark-prop-get bookmark 'buffer-name))
+         (buf-lst           (split-string buf))
+         (node              (replace-regexp-in-string "\*" "" (car (last buf-lst))))
+         (ind               (when (> (length buf-lst) 2) (second buf-lst)))
+         (Man-notify-method (case bookmarkp-jump-display-function
+                              ('switch-to-buffer 'pushy)
+                              ('pop-to-buffer    'friendly)
+                              ('display-buffer   'quiet))))
+    (man (if ind (format "%s(%s)" node ind) node))
+    (while (get-process "man") (sit-for 1))
+    (bookmark-default-handler
+     `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
