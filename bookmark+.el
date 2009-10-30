@@ -362,7 +362,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.57")
+(defconst bookmarkp-version-number "2.5.58")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -451,6 +451,8 @@
 (define-key bookmark-bmenu-mode-map "\M-r" 'bookmark-bmenu-relocate) ; Was `R' in vanilla.
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "M-g") 'bookmarkp-bmenu-search)
+;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "C-k") 'bookmarkp-bmenu-delete-bookmark)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
@@ -1456,15 +1458,16 @@ candidate.  In this way, you can delete multiple bookmarks."
   (bookmark-maybe-historicize-string bookmark-name)
   (bookmark-maybe-load-default-file)
   (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
-    (setq bookmark-alist (delq will-go bookmark-alist))
+    (setq bookmark-alist (delete will-go bookmark-alist))
     ;; Added by db, nil bookmark-current-bookmark if the last
     ;; occurrence has been deleted
+    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
     (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
-        (setq bookmark-current-bookmark nil)))
-  ;; Don't rebuild the list when using `batch' arg
-  (unless batch
-    (bookmark-bmenu-surreptitiously-rebuild-list))
-  (bookmarkp-maybe-save-bookmark))
+        (setq bookmark-current-bookmark nil))
+    ;; Don't rebuild the list when using `batch' arg
+    (unless batch
+      (bookmark-bmenu-surreptitiously-rebuild-list))
+    (bookmarkp-maybe-save-bookmark)))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1914,6 +1917,18 @@ If a prefix arg is given search in the whole `bookmark-alist'."
             (forward-line 1))
           (forward-line 0)
           (bookmark-bmenu-check-position)))))
+
+
+;;;###autoload
+(defun bookmarkp-bmenu-delete-bookmark ()
+  "Delete bookmark at point in Bookmark Menu list."
+  (interactive)
+  (when (equal (buffer-name (current-buffer)) "*Bookmark List*")
+    (let ((bmk (bookmark-bmenu-bookmark))
+          (pos (point)))
+      (if (y-or-n-p "Delete this bookmark? ")
+          (progn (bookmark-delete bmk) (goto-char pos))
+          (message "Aborting bookmark deletion")))))
 
 
 (defun bookmarkp-bmenu-propertize-item (bookmark-name start end)
