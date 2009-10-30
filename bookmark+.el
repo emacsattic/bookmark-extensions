@@ -362,7 +362,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.55")
+(defconst bookmarkp-version-number "2.5.56")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1046,6 +1046,12 @@ bookmarks.)"
                           w3m-current-title)
                          ((eq major-mode 'gnus-summary-mode)
                           (elt (gnus-summary-article-header) 1))
+                         ((or (eq major-mode 'woman-mode) (eq major-mode 'Man-mode))
+                          (save-excursion
+                            (goto-char (point-min))
+                            (search-forward "NAME" nil t)
+                            (forward-line 1) (skip-chars-forward " ")
+                            (buffer-substring-no-properties (point) (line-end-position))))
                          (t (car record)))))
          (doc-cmd "`\\<minibuffer-local-map>\\[next-history-element]' \ for default")
          (bname   (or name
