@@ -316,7 +316,7 @@
 (eval-when-compile (require 'cl))
 
 
-(defconst bookmarkp-version-number "2.5.61")
+(defconst bookmarkp-version-number "2.5.62")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -700,7 +700,7 @@ pertains to the location within the buffer."
                        (bookmarkp-record-rear-context-string beg)))
          (fcrs     (when isregion (bookmarkp-record-front-context-region-string beg end)))
          (ecrs     (when isregion (bookmarkp-record-end-context-region-string end)))
-         (ctime    (bookmarkp-current-sec-time)))
+         (ctime    (float-time)))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
