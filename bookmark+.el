@@ -90,8 +90,6 @@
 ;; `bookmark-bmenu-this-window'
 ;; `bookmark-jump'
 ;; `bookmark-jump-other-window'
-;; `bookmark-relocate'
-;; `bookmark-insert-location'
 ;; `bookmark-rename'
 ;; `bookmark-insert'
 ;; `bookmark-delete'
@@ -133,7 +131,6 @@
 ;; `bookmarkp-maybe-save-bookmark'
 ;; `bookmarkp-edit-bookmark'
 ;; `bookmarkp-increment-visits'
-;; `bookmarkp-current-sec-time'
 ;; `bookmarkp-add-or-update-time'
 ;; `bookmarkp-update-time-and-increment-visits'
 ;; `bookmarkp-sort-p-1'
@@ -175,9 +172,6 @@
 ;; `bookmarkp-marked-bookmarks-only'
 ;; `bookmarkp-non-marked-bookmarks-only'
 ;; `bookmarkp-current-list-have-marked-p'
-;; `bookmarkp-remove-if'
-;; `bookmarkp-remove-if-not'
-;; `bookmarkp-replace-regexp-in-string'
 ;; `bookmarkp-get-buffer-name'
 ;; `bookmarkp-get-end-position'
 ;; `bookmarkp-root-or-sudo-logged-p'
@@ -191,7 +185,6 @@
 ;; `bookmarkp-position-before-whitespace'
 ;; `bookmarkp-save-new-region-location'
 ;; `bookmarkp-handle-region-default'
-;; `bookmarkp-line-number-at-pos'
 ;; `bookmarkp-goto-position'
 ;; `bookmarkp-make-w3m-record'
 ;; `bookmarkp-w3m-set-new-buffer-name'
@@ -320,10 +313,10 @@
 (require 'bookmark)
 (unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
 (eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
-(eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
+(eval-when-compile (require 'cl))
 
 
-(defconst bookmarkp-version-number "2.5.60")
+(defconst bookmarkp-version-number "2.5.61")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -511,17 +504,7 @@ bookmarks (`C-u' for local only)
 
 (defgroup bookmark-plus nil
   "Bookmark enhancements."
-  :prefix "bookmarkp-" :group 'bookmark
-  :link `(url-link :tag "Send Bug Report"
-                   ,(concat "mailto:" "thierry.volpiatto" "@" "gmail" ".com?subject=\
-bookmark+.el bug: \
-&body=Describe bug here, starting with `emacs -q'.  \
-Don't forget to mention your Emacs and library versions."))
-  :link '(url-link :tag "Download"
-          "http://www.emacswiki.org/cgi-bin/wiki/bookmark+.el")
-  :link '(url-link :tag "Description"
-          "http://www.emacswiki.org/cgi-bin/wiki/BookMarks#BookmarkPlus")
-  :link '(emacs-commentary-link :tag "Commentary" "bookmark+"))
+  :prefix "bookmarkp-" :group 'bookmark)
 
 (defcustom bookmarkp-use-region-flag t
   "*Non-nil means jumping to bookmark activates bookmarked region, if any."
@@ -789,7 +772,7 @@ bookmarks.)"
                            (if regionp
                                (region-end)
                                (save-excursion (end-of-line) (point))))))
-         (defname (bookmarkp-replace-regexp-in-string
+         (defname (replace-regexp-in-string
                    "\n" " "
                    (cond (regionp
                           (save-excursion (goto-char (region-beginning))
@@ -844,7 +827,7 @@ Newline characters are stripped out."
                    (buffer-substring-no-properties
                     (point)
                     (progn (forward-word 1) (setq bookmark-yank-point (point)))))))
-    (setq string  (bookmarkp-replace-regexp-in-string "\n" "" string))
+    (setq string  (replace-regexp-in-string "\n" "" string))
     (insert string)))
 
 
@@ -967,8 +950,6 @@ DISPLAY-FUNCTION is the function that displays the bookmark."
             (setcdr bmk (cons (cons prop val) (cdr bmk))))))) ; New: ("name" (filename . "f")...)
 
 
-;; (find-epp (progn (bookmark-prop-set ".emacs.el" 'visits 0) (bookmark-get-bookmark ".emacs.el")))
-
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; 1. Added optional arg USE-REGION-P.
@@ -1059,52 +1040,6 @@ Return nil or signal `file-error'."
         (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
         ;; Activate region.  Relocate it if it moved.  Save relocated bookmark if confirm.
         (funcall bookmarkp-handle-region-function bmk))))
-
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;; Add note about `S-delete' to doc string.
-;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
-;;
-(or (fboundp 'old-bookmark-relocate)
-    (fset 'old-bookmark-relocate (symbol-function 'bookmark-relocate)))
-
-;;;###autoload
-(defun bookmark-relocate (bookmark-name)
-  "Relocate the bookmark named BOOKMARK-NAME to another file.
-You are prompted for the new file name.
-Changes the file associated with the bookmark.
-Useful when a file has been renamed after a bookmark was set in it.
-
-If you use Icicles, then you can use `S-delete' during completion of a
-bookmark name to delete the bookmark named by the current completion
-candidate."
-  (interactive (list (bookmark-completing-read "Bookmark to relocate")))
-  (old-bookmark-relocate bookmark-name))
-
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;; Add note about `S-delete' to doc string.
-;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
-;;
-(or (fboundp 'old-bookmark-insert-location)
-    (fset 'old-bookmark-insert-location (symbol-function 'bookmark-insert-location)))
-
-;;;###autoload
-(defun bookmark-insert-location (bookmark-name &optional no-history)
-  "Insert file or buffer name for the bookmark named BOOKMARK-NAME.
-If a file is bookmarked, insert the recorded file name.
-If a non-file buffer is bookmarked, insert the recorded buffer name.
-
-Optional second arg NO-HISTORY means do not record this in the
-minibuffer history list `bookmark-history'.
-
-If you use Icicles, then you can use `S-delete' during completion of a
-bookmark name to delete the bookmark named by the current completion
-candidate."
-  (interactive (list (bookmark-completing-read "Insert bookmark location")))
-  (old-bookmark-insert-location bookmark-name no-history))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1436,6 +1371,18 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
 
 ;;; Bookmark+ Functions (`bookmarkp-*') ------------------------------
 
+;; Don't require cl at runtime.
+(defun bookmarkp-remove-if (pred xs)
+  "A copy of list XS with no elements that satisfy predicate PRED."
+  (loop for i in xs unless (funcall pred i) collect i into result
+     finally return result))
+
+(defun bookmarkp-remove-if-not (pred xs)
+  "A copy of list XS with only elements that satisfy predicate PRED."
+  (loop for i in xs when (funcall pred i) collect i into result
+     finally return result))
+  
+
 (defun bookmarkp-maybe-save-bookmark ()
   "Increment save counter and maybe save `bookmark-alist'."
   (setq bookmark-alist-modification-count (1+ bookmark-alist-modification-count))
@@ -1463,18 +1410,11 @@ If bmk have no visits entry, add one with value 0."
         (bookmark-prop-set bmk 'visits (1+ cur-val))
         (bookmark-prop-set bmk 'visits 0))))
 
-(defun bookmarkp-current-sec-time ()
-  "Return current time in seconds.
-For compatibility with older emacs."
-  (let ((ct   (current-time)))
-    (if (fboundp 'float-time)
-        (float-time)
-        (+ (* (float (nth 0 ct)) (expt 2 16)) (nth 1 ct)))))
 
 (defun bookmarkp-add-or-update-time (bmk)
   "Update time entry of bmk.
 If bmk have no time entry, add one with current time."
-  (let ((time (bookmarkp-current-sec-time)))
+  (let ((time (float-time)))
     (bookmark-prop-set bmk 'time time)))
 
 (defun bookmarkp-update-time-and-increment-visits (bmk &optional batch)
@@ -1487,8 +1427,6 @@ Unless batch arg is non--nil update display and increment save counter."
     (bookmark-bmenu-surreptitiously-rebuild-list))
   (bookmarkp-maybe-save-bookmark))
 
-;; (find-epp (progn (bookmarkp-add-or-update-time "/home/thierry") (bookmark-get-bookmark "/home/thierry")))
-;; (find-epp (progn (bookmarkp-add-or-update-time ".emacs.el") (bookmark-get-bookmark ".emacs.el")))
 
 ;;; Sorting bookmarks
 (defun bookmarkp-sort-p-1 (s1 s2)
@@ -1595,9 +1533,7 @@ Try to follow position of last bookmark in menu-list."
   "Read each keyboard input and add it to `bookmarkp-search-pattern'."
   (setq bookmarkp-search-pattern "")    ; Always reset pattern to empty string
   (let ((tmp-list ())
-        (prompt   (if (fboundp 'propertize)
-                      (propertize bookmarkp-search-prompt 'face '((:foreground "cyan")))
-                      bookmarkp-search-prompt))
+        (prompt   (propertize bookmarkp-search-prompt 'face '((:foreground "cyan"))))
         char)
     (catch 'break
       (while 1
@@ -2008,7 +1944,6 @@ If MARK is non--nil unmark only bookmarks with flag >."
           (when (re-search-forward "^>" (point-max) t)
             (forward-line 0))))))
 
-;; (find-epp bookmarkp-latest-bookmark-alist)
 
 ;;;###autoload
 (defun bookmarkp-bmenu-toggle-marks ()
@@ -2117,42 +2052,36 @@ BOOKMARK is a bookmark name or a bookmark record."
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-region-bookmark-p bookmark-alist))
 
-;; (find-epp (bookmarkp-region-alist-only))
 
 (defun bookmarkp-gnus-alist-only ()
   "`bookmark-alist', filtered to retain only Gnus bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-gnus-bookmark-p bookmark-alist))
 
-;; (find-epp (bookmarkp-gnus-alist-only))
 
 (defun bookmarkp-w3m-alist-only ()
   "`bookmark-alist', filtered to retain only W3m bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-w3m-bookmark-p bookmark-alist))
 
-;; (find-epp (bookmarkp-w3m-alist-only))
 
 (defun bookmarkp-info-alist-only ()
   "`bookmark-alist', filtered to retain only Info bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-info-bookmark-p bookmark-alist))
 
-;; (find-epp (bookmarkp-info-alist-only))
 
 (defun bookmarkp-woman-alist-only ()
   "`bookmark-alist', filtered to retain only Woman bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-woman-bookmark-p bookmark-alist))
 
-;; (find-epp (bookmarkp-woman-alist-only))
 
 (defun bookmarkp-man-alist-only ()
   "`bookmark-alist', filtered to retain only Man bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-man-bookmark-p bookmark-alist))
 
-;; (find-epp (bookmarkp-man-alist-only))
 
 (defun bookmarkp-woman-man-alist-only ()
   "`bookmark-alist', filtered to retain only Man or Woman bookmarks.
@@ -2165,14 +2094,12 @@ A new list is returned (no side effects)."
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-remote-file-bookmark-p bookmark-alist))
 
-;; (find-epp (bookmarkp-remote-file-alist-only))
 
 (defun bookmarkp-local-file-alist-only ()
   "`bookmark-alist', filtered to retain only local-file bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-local-file-bookmark-p bookmark-alist))
 
-;; (find-epp (bookmarkp-local-file-alist-only))
 
 (defun bookmarkp-file-alist-only (&optional hide-remote)
   "`bookmark-alist', filtered to retain only file and directory bookmarks.
@@ -2193,14 +2120,11 @@ A new list is returned (no side effects)."
            (and hide-remote (bookmarkp-remote-file-bookmark-p bookmark))))
    bookmark-alist))
 
-;; (find-epp (bookmarkp-file-alist-only))
 
 (defun bookmarkp-non-file-alist-only ()
   "`bookmark-alist', filtered to retain only non-file bookmarks.
 A new list is returned (no side effects)."
   (bookmarkp-remove-if-not #'bookmarkp-non-file-bookmark-p bookmark-alist))
-
-;; (find-epp (bookmarkp-non-file-alist-only))
 
 
 ;;; Marked bookmarks
@@ -2214,8 +2138,6 @@ A new list is returned (no side effects)."
   (bookmarkp-remove-if #'bookmarkp-bookmark-marked-p bookmark-alist))
 
 
-;; (find-epp bookmarkp-bookmark-marked-list)
-
 (defun bookmarkp-current-list-have-marked-p (&optional alist)
   "Return non--nil if `bookmarkp-latest-bookmark-alist' have marked bookmarks."
   (when bookmarkp-bookmark-marked-list
@@ -2224,30 +2146,6 @@ A new list is returned (no side effects)."
         (dolist (i last-alist)
           (when (bookmarkp-bookmark-marked-p i)
             (throw 'break t)))))))
-
-
-;; General Utility Functions -----------------------------------------
-
-(defun bookmarkp-remove-if (pred xs)
-  "A copy of list XS with no elements that satisfy predicate PRED."
-  (let ((result  ()))
-    (dolist (x xs) (unless (funcall pred x) (push x result)))
-    (nreverse result)))
-
-(defun bookmarkp-remove-if-not (pred xs)
-  "A copy of list XS with only elements that satisfy predicate PRED."
-  (let ((result  ()))
-    (dolist (x xs) (when (funcall pred x) (push x result)))
-    (nreverse result)))
-
-(defun bookmarkp-replace-regexp-in-string (regexp rep string
-                                           &optional fixedcase literal subexp start)
-  "Replace all matches for REGEXP with REP in STRING and return STRING."
-  (if (fboundp 'replace-regexp-in-string) ; Emacs > 20.
-      (replace-regexp-in-string regexp rep string fixedcase literal subexp start)
-      (if (string-match regexp string)    ; Emacs 20
-          (replace-match rep nil nil string)
-          string)))
 
 
 ;; Other Functions ---------------------------------------------------
@@ -2415,12 +2313,6 @@ If region was relocated, save it if user confirms saving."
            (goto-char pos) (forward-line 0)
            (message "No region from %d to %d" pos end-pos)))))
 
-;; Same as `line-number-at-pos', which is not available until Emacs 22.
-(defun bookmarkp-line-number-at-pos (&optional pos)
-  "Buffer line number at position POS. Current line number if POS is nil.
-Counting starts at (point-min), so any narrowing restriction applies."
-  (1+ (count-lines (point-min) (save-excursion (when pos (goto-char pos))
-                                               (forward-line 0) (point)))))
 
 (defun bookmarkp-goto-position (file buf bufname pos forward-str behind-str)
   "Go to a bookmark that has no region.
@@ -2446,7 +2338,7 @@ position, and the context strings for the position."
     (goto-char (match-beginning 0)))
   (when (and behind-str (search-backward behind-str (point-min) t))
     (goto-char (match-end 0)))
-  nil);; $$$$$$ FIXME LATER: Why do we (and vanilla Emacs) return nil?
+  nil)
 
 ;; W3M support
 (defun bookmarkp-make-w3m-record ()
