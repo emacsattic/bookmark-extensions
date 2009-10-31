@@ -33,13 +33,14 @@
 
 ;; X-URL: http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
 
-;; Keywords: bookmarks, placeholders, annotations, search, info, w3m, gnus
+;; Keywords: bookmarks, placeholders, annotations, search, info, w3m, gnus,
+;;           man, woman.
 
 ;; Compatibility: GNU Emacs: 23.x
 
 ;; Features that might be required by this library:
 
-;;   `bookmark', `ffap', `pp'.
+;;   `bookmark', `emacs-w3m', `gnus'.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -91,7 +92,6 @@
 ;; `bookmark-jump'
 ;; `bookmark-jump-other-window'
 ;; `bookmark-rename'
-;; `bookmark-insert'
 ;; `bookmark-delete'
 ;; `bookmark-bmenu-list'
 ;; `bookmark-bmenu-other-window'
@@ -128,6 +128,8 @@
 
 ;;  * Non-interactive functions defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "bookmarkp")
+;; `bookmarkp-remove-if'
+;; `bookmarkp-remove-if-not'
 ;; `bookmarkp-maybe-save-bookmark'
 ;; `bookmarkp-edit-bookmark'
 ;; `bookmarkp-increment-visits'
@@ -258,10 +260,6 @@
 ;;  Put this library in your `load-path'.
 ;;  Add this to your init file (~/.emacs) : (require 'bookmark+)
 ;;
-;;  Some of the commands defined here bind `S-delete', to delete the
-;;  current bookmark candidate during completion in Icicle mode (see
-;;  Icicles: http://www.emacswiki.org/cgi-bin/wiki/Icicles).
-;;
 ;;
 ;;  ** Compatibility with Vanilla Emacs (`bookmark.el') **
 ;;
@@ -311,12 +309,9 @@
 ;;; Code:
 
 (require 'bookmark)
-(unless (fboundp 'file-remote-p) (require 'ffap)) ;; ffap-file-remote-p
-(eval-when-compile (require 'gnus)) ;; mail-header-id (really in `nnheader.el')
 (eval-when-compile (require 'cl))
 
-
-(defconst bookmarkp-version-number "2.5.62")
+(defconst bookmarkp-version-number "2.5.63")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -415,10 +410,7 @@
 (define-key bookmark-bmenu-mode-map "%m" 'bookmarkp-bmenu-regexp-mark)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "*" nil)
-;;;###autoload
-(when (< emacs-major-version 21)
-  (define-key bookmark-bmenu-mode-map (kbd "RET") 'bookmark-bmenu-this-window)
-  (define-key bookmark-bmenu-mode-map (kbd "*m") 'bookmark-bmenu-mark))
+
 
 (defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
   "Extras keys added by bookmark+:\\<bookmark-bmenu-mode-map>
@@ -904,7 +896,7 @@ Returns non-nil if on a line with a bookmark and
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Fix bug in emacs-23.1-r1 with `called-interactively-p'
+;; Fix bug in emacs-23.1.1 with `called-interactively-p'
 ;; Call *-jump-via that is not interactive to fix that.
 ;;
 (defun bookmark-bmenu-this-window ()
@@ -953,7 +945,6 @@ DISPLAY-FUNCTION is the function that displays the bookmark."
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; 1. Added optional arg USE-REGION-P.
-;; 2. Add note about Icicles `S-delete' to doc string.
 ;;
 ;;;###autoload
 (defun bookmark-jump (bookmark-name &optional use-region-p)
@@ -969,11 +960,7 @@ asked if you wish to give the bookmark a new location.  If so,
 If the bookmark represents a region, then the region is activated if
 `bookmarkp-use-region-flag' is not-nil or it is nil and you use a
 prefix argument.  A prefix arg temporarily flips the value of
-`bookmarkp-use-region-flag'.
-
-If you use Icicles, then you can use `S-delete' during completion of a
-bookmark name to delete the bookmark named by the current completion
-candidate."
+`bookmarkp-use-region-flag'."
   (interactive (list (bookmark-completing-read "Jump to bookmark" bookmark-current-bookmark)
                      current-prefix-arg))
   (unless bookmark-name (error "No bookmark specified"))
@@ -1058,7 +1045,6 @@ BOOKMARK is a bookmark name or a bookmark record."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Added note about `S-delete' to doc string.
 ;; Added BATCH arg.
 ;;
 ;;;###autoload
@@ -1072,11 +1058,7 @@ If NEW is nil, then prompt for its string value.
 If BATCH is non-nil, then do not rebuild the menu list.
 
 While the user enters the new name, repeated `C-w' inserts consecutive
-words from the buffer into the new bookmark name.
-
-If you use Icicles, then you can use `S-delete' during completion of a
-bookmark name to delete the bookmark named by the current completion
-candidate."
+words from the buffer into the new bookmark name."
   (interactive (list (bookmark-completing-read "Old bookmark name")))
   (bookmark-maybe-historicize-string old)
   (bookmark-maybe-load-default-file)
@@ -1094,32 +1076,9 @@ candidate."
     (bookmarkp-maybe-save-bookmark) newname))
 
 
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;; Add note about `S-delete' to doc string.
-;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
-;;
-(or (fboundp 'old-bookmark-insert)
-    (fset 'old-bookmark-insert (symbol-function 'bookmark-insert)))
-
-;;;###autoload
-(defun bookmark-insert (bookmark-name)
-  "Insert the text of a bookmarked file.
-BOOKMARK-NAME is the name of the bookmark.
-You may have a problem using this function if the value of variable
-`bookmark-alist' is nil.  If that happens, you need to load in some
-bookmarks.  See function `bookmark-load' for more about this.
-
-If you use Icicles, then you can use `S-delete' during completion of a
-bookmark name to delete the bookmark named by the current completion
-candidate."
-  (interactive (list (bookmark-completing-read "Insert bookmark contents")))
-  (old-bookmark-insert bookmark-name))
-
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Add note about `S-delete' to doc string.
 ;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
 ;; Increment `bookmark-alist-modification-count' even when using `batch' arg.
 ;;
@@ -1131,11 +1090,7 @@ If there are other bookmarks with the same name, they are not deleted.
 Defaults to the \"current\" bookmark (that is, the one most recently
 used in this file), if it exists.  Optional second arg BATCH means do
 not update the bookmark list buffer (probably because we were called
-from there).
-
-If you use Icicles, then you can use `S-delete' during completion of a
-bookmark name to delete the bookmark named by the current completion
-candidate.  In this way, you can delete multiple bookmarks."
+from there)."
   (interactive
    (list (bookmark-completing-read "Delete bookmark"
 				   bookmark-current-bookmark)))
@@ -1382,7 +1337,6 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
   (loop for i in xs when (funcall pred i) collect i into result
      finally return result))
   
-
 (defun bookmarkp-maybe-save-bookmark ()
   "Increment save counter and maybe save `bookmark-alist'."
   (setq bookmark-alist-modification-count (1+ bookmark-alist-modification-count))
@@ -1409,7 +1363,6 @@ If bmk have no visits entry, add one with value 0."
     (if cur-val
         (bookmark-prop-set bmk 'visits (1+ cur-val))
         (bookmark-prop-set bmk 'visits 0))))
-
 
 (defun bookmarkp-add-or-update-time (bmk)
   "Update time entry of bmk.
@@ -1619,11 +1572,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
 (defun bookmarkp-bmenu-propertize-item (bookmark-name start end)
   "Add text properties to BOOKMARK-NAME, from START to END."
   (let* ((isfile        (bookmark-get-filename bookmark-name))
-         (isremote      (and isfile
-                             (if (fboundp 'file-remote-p)
-                                 (file-remote-p isfile)
-                                 (if (fboundp 'ffap-file-remote-p)
-                                     (ffap-file-remote-p isfile)))))
+         (isremote      (and isfile (file-remote-p isfile)))
          (istramp       (and isfile (boundp 'tramp-file-name-regexp)
                              (save-match-data
                                (string-match tramp-file-name-regexp isfile))))
