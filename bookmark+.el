@@ -362,7 +362,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.58")
+(defconst bookmarkp-version-number "2.5.59")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -1461,7 +1461,7 @@ candidate.  In this way, you can delete multiple bookmarks."
     (setq bookmark-alist (delete will-go bookmark-alist))
     ;; Added by db, nil bookmark-current-bookmark if the last
     ;; occurrence has been deleted
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+    (setq bookmarkp-latest-bookmark-alist (delete will-go bookmarkp-latest-bookmark-alist))
     (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
         (setq bookmark-current-bookmark nil))
     ;; Don't rebuild the list when using `batch' arg
