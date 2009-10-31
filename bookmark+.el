@@ -35,7 +35,7 @@
 
 ;; Keywords: bookmarks, placeholders, annotations, search, info, w3m, gnus
 
-;; Compatibility: GNU Emacs: 20.x, 21.x, 22.x, 23.x
+;; Compatibility: GNU Emacs: 23.x
 
 ;; Features that might be required by this library:
 
@@ -62,6 +62,7 @@
 ;; `bookmarkp-bmenu-sort-alphabetically'
 ;; `bookmarkp-bmenu-search'
 ;; `bookmarkp-bmenu-edit-bookmark'
+;; `bookmarkp-bmenu-delete-bookmark'
 ;; `bookmarkp-bmenu-quit'
 ;; `bookmarkp-bmenu-list-only-file-bookmarks'
 ;; `bookmarkp-bmenu-list-only-non-file-bookmarks'
@@ -86,6 +87,7 @@
 ;; `bookmark-yank-word'
 ;; `bookmark-bmenu-mark'
 ;; `bookmark-bmenu-unmark'
+;; `bookmark-bmenu-this-window'
 ;; `bookmark-jump'
 ;; `bookmark-jump-other-window'
 ;; `bookmark-relocate'
@@ -111,6 +113,7 @@
 ;; `bookmarkp-bmenu-sort-function'
 ;; `bookmarkp-search-prompt'
 ;; `bookmarkp-search-delay'
+;; `bookmarkp-local-man-name-regexp'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
@@ -205,7 +208,6 @@
 ;;  * Non-interactive functions redefined here:(From `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "^bookmark-")
 ;; `bookmark-bmenu-mode'
-;; `bookmark-completing-read'
 ;; `bookmark-make-record-default'
 ;; `bookmark-bmenu-bookmark'
 ;; `bookmark-bmenu-check-position'
@@ -216,10 +218,6 @@
 ;; `bookmark-write-file'
 ;; `bookmark-bmenu-surreptitiously-rebuild-list'
 ;; `bookmark-bmenu-hide-filenames'
-
-;;  * Functions defined here for emacs versions < 23
-;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-function :prefix "^bookmarkp-")
-;; `bookmarkp-menu-jump-other-window'
 
 ;;  * Internal variables defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "bookmarkp")
@@ -233,30 +231,6 @@
 ;; `bookmarkp-search-pattern'
 ;; `bookmarkp-search-timer'
 
-;;  ***** NOTE: The following functions defined in `bookmark.el'
-;;              have been REDEFINED OR ADVISED HERE for emacs versions < 23:
-;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-function :prefix "^bookmark-")
-;; `bookmark-get-bookmark'
-;; `bookmark-get-bookmark-record'
-;; `bookmark-make-record'
-;; `bookmark-store'
-;; `bookmark-prop-get'
-;; `bookmark-get-handler'
-;; `bookmark-jump-noselect'
-;; `bookmark-handle-bookmark'
-;; `bookmark-maybe-message'
-
-;;  ***** NOTE: The following functions defined in `info.el'
-;;              have been REDEFINED HERE (Emacs 20-22):
-;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-function :prefix "^Info-")
-;; `Info-bookmark-make-record'
-;; `Info-bookmark-jump'
-
-;;  ***** NOTE: The following variables defined in `bookmark.el'
-;;              have been REDEFINED HERE for emacs versions < 23
-;; [EVAL] (traverse-auto-document-lisp-buffer :type 'nested-variable :prefix "^bookmark-")
-;; `bookmark-make-record-function'
-
 ;;  ***** NOTE: The following variables defined in `bookmark.el'
 ;;              have been REDEFINED HERE.
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "^bookmark-")
@@ -268,7 +242,6 @@
 ;;
 ;;  Documentation
 ;;  -------------
-;;
 ;;
 ;;  ** Bookmark+ Features **
 ;;
@@ -299,18 +272,11 @@
 ;;
 ;;  ** Compatibility with Vanilla Emacs (`bookmark.el') **
 ;;
-;;  Library `bookmark+.el' is generally compatible with GNU Emacs
-;;  versions 20 through 23.
-;;
 ;;  1. All bookmarks created using any version of vanilla Emacs
 ;;     (library `bookmark.el') continue to work with `bookmark+.el'.
 ;;
-;;  2. All bookmarks created using library `bookmark+.el' will work
-;;     with all Emacs versions (20-23), provided you use library
-;;     `bookmark+.el' to access them.
-;;
-;;  3. Most bookmarks created using `bookmark+.el' will not interfere
-;;     with the behavior of vanilla Emacs, versions 21-23.  The new
+;;  2. Most bookmarks created using `bookmark+.el' will not interfere
+;;     with the behavior of vanilla Emacs, versions 23.  The new
 ;;     bookmark types are simply ignored by vanilla Emacs.  For
 ;;     example:
 ;;
@@ -325,15 +291,10 @@
 ;;  * You cannot use non-file bookmarks with any version of vanilla
 ;;    Emacs.
 ;;
-;;  * You cannot use any bookmarks created using `bookmark+.el' with
-;;    vanilla Emacs 20.
 ;;
 ;;    The Emacs bookmark data structure has changed from version to
 ;;    version.  Library `bookmark+.el' always creates bookmarks that
-;;    have the most recent structure (Emacs 23).  As is the case for
-;;    any bookmarks that have the Emacs 23 structure, these bookmarks
-;;    will not work in vanilla Emacs 20 (that is, without
-;;    `bookmark+.el').
+;;    have the most recent structure (Emacs 23).
 ;;
 ;;  Bottom line: Use `bookmark+.el' to access bookmarks created using
 ;;  `bookmark+.el'.
@@ -362,7 +323,7 @@
 (eval-when-compile (require 'cl)) ;; gensym, case, (plus, for Emacs 20: push, pop, dolist)
 
 
-(defconst bookmarkp-version-number "2.5.59")
+(defconst bookmarkp-version-number "2.5.60")
 
 (defun bookmarkp-version ()
   "Show version number of library `bookmark+.el'."
@@ -406,7 +367,7 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "." 'bookmarkp-bmenu-show-all-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U") nil) ; Emacs20
+(define-key bookmark-bmenu-mode-map (kbd "U") nil)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-bmenu-unmark-all)
 ;;;###autoload
@@ -456,11 +417,11 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "%" nil) ; Emacs20
+(define-key bookmark-bmenu-mode-map "%" nil)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "%m" 'bookmarkp-bmenu-regexp-mark)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "*" nil) ; Emacs20
+(define-key bookmark-bmenu-mode-map "*" nil)
 ;;;###autoload
 (when (< emacs-major-version 21)
   (define-key bookmark-bmenu-mode-map (kbd "RET") 'bookmark-bmenu-this-window)
@@ -732,219 +693,7 @@ region is bookmarked, POS represents the region start position.
 4. For a W3m bookmark, FILENAME is a W3m URL.")
 
 
-;;; Compatibility Code for Older Emacs Versions ----------------------
-
-;;;###autoload
-(when (< emacs-major-version 23)
-
-  ;; These definitions are for Emacs versions prior to Emacs 23.
-  ;; They are the same as the vanilla Emacs 23+ definitions, except as noted.
-  ;; They let older versions of Emacs handle bookmarks created with Emacs 23.
-
-  (defun bookmark-get-bookmark (bookmark &optional noerror)
-    "Return the bookmark record corresponding to BOOKMARK.
-BOOKMARK is a bookmark name or a bookmark record.
-If BOOKMARK is already a bookmark record, just return it,
-Otherwise look for the corresponding bookmark in `bookmark-alist'."
-    (cond
-      ((consp bookmark) bookmark)
-      ((stringp bookmark)
-       (or (if (fboundp 'assoc-string)  ; Emacs 22+.
-               (assoc-string bookmark bookmark-alist bookmark-completion-ignore-case)
-               (assoc bookmark bookmark-alist))
-           (unless noerror (error "Invalid bookmark: `%s'" bookmark))))))
-
-  (defun bookmark-get-bookmark-record (bookmark)
-    "Return the guts of the entry for BOOKMARK in `bookmark-alist'.
-That is, all information but the name.
-BOOKMARK is a bookmark name or a bookmark record."
-    (let ((alist  (cdr (bookmark-get-bookmark bookmark))))
-      ;; The bookmark objects can either look like (NAME ALIST) or
-      ;; (NAME . ALIST), so we have to distinguish the two here.
-      (if (and (null (cdr alist)) (consp (caar alist)))
-          (car alist)
-          alist)))
-
-  (defun Info-bookmark-make-record ()
-    "Create an Info bookmark record."
-    `(,Info-current-node
-      ,@(bookmark-make-record-default 'point-only)
-      (filename . ,Info-current-file)
-      (info-node . ,Info-current-node)
-      (handler . Info-bookmark-jump)))
-
-  ;; Requires `info.el' explicitly (not autoloaded for `Info-find-node'.
-  (defun Info-bookmark-jump (bookmark)
-    "Jump to Info bookmark BOOKMARK.
-BOOKMARK is a bookmark name or a bookmark record."
-    (require 'info)
-    ;; Implements the `handler' for the record type returned by `Info-bookmark-make-record'.
-    (let* ((file       (bookmark-prop-get bookmark 'filename))
-           (info-node  (bookmark-prop-get bookmark 'info-node))
-           (buf
-            (save-window-excursion      ; VANILLA EMACS FIXME: doesn't work with frames!
-              (Info-find-node file info-node) (current-buffer))))
-      ;; Use `bookmark-default-handler' to move to appropriate location within Info node.
-      (bookmark-default-handler
-       `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
-
-  (add-hook 'Info-mode-hook (lambda ()
-                              (set (make-local-variable 'bookmark-make-record-function)
-                                   'Info-bookmark-make-record)))
-
-  (defvar bookmark-make-record-function 'bookmark-make-record-default
-    "Function called with no arguments, to create a bookmark record.
-It should return the new record, which should be a cons cell of the
-form (NAME . ALIST) or just ALIST, where ALIST is as described in
-`bookmark-alist'.  If it cannot construct the record, then it should
-raise an error.
-
-NAME is a string that names the new bookmark.  NAME can be nil, in
-which case a default name is used.
-
-ALIST can contain an entry (handler . FUNCTION) which sets the handler
-to FUNCTION, which is then used instead of `bookmark-default-handler'.
-FUNCTION must accept the same arguments as `bookmark-default-handler'.
-
-You can set this variable buffer-locally to enable bookmarking of
-locations that should be treated specially, such as Info nodes, news
-posts, images, pdf documents, etc.")
-
-  (defun bookmark-make-record ()
-    "Return a new bookmark record (NAME . ALIST) for the current location."
-    (let ((record  (funcall bookmark-make-record-function)))
-      ;; Set up default name.
-      (if (stringp (car record))
-          record                        ; The function already provided a default name.
-          (when (car record) (push nil record))
-          (setcar record  (or bookmark-current-bookmark (bookmark-buffer-name)))
-          record)))
-
-  (defun bookmark-store (bookmark-name alist no-overwrite)
-    "Store the bookmark named bookmark-NAME, giving it data ALIST.
-If NO-OVERWRITE is non-nil and another bookmark of the same name already
-exists in `bookmark-alist', then record the new bookmark but do not
-discard the old one."
-    (bookmark-maybe-load-default-file)
-    (let ((stripped-name  (copy-sequence bookmark-name)))
-      (or (featurep 'xemacs)
-          ;; XEmacs's `set-text-properties' doesn't work on free-standing strings.
-          (set-text-properties 0 (length stripped-name) nil stripped-name))
-      (if (and (not no-overwrite)
-               (condition-case nil
-                   (bookmark-get-bookmark stripped-name)
-                 (error nil)))
-          ;; Existing bookmark under that name and no prefix arg means just overwrite old.
-          ;; Use the new (NAME . ALIST) format.
-          (setcdr (bookmark-get-bookmark stripped-name) alist)
-          (push (cons stripped-name alist) bookmark-alist))
-      (bookmarkp-maybe-save-bookmark)
-      (setq bookmark-current-bookmark  stripped-name)
-      (bookmark-bmenu-surreptitiously-rebuild-list)))
-
-  (defun bookmark-prop-get (bookmark prop)
-    "Return property PROP of BOOKMARK, or nil if no such property.
-BOOKMARK is a bookmark name or a bookmark record."
-    (cdr (assq prop (bookmark-get-bookmark-record bookmark))))
-
-  (defun bookmark-get-handler (bookmark)
-    "Return the `handler' entry for BOOKMARK.
-BOOKMARK is a bookmark name or a bookmark record."
-    (bookmark-prop-get bookmark 'handler))
-
-  (defun bookmark-jump-noselect (bookmark)
-    "Return the location recorded for BOOKMARK.
-BOOKMARK is a bookmark name or a bookmark record.
-The return value has the form (BUFFER . POINT), where BUFFER is a
-buffer and POINT is the location within BUFFER."
-    (save-excursion (bookmark-handle-bookmark bookmark) (cons (current-buffer) (point))))
-
-  (defun bookmark-handle-bookmark (bookmark)
-    "Call BOOKMARK's handler, or `bookmark-default-handler' if it has none.
-Changes the current buffer and point.
-Returns nil or signals a `file-error'.
-BOOKMARK can be a bookmark record used internally by some other
-elisp package, or the name of a bookmark to be found in `bookmark-alist'."
-    (condition-case err
-        (funcall (or (bookmark-get-handler bookmark) 'bookmark-default-handler)
-                 (bookmark-get-bookmark bookmark))
-      (file-error
-       ;; We were unable to find the marked file, so ask if user wants to
-       ;; relocate the bookmark, else remind them to consider deletion.
-       (when (stringp bookmark)
-         ;; BOOKMARK can be either a bookmark name (found in `bookmark-alist') or a bookmark
-         ;; object.  If an object, assume it's a bookmark used internally by some other
-         ;; package.
-         (let ((file  (bookmark-get-filename bookmark)))
-           (when file                   ; Don't know how to relocate if file doesn't exist.
-             (setq file  (expand-file-name file)) (ding)
-             (cond ((y-or-n-p (concat (file-name-nondirectory file)
-                                      " nonexistent.  Relocate \""
-                                      bookmark "\"? "))
-                    (bookmark-relocate bookmark) ; Try again
-                    (funcall (or (bookmark-get-handler bookmark) 'bookmark-default-handler)
-                             (bookmark-get-bookmark bookmark)))
-                   (t
-                    (message "Bookmark not relocated \(%s\)." bookmark)
-                    (signal (car err) (cdr err)))))))))
-    (when (stringp bookmark) (setq bookmark-current-bookmark bookmark))
-    nil))                               ; Return nil if no error.
-
-;;;###autoload
-(when (< emacs-major-version 22)
-
-  ;; These definitions are for Emacs versions prior to Emacs 22.
-  ;; They are the same as the vanilla Emacs 22+ definitions, except as noted.
-
-  ;; 22+ just uses `bookmark-jump-other-window' for the menu also.
-  (defun bookmarkp-menu-jump-other-window (event)
-    "Jump to BOOKMARK (a point in some file) in another window.
-See `bookmark-jump-other-window'."
-    (interactive "e")
-    (bookmark-popup-menu-and-apply-function 'bookmark-jump-other-window
-                                            "Jump to Bookmark (in another window)" event))
-
-  (defun bookmark-maybe-message (fmt &rest args)
-    "Apply `message' to FMT and ARGS, but only if the display is fast enough."
-    (when (>= baud-rate 9600) (apply 'message fmt args))))
-
-
 ;;; Core Replacements (`bookmark-*' except `bookmark-bmenu-*') -------
-
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;; Binds `icicle-delete-candidate-object' to `bookmark-delete'.
-;;
-(defun bookmark-completing-read (prompt &optional default)
-  "Read a bookmark name, with completion, prompting with PROMPT.
-PROMPT is automatically suffixed with \": \", so do not include that.
-Optional second arg DEFAULT is a string to return if the user enters
-the empty string.
-
-If you use Icicles, then you can use `S-delete' during completion of a
-bookmark name to delete the bookmark named by the current completion
-candidate."
-  (bookmark-maybe-load-default-file)    ; paranoia
-  (if (listp last-nonmenu-event)
-      (bookmark-menu-popup-paned-menu t prompt (bookmark-all-names))
-      (let* ((icicle-delete-candidate-object  'bookmark-delete) ; For `S-delete'.
-             (completion-ignore-case          bookmark-completion-ignore-case)
-             (default                         default)
-             (prompt                          (if default
-                                                  (concat prompt (format " (%s): " default))
-                                                  (concat prompt ": ")))
-             (str                             (completing-read prompt bookmark-alist nil 0 nil
-                                                               'bookmark-history)))
-        (if (string-equal "" str) default str))))
-
-;;;###autoload
-(if (> emacs-major-version 21)
-    (define-key-after menu-bar-bookmark-map [jump-other]
-      '("Jump to Bookmark (Other Window)" . bookmark-jump-other-window) 'jump)
-    (define-key-after menu-bar-bookmark-map [jump-other]
-      '("Jump to Bookmark (Other Window)" . bookmarkp-menu-jump-other-window) 'jump))
-
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1569,22 +1318,22 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
     (erase-buffer)
     (insert (format "%s\n- %s\n" alternate-title (make-string len-alt-title ?-)))
     (add-text-properties (point-min) (point) '(font-lock-face bookmark-menu-heading))
-    (mapcar (lambda (full-record)
-              ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
-              (let ((name        (bookmark-name-from-full-record full-record))
-                    (annotation  (bookmark-get-annotation full-record))
-                    (marked      (bookmarkp-bookmark-marked-p full-record))
-                    (start       (+ 2 (point)))
-                    end)
-                (insert (cond ((and annotation (not (string-equal annotation "")) marked) ">*")
-                              ((and annotation (not (string-equal annotation "")))  " *")
-                              (marked "> ")
-                              (t "  "))
-                        name)
-                (setq end (point))
-                (bookmarkp-bmenu-propertize-item name start end)
-                (insert "\n")))
-            (bookmarkp-bmenu-maybe-sort))
+    (mapc (lambda (full-record)
+            ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
+            (let ((name        (bookmark-name-from-full-record full-record))
+                  (annotation  (bookmark-get-annotation full-record))
+                  (marked      (bookmarkp-bookmark-marked-p full-record))
+                  (start       (+ 2 (point)))
+                  end)
+              (insert (cond ((and annotation (not (string-equal annotation "")) marked) ">*")
+                            ((and annotation (not (string-equal annotation "")))  " *")
+                            (marked "> ")
+                            (t "  "))
+                      name)
+              (setq end (point))
+              (bookmarkp-bmenu-propertize-item name start end)
+              (insert "\n")))
+          (bookmarkp-bmenu-maybe-sort))
     (goto-char (point-min))
     (forward-line 2)
     (bookmark-bmenu-mode)
