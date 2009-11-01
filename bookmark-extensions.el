@@ -48,7 +48,10 @@
 ;;
 ;;    Extensions to standard library `bookmark.el'.
 ;;
-;;    This is a fork of bookmark+.el originally created by Drew Adams.
+;;    This is a fork of bookmark+.el created by Drew Adams.
+;;
+;;    Drew continues to develop bookmark+.el, and is not responsible for code in
+;;    bookmark-extensions.el that departs from that in bookmark+.el."
 ;;
 ;;    Support bookmarking in `Gnus', `W3m', `Woman', `Man' in addition
 ;;    to Emacs23 vanilla bookmark features.
