@@ -1,14 +1,13 @@
-;;; bookmark+.el - Extensions to standard library `bookmark.el'.
+;;; bookmark-extensions.el - Extensions to standard library `bookmark.el'.
 
-;; Filename: bookmark+.el
+;; Filename: bookmark-extensions.el
 
-;; Author: Drew Adams, Thierry Volpiatto
-;; Maintainer: Thierry Volpiatto
+;; Author: Thierry Volpiatto
+;; Maintainer: Thierry Volpiatto <thierry.volpiatto@gmail.com>
 
-;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
 ;; Copyright (C) 2009, Thierry Volpiatto, all rights reserved.
 
-;; Created: Fri Sep 15 07:58:41 2000
+;; Created: <2009-11-01 Dim. 08:39>
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -48,39 +47,52 @@
 ;;
 ;;    Extensions to standard library `bookmark.el'.
 ;;
-;;    More description below.
+;;    This is a fork of bookmark+.el originally created by Drew Adams.
 ;;
+;;    Support bookmarking in `Gnus', `W3m', `Woman', `Man' in addition
+;;    to Emacs23 vanilla bookmark features.
+;;
+;;    Support to Emacs versions < 23 is NOT provided.
+;;
+;;; Acknowledgements:
+;;    Drew Adams for bookmark+.el.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;  Things Defined Here
 ;;  -------------------
+
+;;  Auto documentation created with traverselisp.el:
+;;  http://www.emacswiki.org/cgi-bin/emacs/traverselisp.el
 
 ;;  [UPDATE ALL EVAL] (traverse-auto-update-documentation)
 
 ;;  * Commands defined here:
-;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "bookmarkp")
-;; `bookmarkp-version'
-;; `bookmarkp-bmenu-sort-by-visit-frequency'
-;; `bookmarkp-bmenu-sort-by-last-time-visited'
-;; `bookmarkp-bmenu-sort-alphabetically'
-;; `bookmarkp-bmenu-search'
-;; `bookmarkp-bmenu-edit-bookmark'
-;; `bookmarkp-bmenu-delete-bookmark'
-;; `bookmarkp-bmenu-quit'
-;; `bookmarkp-bmenu-list-only-file-bookmarks'
-;; `bookmarkp-bmenu-list-only-non-file-bookmarks'
-;; `bookmarkp-bmenu-list-only-info-bookmarks'
-;; `bookmarkp-bmenu-list-only-w3m-bookmarks'
-;; `bookmarkp-bmenu-list-only-gnus-bookmarks'
-;; `bookmarkp-bmenu-list-only-region-bookmarks'
-;; `bookmarkp-bmenu-list-only-woman-man-bookmarks'
-;; `bookmarkp-bmenu-show-all-bookmarks'
-;; `bookmarkp-bmenu-mark-all-bookmarks'
-;; `bookmarkp-bmenu-unmark-all-deletion-flags'
-;; `bookmarkp-bmenu-unmark-all-non-deletion-flags'
-;; `bookmarkp-bmenu-unmark-all'
-;; `bookmarkp-bmenu-regexp-mark'
-;; `bookmarkp-bmenu-hide-marked'
-;; `bookmarkp-bmenu-hide-unmarked'
-;; `bookmarkp-bmenu-toggle-marks'
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "bmkext-")
+;; `bmkext-version'
+;; `bmkext-bmenu-sort-by-visit-frequency'
+;; `bmkext-bmenu-sort-by-last-time-visited'
+;; `bmkext-bmenu-sort-alphabetically'
+;; `bmkext-bmenu-search'
+;; `bmkext-bmenu-edit-bookmark'
+;; `bmkext-bmenu-delete-bookmark'
+;; `bmkext-bmenu-quit'
+;; `bmkext-bmenu-list-only-file-bookmarks'
+;; `bmkext-bmenu-list-only-non-file-bookmarks'
+;; `bmkext-bmenu-list-only-info-bookmarks'
+;; `bmkext-bmenu-list-only-w3m-bookmarks'
+;; `bmkext-bmenu-list-only-gnus-bookmarks'
+;; `bmkext-bmenu-list-only-region-bookmarks'
+;; `bmkext-bmenu-list-only-woman-man-bookmarks'
+;; `bmkext-bmenu-show-all-bookmarks'
+;; `bmkext-bmenu-mark-all-bookmarks'
+;; `bmkext-bmenu-unmark-all-deletion-flags'
+;; `bmkext-bmenu-unmark-all-non-deletion-flags'
+;; `bmkext-bmenu-unmark-all'
+;; `bmkext-bmenu-regexp-mark'
+;; `bmkext-bmenu-hide-marked'
+;; `bmkext-bmenu-hide-unmarked'
+;; `bmkext-bmenu-toggle-marks'
 
 ;;  * Commands redefined here:(from `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "^bookmark-")
@@ -100,105 +112,105 @@
 
 ;;  * User options defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'user-variable)
-;; `bookmarkp-use-region-flag'
-;; `bookmarkp-region-search-size'
-;; `bookmarkp-save-new-location-flag'
-;; `bookmarkp-handle-region-function'
-;; `bookmarkp-su-or-sudo-regexp'
-;; `bookmarkp-w3m-allow-multi-tabs'
-;; `bookmarkp-show-end-of-region'
-;; `bookmarkp-bookmark-name-length-max'
-;; `bookmarkp-bmenu-sort-function'
-;; `bookmarkp-search-prompt'
-;; `bookmarkp-search-delay'
-;; `bookmarkp-local-man-name-regexp'
+;; `bmkext-use-region-flag'
+;; `bmkext-region-search-size'
+;; `bmkext-save-new-location-flag'
+;; `bmkext-handle-region-function'
+;; `bmkext-su-or-sudo-regexp'
+;; `bmkext-w3m-allow-multi-tabs'
+;; `bmkext-show-end-of-region'
+;; `bmkext-bookmark-name-length-max'
+;; `bmkext-bmenu-sort-function'
+;; `bmkext-search-prompt'
+;; `bmkext-search-delay'
+;; `bmkext-local-man-name-regexp'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
-;; `bookmarkp-gnus'
-;; `bookmarkp-info'
-;; `bookmarkp-local-directory'
-;; `bookmarkp-local-file-with-region'
-;; `bookmarkp-local-file-without-region'
-;; `bookmarkp-non-file'
-;; `bookmarkp-remote-file'
-;; `bookmarkp-su-or-sudo'
-;; `bookmarkp-w3m'
-;; `bookmarkp-woman'
+;; `bmkext-gnus'
+;; `bmkext-info'
+;; `bmkext-local-directory'
+;; `bmkext-local-file-with-region'
+;; `bmkext-local-file-without-region'
+;; `bmkext-non-file'
+;; `bmkext-remote-file'
+;; `bmkext-su-or-sudo'
+;; `bmkext-w3m'
+;; `bmkext-woman'
 
 ;;  * Non-interactive functions defined here:
-;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "bookmarkp")
-;; `bookmarkp-remove-if'
-;; `bookmarkp-remove-if-not'
-;; `bookmarkp-maybe-save-bookmark'
-;; `bookmarkp-edit-bookmark'
-;; `bookmarkp-increment-visits'
-;; `bookmarkp-add-or-update-time'
-;; `bookmarkp-update-time-and-increment-visits'
-;; `bookmarkp-sort-p-1'
-;; `bookmarkp-bmenu-maybe-sort'
-;; `bookmarkp-bmenu-sort-1'
-;; `bookmarkp-bmenu-goto-bookmark-named'
-;; `bookmarkp-read-search-input'
-;; `bookmarkp-filtered-alist-by-regexp-only'
-;; `bookmarkp-bmenu-filter-alist-by-regexp'
-;; `bookmarkp-bmenu-cancel-search'
-;; `bookmarkp-bmenu-propertize-item'
-;; `bookmarkp-bmenu-unmark-all-1'
-;; `bookmarkp-bmenu-unmark-all-2'
-;; `bookmarkp-count-marked'
-;; `bookmarkp-region-bookmark-p'
-;; `bookmarkp-gnus-bookmark-p'
-;; `bookmarkp-w3m-bookmark-p'
-;; `bookmarkp-info-bookmark-p'
-;; `bookmarkp-woman-bookmark-p'
-;; `bookmarkp-man-bookmark-p'
-;; `bookmarkp-woman-man-bookmark-p'
-;; `bookmarkp-file-bookmark-p'
-;; `bookmarkp-non-file-bookmark-p'
-;; `bookmarkp-remote-file-bookmark-p'
-;; `bookmarkp-local-file-bookmark-p'
-;; `bookmarkp-local-directory-bookmark-p'
-;; `bookmarkp-bookmark-marked-p'
-;; `bookmarkp-region-alist-only'
-;; `bookmarkp-gnus-alist-only'
-;; `bookmarkp-w3m-alist-only'
-;; `bookmarkp-info-alist-only'
-;; `bookmarkp-woman-alist-only'
-;; `bookmarkp-man-alist-only'
-;; `bookmarkp-woman-man-alist-only'
-;; `bookmarkp-remote-file-alist-only'
-;; `bookmarkp-local-file-alist-only'
-;; `bookmarkp-file-alist-only'
-;; `bookmarkp-non-file-alist-only'
-;; `bookmarkp-marked-bookmarks-only'
-;; `bookmarkp-non-marked-bookmarks-only'
-;; `bookmarkp-current-list-have-marked-p'
-;; `bookmarkp-get-buffer-name'
-;; `bookmarkp-get-end-position'
-;; `bookmarkp-root-or-sudo-logged-p'
-;; `bookmarkp-region-record-front-context-string'
-;; `bookmarkp-record-front-context-string'
-;; `bookmarkp-region-record-rear-context-string'
-;; `bookmarkp-record-rear-context-string'
-;; `bookmarkp-record-front-context-region-string'
-;; `bookmarkp-record-end-context-region-string'
-;; `bookmarkp-position-after-whitespace'
-;; `bookmarkp-position-before-whitespace'
-;; `bookmarkp-save-new-region-location'
-;; `bookmarkp-handle-region-default'
-;; `bookmarkp-goto-position'
-;; `bookmarkp-make-w3m-record'
-;; `bookmarkp-w3m-set-new-buffer-name'
-;; `bookmarkp-jump-w3m-new-session'
-;; `bookmarkp-jump-w3m-only-one-tab'
-;; `bookmarkp-jump-w3m'
-;; `bookmarkp-make-gnus-record'
-;; `bookmarkp-jump-gnus'
-;; `bookmarkp-make-woman-record'
-;; `bookmarkp-jump-woman'
-;; `bookmarkp-make-man-record'
-;; `bookmarkp-jump-man'
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "bmkext-")
+;; `bmkext-remove-if'
+;; `bmkext-remove-if-not'
+;; `bmkext-maybe-save-bookmark'
+;; `bmkext-edit-bookmark'
+;; `bmkext-increment-visits'
+;; `bmkext-add-or-update-time'
+;; `bmkext-update-time-and-increment-visits'
+;; `bmkext-sort-p-1'
+;; `bmkext-bmenu-maybe-sort'
+;; `bmkext-bmenu-sort-1'
+;; `bmkext-bmenu-goto-bookmark-named'
+;; `bmkext-read-search-input'
+;; `bmkext-filtered-alist-by-regexp-only'
+;; `bmkext-bmenu-filter-alist-by-regexp'
+;; `bmkext-bmenu-cancel-search'
+;; `bmkext-bmenu-propertize-item'
+;; `bmkext-bmenu-unmark-all-1'
+;; `bmkext-bmenu-unmark-all-2'
+;; `bmkext-count-marked'
+;; `bmkext-region-bookmark-p'
+;; `bmkext-gnus-bookmark-p'
+;; `bmkext-w3m-bookmark-p'
+;; `bmkext-info-bookmark-p'
+;; `bmkext-woman-bookmark-p'
+;; `bmkext-man-bookmark-p'
+;; `bmkext-woman-man-bookmark-p'
+;; `bmkext-file-bookmark-p'
+;; `bmkext-non-file-bookmark-p'
+;; `bmkext-remote-file-bookmark-p'
+;; `bmkext-local-file-bookmark-p'
+;; `bmkext-local-directory-bookmark-p'
+;; `bmkext-bookmark-marked-p'
+;; `bmkext-region-alist-only'
+;; `bmkext-gnus-alist-only'
+;; `bmkext-w3m-alist-only'
+;; `bmkext-info-alist-only'
+;; `bmkext-woman-alist-only'
+;; `bmkext-man-alist-only'
+;; `bmkext-woman-man-alist-only'
+;; `bmkext-remote-file-alist-only'
+;; `bmkext-local-file-alist-only'
+;; `bmkext-file-alist-only'
+;; `bmkext-non-file-alist-only'
+;; `bmkext-marked-bookmarks-only'
+;; `bmkext-non-marked-bookmarks-only'
+;; `bmkext-current-list-have-marked-p'
+;; `bmkext-get-buffer-name'
+;; `bmkext-get-end-position'
+;; `bmkext-root-or-sudo-logged-p'
+;; `bmkext-region-record-front-context-string'
+;; `bmkext-record-front-context-string'
+;; `bmkext-region-record-rear-context-string'
+;; `bmkext-record-rear-context-string'
+;; `bmkext-record-front-context-region-string'
+;; `bmkext-record-end-context-region-string'
+;; `bmkext-position-after-whitespace'
+;; `bmkext-position-before-whitespace'
+;; `bmkext-save-new-region-location'
+;; `bmkext-handle-region-default'
+;; `bmkext-goto-position'
+;; `bmkext-make-w3m-record'
+;; `bmkext-w3m-set-new-buffer-name'
+;; `bmkext-jump-w3m-new-session'
+;; `bmkext-jump-w3m-only-one-tab'
+;; `bmkext-jump-w3m'
+;; `bmkext-make-gnus-record'
+;; `bmkext-jump-gnus'
+;; `bmkext-make-woman-record'
+;; `bmkext-jump-woman'
+;; `bmkext-make-man-record'
+;; `bmkext-jump-man'
 
 ;;  * Non-interactive functions redefined here:(From `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'function :prefix "^bookmark-")
@@ -215,16 +227,16 @@
 ;; `bookmark-bmenu-hide-filenames'
 
 ;;  * Internal variables defined here:
-;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "bookmarkp")
-;; `bookmarkp-jump-display-function'
-;; `bookmarkp-latest-bookmark-alist'
-;; `bookmarkp-bookmark-marked-list'
-;; `bookmarkp-bmenu-before-hide-unmarked-list'
-;; `bookmarkp-bmenu-before-hide-marked-list'
-;; `bookmarkp-bmenu-called-from-inside-flag'
-;; `bookmarkp-bmenu-reverse-sort-p'
-;; `bookmarkp-search-pattern'
-;; `bookmarkp-search-timer'
+;; [EVAL] (traverse-auto-document-lisp-buffer :type 'internal-variable :prefix "bmkext")
+;; `bmkext-jump-display-function'
+;; `bmkext-latest-bookmark-alist'
+;; `bmkext-bookmark-marked-list'
+;; `bmkext-bmenu-before-hide-unmarked-list'
+;; `bmkext-bmenu-before-hide-marked-list'
+;; `bmkext-bmenu-called-from-inside-flag'
+;; `bmkext-bmenu-reverse-sort-p'
+;; `bmkext-search-pattern'
+;; `bmkext-search-timer'
 
 ;;  ***** NOTE: The following variables defined in `bookmark.el'
 ;;              have been REDEFINED HERE.
@@ -238,57 +250,27 @@
 ;;  Documentation
 ;;  -------------
 ;;
-;;  ** Bookmark+ Features **
+;;  ** Bookmark-Extensions Features **
 ;;
 ;;  In addition to the kinds of bookmarks provided by vanilla Emacs:
 ;;
 ;;    - You can bookmark a buffer that is not associated with a file.
 ;;
-;;    - You can bookmark a region in a W3m buffer.
+;;    - You can bookmark a W3m buffer, a Gnus buffer, a Woman or a Man buffer.
 ;;
 ;;    - For any bookmark (except Gnus), you can bookmark a region of
 ;;      text, not just a position.  By default, when you jump to a
 ;;      bookmark that records a region, the region is activated.  See
-;;      option `bookmarkp-use-region-flag'.  `C-u' reverses the
+;;      option `bmkext-use-region-flag'.  `C-u' reverses the
 ;;      behavior specified by the value of the option.
 ;;
 ;;    - Better bookmark relocation, if the contextual text changes.
 ;;
 ;;
-;;  ** How To Use Bookmark+ **
+;;  ** How To Use Bookmark-Extensions **
 ;;
 ;;  Put this library in your `load-path'.
-;;  Add this to your init file (~/.emacs) : (require 'bookmark+)
-;;
-;;
-;;  ** Compatibility with Vanilla Emacs (`bookmark.el') **
-;;
-;;  1. All bookmarks created using any version of vanilla Emacs
-;;     (library `bookmark.el') continue to work with `bookmark+.el'.
-;;
-;;  2. Most bookmarks created using `bookmark+.el' will not interfere
-;;     with the behavior of vanilla Emacs, versions 23.  The new
-;;     bookmark types are simply ignored by vanilla Emacs.  For
-;;     example:
-;;
-;;    - A bookmark with a region is treated like a simple position
-;;      bookmark: the destination is the region start position.
-;;
-;;    - A Gnus bookmark does not work; it is simply ignored.
-;;
-;;  However, there are two cases in which `bookmark+.el' bookmarks
-;;  will raise an error in vanilla Emacs:
-;;
-;;  * You cannot use non-file bookmarks with any version of vanilla
-;;    Emacs.
-;;
-;;
-;;    The Emacs bookmark data structure has changed from version to
-;;    version.  Library `bookmark+.el' always creates bookmarks that
-;;    have the most recent structure (Emacs 23).
-;;
-;;  Bottom line: Use `bookmark+.el' to access bookmarks created using
-;;  `bookmark+.el'.
+;;  Add this to your init file (~/.emacs) : (require 'bookmark-extensions)
 ;;
 ;;
 ;;  ** New Bookmark Structure **
@@ -311,12 +293,12 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bookmarkp-version-number "2.5.63")
+(defconst bmkext-version-number "2.6.0")
 
-(defun bookmarkp-version ()
-  "Show version number of library `bookmark+.el'."
+(defun bmkext-version ()
+  "Show version number of library `bookmark-extensions.el'."
   (interactive)
-  (message "Bookmark+, version %s" bookmarkp-version-number))
+  (message "Bookmark-extensions, version %s" bmkext-version-number))
 
 
 ;; Quiet the byte-compiler
@@ -340,153 +322,153 @@
 ;;;###autoload
 (define-key bookmark-map "q" 'bookmark-jump-other-window)
 ;;;###autoload
-(define-key bookmark-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
+(define-key bookmark-map "F" 'bmkext-bmenu-list-only-file-bookmarks)
 ;;;###autoload
-(define-key bookmark-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
+(define-key bookmark-map "G" 'bmkext-bmenu-list-only-gnus-bookmarks)
 ;;;###autoload
-(define-key bookmark-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
+(define-key bookmark-map "I" 'bmkext-bmenu-list-only-info-bookmarks)
 ;;;###autoload
-(define-key bookmark-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
+(define-key bookmark-map "R" 'bmkext-bmenu-list-only-region-bookmarks)
 ;;;###autoload
-(define-key bookmark-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
+(define-key bookmark-map "W" 'bmkext-bmenu-list-only-w3m-bookmarks)
 
 ;; *-bmenu-mode-map
 
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "." 'bookmarkp-bmenu-show-all-bookmarks)
+(define-key bookmark-bmenu-mode-map "." 'bmkext-bmenu-show-all-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "U") nil)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bookmarkp-bmenu-unmark-all)
+(define-key bookmark-bmenu-mode-map (kbd "U <RET>") 'bmkext-bmenu-unmark-all)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "M-<DEL>") 'bookmarkp-bmenu-unmark-all)
+(define-key bookmark-bmenu-mode-map (kbd "M-<DEL>") 'bmkext-bmenu-unmark-all)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U D") 'bookmarkp-bmenu-unmark-all-deletion-flags)
+(define-key bookmark-bmenu-mode-map (kbd "U D") 'bmkext-bmenu-unmark-all-deletion-flags)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "U >") 'bookmarkp-bmenu-unmark-all-non-deletion-flags)
+(define-key bookmark-bmenu-mode-map (kbd "U >") 'bmkext-bmenu-unmark-all-non-deletion-flags)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\M-m" 'bookmarkp-bmenu-mark-all-bookmarks)
+(define-key bookmark-bmenu-mode-map "\M-m" 'bmkext-bmenu-mark-all-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-t" 'bookmark-bmenu-toggle-filenames) ; Was `t' in Vanilla
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "t" 'bookmarkp-bmenu-toggle-marks)
+(define-key bookmark-bmenu-mode-map "t" 'bmkext-bmenu-toggle-marks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "q" 'bookmarkp-bmenu-quit)
+(define-key bookmark-bmenu-mode-map "q" 'bmkext-bmenu-quit)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "E" 'bookmarkp-bmenu-edit-bookmark)
+(define-key bookmark-bmenu-mode-map "E" 'bmkext-bmenu-edit-bookmark)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "F" 'bookmarkp-bmenu-list-only-file-bookmarks)
+(define-key bookmark-bmenu-mode-map "F" 'bmkext-bmenu-list-only-file-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "G" 'bookmarkp-bmenu-list-only-gnus-bookmarks)
+(define-key bookmark-bmenu-mode-map "G" 'bmkext-bmenu-list-only-gnus-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map ">" 'bookmarkp-bmenu-hide-unmarked)
+(define-key bookmark-bmenu-mode-map ">" 'bmkext-bmenu-hide-unmarked)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "<" 'bookmarkp-bmenu-hide-marked)
+(define-key bookmark-bmenu-mode-map "<" 'bmkext-bmenu-hide-marked)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "I" 'bookmarkp-bmenu-list-only-info-bookmarks)
+(define-key bookmark-bmenu-mode-map "I" 'bmkext-bmenu-list-only-info-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "M" 'bookmarkp-bmenu-list-only-woman-man-bookmarks)
+(define-key bookmark-bmenu-mode-map "M" 'bmkext-bmenu-list-only-woman-man-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "B" 'bookmarkp-bmenu-list-only-non-file-bookmarks)
+(define-key bookmark-bmenu-mode-map "B" 'bmkext-bmenu-list-only-non-file-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "R" 'bookmarkp-bmenu-list-only-region-bookmarks)
+(define-key bookmark-bmenu-mode-map "R" 'bmkext-bmenu-list-only-region-bookmarks)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\S-V" 'bookmarkp-bmenu-sort-by-visit-frequency)
+(define-key bookmark-bmenu-mode-map "\S-V" 'bmkext-bmenu-sort-by-visit-frequency)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\S-T" 'bookmarkp-bmenu-sort-by-last-time-visited)
+(define-key bookmark-bmenu-mode-map "\S-T" 'bmkext-bmenu-sort-by-last-time-visited)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "\S-S" 'bookmarkp-bmenu-sort-alphabetically)
+(define-key bookmark-bmenu-mode-map "\S-S" 'bmkext-bmenu-sort-alphabetically)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-r" 'bookmark-bmenu-relocate) ; Was `R' in vanilla.
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "M-g") 'bookmarkp-bmenu-search)
+(define-key bookmark-bmenu-mode-map (kbd "M-g") 'bmkext-bmenu-search)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "C-k") 'bookmarkp-bmenu-delete-bookmark)
+(define-key bookmark-bmenu-mode-map (kbd "C-k") 'bmkext-bmenu-delete-bookmark)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "W" 'bookmarkp-bmenu-list-only-w3m-bookmarks)
+(define-key bookmark-bmenu-mode-map "W" 'bmkext-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "%" nil)
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map "%m" 'bookmarkp-bmenu-regexp-mark)
+(define-key bookmark-bmenu-mode-map "%m" 'bmkext-bmenu-regexp-mark)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "*" nil)
 
 
 (defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
   "Extras keys added by bookmark+:\\<bookmark-bmenu-mode-map>
-\\[bookmarkp-bmenu-edit-bookmark]\t- Edit bookmark
-\\[bookmarkp-bmenu-list-only-file-bookmarks]\t- List only file and directory \
+\\[bmkext-bmenu-edit-bookmark]\t- Edit bookmark
+\\[bmkext-bmenu-list-only-file-bookmarks]\t- List only file and directory \
 bookmarks (`C-u' for local only)
-\\[bookmarkp-bmenu-show-all-bookmarks]\t- Show all bookmarks
+\\[bmkext-bmenu-show-all-bookmarks]\t- Show all bookmarks
 \\[bookmark-bmenu-toggle-filenames]\t- Toggle filenames
-\\[bookmarkp-bmenu-toggle-marks]\t- Toggle marks
-\\[bookmarkp-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
-\\[bookmarkp-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
-\\[bookmarkp-bmenu-list-only-info-bookmarks]\t- List only Info bookmarks
-\\[bookmarkp-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man  pages
-\\[bookmarkp-bmenu-list-only-region-bookmarks]\t- List only region bookmarks
-\\[bookmarkp-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks
-\\[bookmarkp-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
-\\[bookmarkp-bmenu-hide-marked]\t- Hide marked bookmarks
-\\[bookmarkp-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
-\\[bookmarkp-bmenu-mark-all-bookmarks]\t- Mark all bookmarks
-\\[bookmarkp-bmenu-search]\t- Incremental search in bookmarks
-\\[bookmarkp-bmenu-unmark-all]\t- Unmark all bookmarks (`C-u' for interactive use)
-\\[bookmarkp-bmenu-unmark-all-non-deletion-flags]\t- Unmark all bookmarks with flag >
-\\[bookmarkp-bmenu-unmark-all-deletion-flags]\t- Unmark all bookmarks with flag D
-\\[bookmarkp-bmenu-sort-by-visit-frequency]\t- Sort by visit frequency (`C-u' to reverse)
-\\[bookmarkp-bmenu-sort-by-last-time-visited]\t- Sort by last time visited (`C-u' to reverse)
-\\[bookmarkp-bmenu-sort-alphabetically]\t- Sort alphabetically (`C-u' to reverse)")
+\\[bmkext-bmenu-toggle-marks]\t- Toggle marks
+\\[bmkext-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
+\\[bmkext-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
+\\[bmkext-bmenu-list-only-info-bookmarks]\t- List only Info bookmarks
+\\[bmkext-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man  pages
+\\[bmkext-bmenu-list-only-region-bookmarks]\t- List only region bookmarks
+\\[bmkext-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks
+\\[bmkext-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
+\\[bmkext-bmenu-hide-marked]\t- Hide marked bookmarks
+\\[bmkext-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
+\\[bmkext-bmenu-mark-all-bookmarks]\t- Mark all bookmarks
+\\[bmkext-bmenu-search]\t- Incremental search in bookmarks
+\\[bmkext-bmenu-unmark-all]\t- Unmark all bookmarks (`C-u' for interactive use)
+\\[bmkext-bmenu-unmark-all-non-deletion-flags]\t- Unmark all bookmarks with flag >
+\\[bmkext-bmenu-unmark-all-deletion-flags]\t- Unmark all bookmarks with flag D
+\\[bmkext-bmenu-sort-by-visit-frequency]\t- Sort by visit frequency (`C-u' to reverse)
+\\[bmkext-bmenu-sort-by-last-time-visited]\t- Sort by last time visited (`C-u' to reverse)
+\\[bmkext-bmenu-sort-alphabetically]\t- Sort alphabetically (`C-u' to reverse)")
 
 
 ;;; Faces (Customizable) ---------------------------------------------
 
-(defface bookmarkp-gnus
+(defface bmkext-gnus
     '((t (:foreground "magenta")))
   "*Face used for a gnus bookmark."
   :group 'bookmarkp)
 
-(defface bookmarkp-info
+(defface bmkext-info
     '((t (:foreground "green")))
   "*Face used for a bookmarked Info node."
   :group 'bookmarkp)
 
-(defface bookmarkp-local-directory
+(defface bmkext-local-directory
     '((t (:foreground "DarkRed" :background "LightGray")))
   "*Face used for a bookmarked local directory."
   :group 'bookmarkp)
 
-(defface bookmarkp-local-file-with-region
+(defface bmkext-local-file-with-region
     '((t (:foreground "Indianred2")))
   "*Face used for a region bookmark in a local file."
   :group 'bookmarkp)
 
-(defface bookmarkp-local-file-without-region
+(defface bmkext-local-file-without-region
     '((t (:foreground "Blue")))
   "*Face used for a bookmarked local file (without a region)."
   :group 'bookmarkp)
 
-(defface bookmarkp-non-file
+(defface bmkext-non-file
     '((t (:foreground "grey")))
   "*Face used for a bookmarked buffer not associated with a file."
   :group 'bookmarkp)
 
-(defface bookmarkp-remote-file
+(defface bmkext-remote-file
     '((t (:foreground "pink")))
   "*Face used for a bookmarked tramp remote file (/ssh:)."
   :group 'bookmarkp)
 
-(defface bookmarkp-su-or-sudo
+(defface bmkext-su-or-sudo
     '((t (:foreground "red")))
   "*Face used for a bookmarked tramp file (/su: or /sudo:)."
   :group 'bookmarkp)
 
-(defface bookmarkp-w3m
+(defface bmkext-w3m
     '((t (:foreground "yellow")))
   "*Face used for a bookmarked w3m url."
   :group 'bookmarkp)
 
-(defface bookmarkp-woman
+(defface bmkext-woman
     '((t (:foreground "Orange4")))
   "*Face used for a bookmarked w3m url."
   :group 'bookmarkp)
@@ -496,94 +478,94 @@ bookmarks (`C-u' for local only)
 
 (defgroup bookmark-plus nil
   "Bookmark enhancements."
-  :prefix "bookmarkp-" :group 'bookmark)
+  :prefix "bmkext-" :group 'bookmark)
 
-(defcustom bookmarkp-use-region-flag t
+(defcustom bmkext-use-region-flag t
   "*Non-nil means jumping to bookmark activates bookmarked region, if any."
   :type 'boolean :group 'bookmarkp)
 
-(defcustom bookmarkp-region-search-size 40
+(defcustom bmkext-region-search-size 40
   "*Same as `bookmark-search-size', but specialized for bookmark regions."
   :type 'integer :group 'bookmarkp)
 
-(defcustom bookmarkp-save-new-location-flag t
+(defcustom bmkext-save-new-location-flag t
   "*Non-nil means save relocated bookmarks.
 If nil, then the new bookmark location is visited, but it is not saved
 as part of the bookmark definition."
   :type 'boolean :group 'bookmarkp)
 
-(defcustom bookmarkp-handle-region-function 'bookmarkp-handle-region-default
+(defcustom bmkext-handle-region-function 'bmkext-handle-region-default
   "*Function to handle a bookmarked region."
   :type 'function :group 'bookmarkp)
 
-(defcustom bookmarkp-su-or-sudo-regexp "\\(/su:\\|/sudo:\\)"
+(defcustom bmkext-su-or-sudo-regexp "\\(/su:\\|/sudo:\\)"
   "*Regexp to recognize `su' or `sudo' Tramp bookmarks."
   :type 'regexp :group 'bookmarkp)
 
-(defcustom bookmarkp-w3m-allow-multi-tabs t
+(defcustom bmkext-w3m-allow-multi-tabs t
   "*Non-nil means jump to W3m bookmarks in a new session."
   :type 'boolean :group 'bookmarkp)
 
-(defcustom bookmarkp-show-end-of-region t
+(defcustom bmkext-show-end-of-region t
   "*Show end of region with `exchange-point-and-mark' when activating a region.
 If nil show only beginning of region."
   :type 'boolean :group 'bookmarkp)
 
-(defcustom bookmarkp-bookmark-name-length-max 70
+(defcustom bmkext-bookmark-name-length-max 70
   "*Maximum number of characters used to name a bookmark with region."
   :type 'integer :group 'bookmarkp)
 
-(defcustom bookmarkp-bmenu-sort-function 'bookmarkp-visited-more-p
+(defcustom bmkext-bmenu-sort-function 'bmkext-visited-more-p
   "*Prefered function to sort bookmarks.
 Possible values are:
-`bookmarkp-visited-more-p' - sort by visit frequency
-`bookmarkp-last-time-p' - sort by more recents visits
-`bookmarkp-alpha-more-p' - sort alphabetically."
+`bmkext-visited-more-p' - sort by visit frequency
+`bmkext-last-time-p' - sort by more recents visits
+`bmkext-alpha-more-p' - sort alphabetically."
   :type '(choice (const :tag "None" nil) function) :group 'bookmarkp)
 
-(defcustom bookmarkp-search-prompt "Pattern: "
-  "*Prompt used for `bookmarkp-bmenu-search'."
+(defcustom bmkext-search-prompt "Pattern: "
+  "*Prompt used for `bmkext-bmenu-search'."
   :type 'string :group 'bookmarkp)
 
-(defcustom bookmarkp-search-delay 0.6
-  "*Display when searching bookmarks is updated all `bookmarkp-search-delay' seconds."
+(defcustom bmkext-search-delay 0.6
+  "*Display when searching bookmarks is updated all `bmkext-search-delay' seconds."
   :type 'integer :group 'bookmarkp)
 
-(defcustom bookmarkp-local-man-name-regexp "^NOM$"
+(defcustom bmkext-local-man-name-regexp "^NOM$"
   "*The translation of the uppercase word NAME in your language.
 Used in `bookmark-set' to get the default bookmark name."
   :type 'string :group 'bookmarkp)
 
 ;;; Internal Variables --------------------------------------------------
 
-(defvar bookmarkp-jump-display-function nil
+(defvar bmkext-jump-display-function nil
   "Function used currently to display a bookmark.")
 
-(defvar bookmarkp-latest-bookmark-alist ()
+(defvar bmkext-latest-bookmark-alist ()
   "Content of `bookmark-alist' as last filtered.")
 
-(defconst bookmarkp-non-file-filename "   - no file -"
+(defconst bmkext-non-file-filename "   - no file -"
   "Name to use for `filename' entry, for non-file bookmarks.")
 
-(defvar bookmarkp-bookmark-marked-list nil
+(defvar bmkext-bookmark-marked-list nil
   "A list that contains all marked bookmarks.")
 
-(defvar bookmarkp-bmenu-before-hide-unmarked-list nil
+(defvar bmkext-bmenu-before-hide-unmarked-list nil
   "Store the list like it was before hiding unmarked bookmarks.")
 
-(defvar bookmarkp-bmenu-before-hide-marked-list nil
+(defvar bmkext-bmenu-before-hide-marked-list nil
   "Store the list like it was before hiding marked bookmarks.")
 
-(defvar bookmarkp-bmenu-called-from-inside-flag nil
+(defvar bmkext-bmenu-called-from-inside-flag nil
   "Signal `bookmark-bmenu-list' is called from bmenu-list buffer.")
 
-(defvar bookmarkp-bmenu-reverse-sort-p nil
+(defvar bmkext-bmenu-reverse-sort-p nil
   "Reverse order of sorting.")
 
-(defvar bookmarkp-search-pattern ""
+(defvar bmkext-search-pattern ""
   "Store keyboard input for incremental search.")
 
-(defvar bookmarkp-search-timer nil
+(defvar bmkext-search-timer nil
   "Timer used for searching")
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
@@ -685,18 +667,18 @@ pertains to the location within the buffer."
          (end      (if isregion (region-end) (point)))
          (buf      (buffer-name))
          (fcs      (if isregion
-                       (bookmarkp-region-record-front-context-string beg end)
-                       (bookmarkp-record-front-context-string beg)))
+                       (bmkext-region-record-front-context-string beg end)
+                       (bmkext-record-front-context-string beg)))
          (rcs      (if isregion
-                       (bookmarkp-region-record-rear-context-string beg)
-                       (bookmarkp-record-rear-context-string beg)))
-         (fcrs     (when isregion (bookmarkp-record-front-context-region-string beg end)))
-         (ecrs     (when isregion (bookmarkp-record-end-context-region-string end)))
+                       (bmkext-region-record-rear-context-string beg)
+                       (bmkext-record-rear-context-string beg)))
+         (fcrs     (when isregion (bmkext-record-front-context-region-string beg end)))
+         (ecrs     (when isregion (bmkext-record-end-context-region-string end)))
          (ctime    (float-time)))
     `(,@(unless point-only `((filename . ,(cond ((buffer-file-name (current-buffer))
                                                  (bookmark-buffer-file-name))
                                                 (isdired)
-                                                (t  bookmarkp-non-file-filename)))))
+                                                (t  bmkext-non-file-filename)))))
         (buffer-name . ,buf)
         (front-context-string . ,fcs)
         (rear-context-string . ,rcs)
@@ -723,7 +705,7 @@ for prompting is as follows (in order of priority):
 
  * If the region is active and nonempty, then the buffer name followed
    by \": \" and the region prefix (up to
-   `bookmarkp-bookmark-name-length-max' chars).
+   `bmkext-bookmark-name-length-max' chars).
 
  * If in W3m mode, then the current W3m title.
 
@@ -770,7 +752,7 @@ bookmarks.)"
                           (save-excursion (goto-char (region-beginning))
                                           (skip-chars-forward " ") (setq bookmark-yank-point (point)))
                           (substring regname 0
-                                     (min bookmarkp-bookmark-name-length-max
+                                     (min bmkext-bookmark-name-length-max
                                           (length regname))))
                          ((eq major-mode 'w3m-mode)
                           w3m-current-title)
@@ -779,7 +761,7 @@ bookmarks.)"
                          ((or (eq major-mode 'woman-mode) (eq major-mode 'Man-mode))
                           (save-excursion
                             (goto-char (point-min))
-                            (when (or (re-search-forward bookmarkp-local-man-name-regexp nil t)
+                            (when (or (re-search-forward bmkext-local-man-name-regexp nil t)
                                       (re-search-forward "^NAME$" nil t))
                             (forward-line 1) (skip-chars-forward " ")
                             (buffer-substring-no-properties (point) (line-end-position)))))
@@ -825,7 +807,7 @@ Newline characters are stripped out."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Add marked bookmark to `bookmarkp-bookmark-marked-list',
+;; Add marked bookmark to `bmkext-bookmark-marked-list',
 ;; Don't call a second time `bookmark-bmenu-check-position'.
 ;;
 ;;;###autoload
@@ -836,7 +818,7 @@ Newline characters are stripped out."
   (when (bookmark-bmenu-check-position)
     (let ((inhibit-read-only t)
           (bmk (bookmark-bmenu-bookmark)))
-      (push bmk bookmarkp-bookmark-marked-list)
+      (push bmk bmkext-bookmark-marked-list)
       (delete-char 1)
       (insert ?>)
       (forward-line 1))))
@@ -844,7 +826,7 @@ Newline characters are stripped out."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Remove marked bookmark of `bookmarkp-bookmark-marked-list'.
+;; Remove marked bookmark of `bmkext-bookmark-marked-list'.
 ;; Don't call a second time `bookmark-bmenu-check-position'.
 ;;
 ;;;###autoload
@@ -858,21 +840,21 @@ Optional BACKUP means move up."
           (bmk (bookmark-bmenu-bookmark)))
       (delete-char 1)
       (insert " ")
-      (setq bookmarkp-bookmark-marked-list
-            (remove bmk bookmarkp-bookmark-marked-list)))
+      (setq bmkext-bookmark-marked-list
+            (remove bmk bmkext-bookmark-marked-list)))
     (forward-line (if backup -1 1))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Get bookmark name from `bookmarkp-bookmark-name' property of bookmark.
+;; Get bookmark name from `bmkext-bookmark-name' property of bookmark.
 ;; 
 (defun bookmark-bmenu-bookmark ()
   "Return the name of the bookmark on this line."
   (when (bookmark-bmenu-check-position)
     (save-excursion
       (forward-line 0) (forward-char 3)
-      (get-text-property (point) 'bookmarkp-bookmark-name))))
+      (get-text-property (point) 'bmkext-bookmark-name))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -908,15 +890,15 @@ Returns non-nil if on a line with a bookmark and
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
-;; Save DISPLAY-FUNCTION to `bookmarkp-jump-display-function' before calling
+;; Save DISPLAY-FUNCTION to `bmkext-jump-display-function' before calling
 ;; `bookmark-handle-bookmark'.
 ;;
 (defun bookmark--jump-via (bookmark display-function)
   "Helper function for `bookmark-jump(-other-window)'.
 BOOKMARK is a bookmark name or a bookmark record.
 DISPLAY-FUNCTION is the function that displays the bookmark."
-  (bookmarkp-update-time-and-increment-visits bookmark)
-  (setq bookmarkp-jump-display-function  display-function)
+  (bmkext-update-time-and-increment-visits bookmark)
+  (setq bmkext-jump-display-function  display-function)
   (bookmark-handle-bookmark bookmark)
   (let ((win  (get-buffer-window (current-buffer) 0)))
     (when win (set-window-point win (point))))
@@ -958,16 +940,16 @@ asked if you wish to give the bookmark a new location.  If so,
 `bookmark-jump' jumps to the new location and saves it.
 
 If the bookmark represents a region, then the region is activated if
-`bookmarkp-use-region-flag' is not-nil or it is nil and you use a
+`bmkext-use-region-flag' is not-nil or it is nil and you use a
 prefix argument.  A prefix arg temporarily flips the value of
-`bookmarkp-use-region-flag'."
+`bmkext-use-region-flag'."
   (interactive (list (bookmark-completing-read "Jump to bookmark" bookmark-current-bookmark)
                      current-prefix-arg))
   (unless bookmark-name (error "No bookmark specified"))
   (bookmark-maybe-historicize-string bookmark-name)
-  (let ((bookmarkp-use-region-flag  (if use-region-p
-                                        (not bookmarkp-use-region-flag)
-                                        bookmarkp-use-region-flag)))
+  (let ((bmkext-use-region-flag  (if use-region-p
+                                        (not bmkext-use-region-flag)
+                                        bmkext-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer)))
 
 
@@ -985,9 +967,9 @@ See `bookmark-jump'."
                      current-prefix-arg))
   (unless bookmark-name (error "No bookmark specified"))
   (bookmark-maybe-historicize-string bookmark-name)
-  (let ((bookmarkp-use-region-flag  (if use-region-p
-                                        (not bookmarkp-use-region-flag)
-                                        bookmarkp-use-region-flag)))
+  (let ((bmkext-use-region-flag  (if use-region-p
+                                        (not bmkext-use-region-flag)
+                                        bmkext-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer-other-window)))
 
 
@@ -998,18 +980,18 @@ See `bookmark-jump'."
 (defun bookmark-default-handler (bookmark)
   "Default handler to jump to the location of BOOKMARK.
 BOOKMARK is a bookmark name or a bookmark record.
-If BOOKMARK records a nonempty region, and `bookmarkp-use-region-flag'
+If BOOKMARK records a nonempty region, and `bmkext-use-region-flag'
  is non-nil, then activate the region.
 Return nil or signal `file-error'."
   (let* ((bmk      (bookmark-get-bookmark bookmark)) ; Get bookmark object once and for all.
          (file     (bookmark-get-filename bmk))
          (buf      (bookmark-prop-get bmk 'buffer))
-         (bufname  (bookmarkp-get-buffer-name bmk))
+         (bufname  (bmkext-get-buffer-name bmk))
          (pos      (bookmark-get-position bmk))
-         (end-pos  (bookmarkp-get-end-position bmk)))
-    (if (not (and bookmarkp-use-region-flag end-pos (/= pos end-pos)))
+         (end-pos  (bmkext-get-end-position bmk)))
+    (if (not (and bmkext-use-region-flag end-pos (/= pos end-pos)))
         ;; Single-position bookmark (no region).  Go to it.
-        (bookmarkp-goto-position file buf bufname pos
+        (bmkext-goto-position file buf bufname pos
                                  (bookmark-get-front-context-string bmk)
                                  (bookmark-get-rear-context-string bmk))
         ;; Bookmark with a region.  Go to it and activate the region.
@@ -1021,12 +1003,12 @@ Return nil or signal `file-error'."
               (signal 'file-error `("Jumping to bookmark" "No such file or directory"
                                                           (bookmark-get-filename bmk)))))
         (set-buffer (or buf bufname))
-        (save-current-buffer (funcall bookmarkp-jump-display-function (current-buffer)))
+        (save-current-buffer (funcall bmkext-jump-display-function (current-buffer)))
         (raise-frame)
         (goto-char (min pos (point-max)))
         (when (> pos (point-max)) (error "Bookmark position is beyond buffer end"))
         ;; Activate region.  Relocate it if it moved.  Save relocated bookmark if confirm.
-        (funcall bookmarkp-handle-region-function bmk))))
+        (funcall bmkext-handle-region-function bmk))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1038,7 +1020,7 @@ Return nil or signal `file-error'."
 BOOKMARK is a bookmark name or a bookmark record."
   (bookmark-maybe-load-default-file)
   (or (bookmark-get-filename bookmark)
-      (bookmarkp-get-buffer-name bookmark)
+      (bmkext-get-buffer-name bookmark)
       (bookmark-prop-get bookmark 'buffer)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
@@ -1073,7 +1055,7 @@ words from the buffer into the new bookmark name."
     (bookmark-set-name old newname)
     (setq bookmark-current-bookmark  newname)
     (unless batch (bookmark-bmenu-surreptitiously-rebuild-list))
-    (bookmarkp-maybe-save-bookmark) newname))
+    (bmkext-maybe-save-bookmark) newname))
 
 
 
@@ -1100,13 +1082,13 @@ from there)."
     (setq bookmark-alist (delete will-go bookmark-alist))
     ;; Added by db, nil bookmark-current-bookmark if the last
     ;; occurrence has been deleted
-    (setq bookmarkp-latest-bookmark-alist (delete will-go bookmarkp-latest-bookmark-alist))
+    (setq bmkext-latest-bookmark-alist (delete will-go bmkext-latest-bookmark-alist))
     (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
         (setq bookmark-current-bookmark nil))
     ;; Don't rebuild the list when using `batch' arg
     (unless batch
       (bookmark-bmenu-surreptitiously-rebuild-list))
-    (bookmarkp-maybe-save-bookmark)))
+    (bmkext-maybe-save-bookmark)))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1162,7 +1144,7 @@ Don't affect the buffer ring order."
   (when (get-buffer "*Bookmark List*")
     (save-excursion
       (save-window-excursion
-        (let ((bookmark-alist  bookmarkp-latest-bookmark-alist)
+        (let ((bookmark-alist  bmkext-latest-bookmark-alist)
               (title           (with-current-buffer "*Bookmark List*"
                                  (goto-char (point-min))
                                  (buffer-substring (line-beginning-position)
@@ -1181,10 +1163,10 @@ Don't affect the buffer ring order."
 The following faces are used for the list entries.
 Use `customize-face' if you want to change the appearance.
 
-  `bookmarkp-local-directory', `bookmarkp-local-file-without-region',
-  `bookmarkp-local-file-with-region', `bookmarkp-gnus',
-  `bookmarkp-info', `bookmarkp-non-file', `bookmarkp-remote-file',
-  `bookmarkp-su-or-sudo', `bookmarkp-w3m'.
+  `bmkext-local-directory', `bmkext-local-file-without-region',
+  `bmkext-local-file-with-region', `bmkext-gnus',
+  `bmkext-info', `bmkext-non-file', `bmkext-remote-file',
+  `bmkext-su-or-sudo', `bmkext-w3m'.
 
 The optional args are for non-interactive use.
 TITLE is a string to be used as the title.
@@ -1194,11 +1176,11 @@ The leftmost column of a bookmark entry shows `D' if the bookmark is
 
 Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
 \(e.g gnus, w3m, info, files, or regions).  In that case,
-`bookmarkp-latest-bookmark-alist' is not reset to `bookmark-alist'."
+`bmkext-latest-bookmark-alist' is not reset to `bookmark-alist'."
   (interactive)
   (bookmark-maybe-load-default-file)
-  (unless bookmarkp-bmenu-called-from-inside-flag (setq bookmarkp-bookmark-marked-list nil))
-  (unless filteredp (setq bookmarkp-latest-bookmark-alist bookmark-alist))
+  (unless bmkext-bmenu-called-from-inside-flag (setq bmkext-bookmark-marked-list nil))
+  (unless filteredp (setq bmkext-latest-bookmark-alist bookmark-alist))
   (if (interactive-p)
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
       (set-buffer (get-buffer-create "*Bookmark List*")))
@@ -1212,7 +1194,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
             ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
             (let ((name        (bookmark-name-from-full-record full-record))
                   (annotation  (bookmark-get-annotation full-record))
-                  (marked      (bookmarkp-bookmark-marked-p full-record))
+                  (marked      (bmkext-bookmark-marked-p full-record))
                   (start       (+ 2 (point)))
                   end)
               (insert (cond ((and annotation (not (string-equal annotation "")) marked) ">*")
@@ -1221,9 +1203,9 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
                             (t "  "))
                       name)
               (setq end (point))
-              (bookmarkp-bmenu-propertize-item name start end)
+              (bmkext-bmenu-propertize-item name start end)
               (insert "\n")))
-          (bookmarkp-bmenu-maybe-sort))
+          (bmkext-bmenu-maybe-sort))
     (goto-char (point-min))
     (forward-line 2)
     (bookmark-bmenu-mode)
@@ -1254,7 +1236,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
                     (start (point))
                     end)  
                 (insert name) (setq end (point))
-                (bookmarkp-bmenu-propertize-item name start end))
+                (bmkext-bmenu-propertize-item name start end))
               (setq bookmark-bmenu-hidden-bookmarks  (cdr bookmark-bmenu-hidden-bookmarks))
               (forward-line 1))))))))
 
@@ -1276,7 +1258,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
 ;;
 ;; 1. Use  `bookmark-bmenu-surreptitiously-rebuild-list', instead of using
 ;; `bookmark-bmenu-list', updating the modification count, and saving.
-;; 2. Update `bookmarkp-latest-bookmark-alist' to reflect deletion.
+;; 2. Update `bmkext-latest-bookmark-alist' to reflect deletion.
 ;;
 ;;;###autoload
 (defun bookmark-bmenu-execute-deletions (&optional markedp)
@@ -1293,18 +1275,18 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
         (while (re-search-forward which-mark (point-max) t)
           (let ((bmk (bookmark-bmenu-bookmark))) 
             (bookmark-delete bmk 'batch) ; pass BATCH arg
-            (setq bookmarkp-latest-bookmark-alist
-                  (delete (assoc bmk bookmarkp-latest-bookmark-alist)
-                          bookmarkp-latest-bookmark-alist))
+            (setq bmkext-latest-bookmark-alist
+                  (delete (assoc bmk bmkext-latest-bookmark-alist)
+                          bmkext-latest-bookmark-alist))
             (setq count (1+ count))))
         (if (> count 0)
             (progn
-              (setq bookmarkp-bmenu-called-from-inside-flag t)
+              (setq bmkext-bmenu-called-from-inside-flag t)
               (bookmark-bmenu-surreptitiously-rebuild-list)
               (message "Deleting %s bookmarks...done" count))
             (message "Nothing to delete here"))
         (if o-str
-            (bookmarkp-bmenu-goto-bookmark-named o-str)
+            (bmkext-bmenu-goto-bookmark-named o-str)
             (goto-char o-point) (beginning-of-line)))
       (message "OK, nothing deleted")))
 
@@ -1324,25 +1306,25 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
         (beginning-of-line)))))
 
 
-;;; Bookmark+ Functions (`bookmarkp-*') ------------------------------
+;;; Bookmark+ Functions (`bmkext-*') ------------------------------
 
 ;; Don't require cl at runtime.
-(defun bookmarkp-remove-if (pred xs)
+(defun bmkext-remove-if (pred xs)
   "A copy of list XS with no elements that satisfy predicate PRED."
   (loop for i in xs unless (funcall pred i) collect i into result
      finally return result))
 
-(defun bookmarkp-remove-if-not (pred xs)
+(defun bmkext-remove-if-not (pred xs)
   "A copy of list XS with only elements that satisfy predicate PRED."
   (loop for i in xs when (funcall pred i) collect i into result
      finally return result))
   
-(defun bookmarkp-maybe-save-bookmark ()
+(defun bmkext-maybe-save-bookmark ()
   "Increment save counter and maybe save `bookmark-alist'."
   (setq bookmark-alist-modification-count (1+ bookmark-alist-modification-count))
   (when (bookmark-time-to-save-p) (bookmark-save)))
 
-(defun bookmarkp-edit-bookmark (bookmark-name)
+(defun bmkext-edit-bookmark (bookmark-name)
   "Edit bookmark's name and file name, and maybe save them.
 BOOKMARK-NAME is the current (old) name of the bookmark to be renamed."
   (let* ((bookmark-filename  (bookmark-get-filename bookmark-name))
@@ -1353,10 +1335,10 @@ BOOKMARK-NAME is the current (old) name of the bookmark to be renamed."
                (y-or-n-p "Save changes?"))
       (bookmark-rename bookmark-name new-name 'batch)
       (bookmark-set-filename new-name new-filename)
-      (bookmarkp-maybe-save-bookmark)
+      (bmkext-maybe-save-bookmark)
       (list new-name new-filename))))
 
-(defun bookmarkp-increment-visits (bmk)
+(defun bmkext-increment-visits (bmk)
   "Increment visits entry of bmk.
 If bmk have no visits entry, add one with value 0."
   (let ((cur-val (bookmark-prop-get bmk 'visits)))
@@ -1364,33 +1346,33 @@ If bmk have no visits entry, add one with value 0."
         (bookmark-prop-set bmk 'visits (1+ cur-val))
         (bookmark-prop-set bmk 'visits 0))))
 
-(defun bookmarkp-add-or-update-time (bmk)
+(defun bmkext-add-or-update-time (bmk)
   "Update time entry of bmk.
 If bmk have no time entry, add one with current time."
   (let ((time (float-time)))
     (bookmark-prop-set bmk 'time time)))
 
-(defun bookmarkp-update-time-and-increment-visits (bmk &optional batch)
+(defun bmkext-update-time-and-increment-visits (bmk &optional batch)
   "Update time and increment visits entry of BMK.
 Unless batch arg is non--nil update display and increment save counter."
-  (bookmarkp-increment-visits bmk)
-  (bookmarkp-add-or-update-time bmk)
+  (bmkext-increment-visits bmk)
+  (bmkext-add-or-update-time bmk)
   (unless batch
-    (setq bookmarkp-bmenu-called-from-inside-flag t)
+    (setq bmkext-bmenu-called-from-inside-flag t)
     (bookmark-bmenu-surreptitiously-rebuild-list))
-  (bookmarkp-maybe-save-bookmark))
+  (bmkext-maybe-save-bookmark))
 
 
 ;;; Sorting bookmarks
-(defun bookmarkp-sort-p-1 (s1 s2)
+(defun bmkext-sort-p-1 (s1 s2)
   "General predicate for sorting bookmarks.
 Return non-nil if bookmark S1 was visited more often than S2.
 Also: S1 < S2 if S1 was visited but S2 was not.
       S1 < S2 if S1 precedes S2 alphabetically and
       neither was visited or both were visited equally."
-  (let* ((sym (case bookmarkp-bmenu-sort-function
-                ('bookmarkp-visited-more-p   'visits)
-                ('bookmarkp-last-time-more-p 'time)
+  (let* ((sym (case bmkext-bmenu-sort-function
+                ('bmkext-visited-more-p   'visits)
+                ('bmkext-last-time-more-p 'time)
                 (t nil)))
          (v1  (when sym (cdr (assq sym s1))))
          (v2  (when sym (cdr (assq sym s2)))))
@@ -1403,55 +1385,55 @@ Also: S1 < S2 if S1 was visited but S2 was not.
 
 
 ;; Predicate for sorting bookmarks with visits entry.
-(defalias 'bookmarkp-visited-more-p 'bookmarkp-sort-p-1)
+(defalias 'bmkext-visited-more-p 'bmkext-sort-p-1)
 
 ;; Predicate for sorting bookmarks with time entry.
-(defalias 'bookmarkp-last-time-more-p 'bookmarkp-sort-p-1)
+(defalias 'bmkext-last-time-more-p 'bmkext-sort-p-1)
 
 ;; Predicate for sorting bookmarks alphabetically.
-(defalias 'bookmarkp-alpha-more-p 'bookmarkp-sort-p-1)
+(defalias 'bmkext-alpha-more-p 'bmkext-sort-p-1)
 
 
-;; Menu-List Functions (`bookmarkp-bmenu-*') -------------------------
+;; Menu-List Functions (`bmkext-bmenu-*') -------------------------
 
 
-(defun bookmarkp-bmenu-maybe-sort (&optional alist)
-  "Sort or reverse-sort using `bookmarkp-bmenu-sort-function'.
-        Sort LIST using `bookmarkp-bmenu-sort-function'.
-        Reverse the result if `bookmarkp-reverse-sort-p' is non-nil.
-        Do nothing if `bookmarkp-bmenu-sort-function' is nil."
+(defun bmkext-bmenu-maybe-sort (&optional alist)
+  "Sort or reverse-sort using `bmkext-bmenu-sort-function'.
+        Sort LIST using `bmkext-bmenu-sort-function'.
+        Reverse the result if `bmkext-reverse-sort-p' is non-nil.
+        Do nothing if `bmkext-bmenu-sort-function' is nil."
   (let ((bmk-alist (or alist (copy-sequence bookmark-alist))))
-    (when (and bmk-alist bookmarkp-bmenu-sort-function)
+    (when (and bmk-alist bmkext-bmenu-sort-function)
       (sort
        bmk-alist
-       (if bookmarkp-bmenu-reverse-sort-p
+       (if bmkext-bmenu-reverse-sort-p
            (lambda (a b)
-             (not (funcall bookmarkp-bmenu-sort-function a b)))
-           bookmarkp-bmenu-sort-function)))))
+             (not (funcall bmkext-bmenu-sort-function a b)))
+           bmkext-bmenu-sort-function)))))
 
 
-(defun bookmarkp-bmenu-sort-1 (method &optional batch)
-  "Set `bookmarkp-bmenu-sort-function' to `method' and rebuild alist.
+(defun bmkext-bmenu-sort-1 (method &optional batch)
+  "Set `bmkext-bmenu-sort-function' to `method' and rebuild alist.
 Try to follow position of last bookmark in menu-list."
   (with-current-buffer "*Bookmark List*"
     (let ((bmk (when (bookmark-bmenu-check-position) (bookmark-bmenu-bookmark)))
-          (bookmarkp-bmenu-called-from-inside-flag t))
-      (setq bookmarkp-bmenu-sort-function method)
+          (bmkext-bmenu-called-from-inside-flag t))
+      (setq bmkext-bmenu-sort-function method)
       (case method
-        ('bookmarkp-visited-more-p (if bookmarkp-bmenu-reverse-sort-p
+        ('bmkext-visited-more-p (if bmkext-bmenu-reverse-sort-p
                                        (message "Sorting by visit frequency [REVERSED]")
                                        (message "Sorting by visit frequency")))
-        ('bookmarkp-last-time-more-p (if bookmarkp-bmenu-reverse-sort-p
+        ('bmkext-last-time-more-p (if bmkext-bmenu-reverse-sort-p
                                          (message "Sorting by last time visited [REVERSED]")
                                          (message "Sorting by last time visited")))
-        ('bookmarkp-alpha-more-p (if bookmarkp-bmenu-reverse-sort-p
+        ('bmkext-alpha-more-p (if bmkext-bmenu-reverse-sort-p
                                      (message "Sorting alphabetically [REVERSED]")
                                      (message "Sorting alphabetically"))))
       (unless batch
         (bookmark-bmenu-surreptitiously-rebuild-list)
-        (bookmarkp-bmenu-goto-bookmark-named bmk)))))
+        (bmkext-bmenu-goto-bookmark-named bmk)))))
 
-(defun bookmarkp-bmenu-goto-bookmark-named (name)
+(defun bmkext-bmenu-goto-bookmark-named (name)
   "Go to the first bookmark whose name matches NAME."
   (goto-char (point-min))
   (bookmark-bmenu-check-position)
@@ -1460,92 +1442,92 @@ Try to follow position of last bookmark in menu-list."
   (forward-line 0))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-sort-by-visit-frequency (&optional reversep)
+(defun bmkext-bmenu-sort-by-visit-frequency (&optional reversep)
   (interactive "P")
-  (let ((bookmarkp-bmenu-reverse-sort-p reversep))
-    (bookmarkp-bmenu-sort-1 'bookmarkp-visited-more-p)))
+  (let ((bmkext-bmenu-reverse-sort-p reversep))
+    (bmkext-bmenu-sort-1 'bmkext-visited-more-p)))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-sort-by-last-time-visited (&optional reversep)
+(defun bmkext-bmenu-sort-by-last-time-visited (&optional reversep)
   (interactive "P")
-  (let ((bookmarkp-bmenu-reverse-sort-p reversep))
-    (bookmarkp-bmenu-sort-1 'bookmarkp-last-time-more-p)))
+  (let ((bmkext-bmenu-reverse-sort-p reversep))
+    (bmkext-bmenu-sort-1 'bmkext-last-time-more-p)))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-sort-alphabetically (&optional reversep)
+(defun bmkext-bmenu-sort-alphabetically (&optional reversep)
   (interactive "P")
-  (let ((bookmarkp-bmenu-reverse-sort-p reversep))
-    (bookmarkp-bmenu-sort-1 'bookmarkp-alpha-more-p)))
+  (let ((bmkext-bmenu-reverse-sort-p reversep))
+    (bmkext-bmenu-sort-1 'bmkext-alpha-more-p)))
 
 ;;; Searching in bookmarks
 ;;
 ;;  Narrow down `bookmark-alist' with only bookmarks matching regexp.
 ;;  Display is updated at each time a character is entered in minibuffer.
 ;;
-(defun bookmarkp-read-search-input ()
-  "Read each keyboard input and add it to `bookmarkp-search-pattern'."
-  (setq bookmarkp-search-pattern "")    ; Always reset pattern to empty string
+(defun bmkext-read-search-input ()
+  "Read each keyboard input and add it to `bmkext-search-pattern'."
+  (setq bmkext-search-pattern "")    ; Always reset pattern to empty string
   (let ((tmp-list ())
-        (prompt   (propertize bookmarkp-search-prompt 'face '((:foreground "cyan"))))
+        (prompt   (propertize bmkext-search-prompt 'face '((:foreground "cyan"))))
         char)
     (catch 'break
       (while 1
         (catch 'continue
           (condition-case nil
-              (setq char (read-char (concat prompt bookmarkp-search-pattern)))
+              (setq char (read-char (concat prompt bmkext-search-pattern)))
             (error (throw 'break nil)))
           (case char
             ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break and exit code.
-            (?\d (pop tmp-list)         ; Delete last char of `bookmarkp-search-pattern' with DEL
-                 (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
+            (?\d (pop tmp-list)         ; Delete last char of `bmkext-search-pattern' with DEL
+                 (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
                  (throw 'continue nil))
             (t
              (push (text-char-description char) tmp-list)
-             (setq bookmarkp-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
+             (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
              (throw 'continue nil))))))))
 
 
-(defun bookmarkp-filtered-alist-by-regexp-only (regexp alist)
+(defun bmkext-filtered-alist-by-regexp-only (regexp alist)
   "Return a filtered ALIST with (only) bookmarks matching REGEXP."
-  (bookmarkp-remove-if-not #'(lambda (x) (string-match regexp (car x))) alist))
+  (bmkext-remove-if-not #'(lambda (x) (string-match regexp (car x))) alist))
 
-(defun bookmarkp-bmenu-filter-alist-by-regexp (regexp alist)
+(defun bmkext-bmenu-filter-alist-by-regexp (regexp alist)
   "Display (only) bookmarks of ALIST matching REGEXP."
-  (let ((bookmark-alist (bookmarkp-filtered-alist-by-regexp-only regexp alist))
-        (bookmarkp-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+  (let ((bookmark-alist (bmkext-filtered-alist-by-regexp-only regexp alist))
+        (bmkext-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Filtered by regexp" 'filteredp)))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-search (&optional all)
-  "Incremental search of bookmarks matching `bookmarkp-search-pattern'.
-We make search in the current list displayed i.e `bookmarkp-latest-bookmark-alist'.
+(defun bmkext-bmenu-search (&optional all)
+  "Incremental search of bookmarks matching `bmkext-search-pattern'.
+We make search in the current list displayed i.e `bmkext-latest-bookmark-alist'.
 If a prefix arg is given search in the whole `bookmark-alist'."
   (interactive "P")
-  (lexical-let ((bmk-list (if all bookmark-alist bookmarkp-latest-bookmark-alist)))
+  (lexical-let ((bmk-list (if all bookmark-alist bmkext-latest-bookmark-alist)))
     (unwind-protect
          (progn
-           (setq bookmarkp-search-timer
-                 (run-with-idle-timer 0 bookmarkp-search-delay
+           (setq bmkext-search-timer
+                 (run-with-idle-timer 0 bmkext-search-delay
                                       #'(lambda ()
-                                          (bookmarkp-bmenu-filter-alist-by-regexp bookmarkp-search-pattern bmk-list))))
-           (bookmarkp-read-search-input))
-      (bookmarkp-bmenu-cancel-search))))
+                                          (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list))))
+           (bmkext-read-search-input))
+      (bmkext-bmenu-cancel-search))))
 
-(defun bookmarkp-bmenu-cancel-search ()
+(defun bmkext-bmenu-cancel-search ()
   "Cancel timer used for searching in bookmarks."
-  (cancel-timer bookmarkp-search-timer)
-  (setq bookmarkp-search-timer nil))
+  (cancel-timer bmkext-search-timer)
+  (setq bmkext-search-timer nil))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-edit-bookmark ()
+(defun bmkext-bmenu-edit-bookmark ()
   "Edit the bookmark under the cursor."
   (interactive)
   (when (bookmark-bmenu-check-position)
     (let* ((bmk-name  (bookmark-bmenu-bookmark))
-           (new-data  (bookmarkp-edit-bookmark bmk-name))
+           (new-data  (bmkext-edit-bookmark bmk-name))
            (new-name  (car new-data)))
       (if (not new-data)
           (message "No changes made")
@@ -1558,7 +1540,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-delete-bookmark ()
+(defun bmkext-bmenu-delete-bookmark ()
   "Delete bookmark at point in Bookmark Menu list."
   (interactive)
   (when (equal (buffer-name (current-buffer)) "*Bookmark List*")
@@ -1569,154 +1551,154 @@ If a prefix arg is given search in the whole `bookmark-alist'."
           (message "Aborting bookmark deletion")))))
 
 
-(defun bookmarkp-bmenu-propertize-item (bookmark-name start end)
+(defun bmkext-bmenu-propertize-item (bookmark-name start end)
   "Add text properties to BOOKMARK-NAME, from START to END."
   (let* ((isfile        (bookmark-get-filename bookmark-name))
          (isremote      (and isfile (file-remote-p isfile)))
          (istramp       (and isfile (boundp 'tramp-file-name-regexp)
                              (save-match-data
                                (string-match tramp-file-name-regexp isfile))))
-         (isw3m         (bookmarkp-w3m-bookmark-p bookmark-name))
-         (issu          (and istramp (string-match bookmarkp-su-or-sudo-regexp
+         (isw3m         (bmkext-w3m-bookmark-p bookmark-name))
+         (issu          (and istramp (string-match bmkext-su-or-sudo-regexp
                                                    isfile)))
-         (isregion      (bookmarkp-region-bookmark-p bookmark-name))
+         (isregion      (bmkext-region-bookmark-p bookmark-name))
          (isannotation  (bookmark-get-annotation bookmark-name))
          (ishandler     (bookmark-get-handler bookmark-name))
-         (isgnus        (bookmarkp-gnus-bookmark-p bookmark-name))
-         (isbuf         (bookmarkp-get-buffer-name bookmark-name)))
-    (put-text-property start end 'bookmarkp-bookmark-name bookmark-name)
+         (isgnus        (bmkext-gnus-bookmark-p bookmark-name))
+         (isbuf         (bmkext-get-buffer-name bookmark-name)))
+    (put-text-property start end 'bmkext-bookmark-name bookmark-name)
     (add-text-properties
      start  end
      (cond ((or (eq ishandler 'Info-bookmark-jump) (string= isbuf "*info*")) ; Info
-            '(mouse-face highlight follow-link t face bookmarkp-info
+            '(mouse-face highlight follow-link t face bmkext-info
               help-echo "mouse-2: Go to this Info buffer"))
            (isgnus               ; Gnus
-            '(mouse-face highlight follow-link t face bookmarkp-gnus
+            '(mouse-face highlight follow-link t face bmkext-gnus
               help-echo "mouse-2: Go to this Gnus buffer"))
            (isw3m                ; W3m
-            `(mouse-face highlight follow-link t face bookmarkp-w3m
+            `(mouse-face highlight follow-link t face bmkext-w3m
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))
-           ((or (eq ishandler 'bookmarkp-jump-woman) ; Woman pages
-                (eq ishandler 'bookmarkp-jump-man))  ; Man pages
-            `(mouse-face highlight follow-link t face bookmarkp-woman
+           ((or (eq ishandler 'bmkext-jump-woman) ; Woman pages
+                (eq ishandler 'bmkext-jump-man))  ; Man pages
+            `(mouse-face highlight follow-link t face bmkext-woman
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))
-           ((and issu (not (bookmarkp-root-or-sudo-logged-p))) ; Root/sudo not logged
-            `(mouse-face highlight follow-link t face bookmarkp-su-or-sudo
+           ((and issu (not (bmkext-root-or-sudo-logged-p))) ; Root/sudo not logged
+            `(mouse-face highlight follow-link t face bmkext-su-or-sudo
                          help-echo (format "mouse-2 Goto file: %s",isfile)))
            ((and isremote (not issu)) ; Remote file (ssh, ftp)
-            `(mouse-face highlight follow-link t face bookmarkp-remote-file
+            `(mouse-face highlight follow-link t face bmkext-remote-file
                          help-echo (format "mouse-2 Goto remote file: %s",isfile)))
            ((and isfile (file-directory-p isfile)) ; Local directory
-            `(mouse-face highlight follow-link t face bookmarkp-local-directory
+            `(mouse-face highlight follow-link t face bmkext-local-directory
                          help-echo (format "mouse-2 Goto dired: %s",isfile)))
            ((and isfile (file-exists-p isfile) isregion) ; Local file with region
             `(mouse-face highlight follow-link t face
-                         bookmarkp-local-file-with-region
+                         bmkext-local-file-with-region
                          help-echo (format "mouse-2 Find region in file: %s",isfile)))
            ((and isfile (file-exists-p isfile)) ; Local file without region
             `(mouse-face highlight follow-link t face
-                         bookmarkp-local-file-without-region
+                         bmkext-local-file-without-region
                          help-echo (format "mouse-2 Goto file: %s",isfile)))
            ((and isbuf (if isfile (not (file-exists-p isfile)) (not isfile))) ; No filename
-            `(mouse-face highlight follow-link t face bookmarkp-non-file
+            `(mouse-face highlight follow-link t face bmkext-non-file
                          help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-quit ()
+(defun bmkext-bmenu-quit ()
   "Reset the marked bookmark lists and quit."
   (interactive)
-  (setq bookmarkp-bookmark-marked-list nil)
-  (setq bookmarkp-bmenu-before-hide-marked-list nil)
-  (setq bookmarkp-bmenu-before-hide-unmarked-list nil)
+  (setq bmkext-bookmark-marked-list nil)
+  (setq bmkext-bmenu-before-hide-marked-list nil)
+  (setq bmkext-bmenu-before-hide-unmarked-list nil)
   (quit-window))
 
 
 ;;; Filters *-bmenu-* commands
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-file-bookmarks (arg)
+(defun bmkext-bmenu-list-only-file-bookmarks (arg)
   "Display a list of file and directory bookmarks (only).
 With a prefix argument, do not include remote files or directories."
   (interactive "P")
-  (let ((bookmark-alist  (bookmarkp-file-alist-only arg))
-        (bookmarkp-bmenu-called-from-inside-flag t))
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+  (let ((bookmark-alist  (bmkext-file-alist-only arg))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Files&Directories" 'filteredp)))
          
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-non-file-bookmarks ()
+(defun bmkext-bmenu-list-only-non-file-bookmarks ()
   "Display (only) the non-file bookmarks."
   (interactive)
-  (let ((bookmark-alist (bookmarkp-non-file-alist-only))
-        (bookmarkp-bmenu-called-from-inside-flag t))
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+  (let ((bookmark-alist (bmkext-non-file-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Non--Files" 'filteredp)))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-info-bookmarks ()
+(defun bmkext-bmenu-list-only-info-bookmarks ()
   "Display (only) the Info bookmarks."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-info-alist-only))
-        (bookmarkp-bmenu-called-from-inside-flag t))
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+  (let ((bookmark-alist  (bmkext-info-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Info" 'filteredp)))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-w3m-bookmarks ()
+(defun bmkext-bmenu-list-only-w3m-bookmarks ()
   "Display (only) the w3m bookmarks."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-w3m-alist-only))
-        (bookmarkp-bmenu-called-from-inside-flag t))
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+  (let ((bookmark-alist  (bmkext-w3m-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ W3m" 'filteredp)))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-gnus-bookmarks ()
+(defun bmkext-bmenu-list-only-gnus-bookmarks ()
   "Display (only) the Gnus bookmarks."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-gnus-alist-only))
-        (bookmarkp-bmenu-called-from-inside-flag t))
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+  (let ((bookmark-alist  (bmkext-gnus-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Gnus" 'filteredp)))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-region-bookmarks ()
+(defun bmkext-bmenu-list-only-region-bookmarks ()
   "Display (only) the bookmarks that record a region."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-region-alist-only))
-        (bookmarkp-bmenu-called-from-inside-flag t))
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+  (let ((bookmark-alist  (bmkext-region-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-list-only-woman-man-bookmarks ()
+(defun bmkext-bmenu-list-only-woman-man-bookmarks ()
   "Display (only) the bookmarks that record a Man or Woman page."
   (interactive)
-  (let ((bookmark-alist  (bookmarkp-woman-man-alist-only))
-        (bookmarkp-bmenu-called-from-inside-flag t))
-    (setq bookmarkp-latest-bookmark-alist bookmark-alist)
+  (let ((bookmark-alist  (bmkext-woman-man-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark+ Man&Woman pages" 'filteredp)))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-show-all-bookmarks ()
+(defun bmkext-bmenu-show-all-bookmarks ()
   "Show all bookmarks without removing marks if some."
   (interactive)
-  (let ((bookmarkp-bmenu-called-from-inside-flag t))
+  (let ((bmkext-bmenu-called-from-inside-flag t))
     (bookmark-bmenu-list)))
 
 
 ;;; *-bmenu-* Commands and functions for marked bookmarks
 
 ;;;###autoload
-(defun bookmarkp-bmenu-mark-all-bookmarks ()
+(defun bmkext-bmenu-mark-all-bookmarks ()
   "Mark all bookmarks with flag >."
   (interactive)
   (with-current-buffer "*Bookmark List*"
@@ -1726,42 +1708,42 @@ With a prefix argument, do not include remote files or directories."
       (while (not (eobp))
         (when (bookmark-bmenu-check-position)
           (bookmark-bmenu-mark)))))
-  (bookmarkp-count-marked))
+  (bmkext-count-marked))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-unmark-all-deletion-flags ()
+(defun bmkext-bmenu-unmark-all-deletion-flags ()
   "Unmark all bookmarks marked with flag D."
   (interactive)
-  (bookmarkp-bmenu-unmark-all-1 'del)
-  (bookmarkp-count-marked))
+  (bmkext-bmenu-unmark-all-1 'del)
+  (bmkext-count-marked))
 
 ;;;###autoload
-(defun bookmarkp-bmenu-unmark-all-non-deletion-flags ()
+(defun bmkext-bmenu-unmark-all-non-deletion-flags ()
   "Unmark all bookmarks marked with flag >."
   (interactive)
-  (bookmarkp-bmenu-unmark-all-1 nil 'mark)
-  (bookmarkp-count-marked))
+  (bmkext-bmenu-unmark-all-1 nil 'mark)
+  (bmkext-count-marked))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-unmark-all ()
+(defun bmkext-bmenu-unmark-all ()
   "Unmark all bookmarks marked with flag > or D.
 Called with prefix arg provide an interactive interface."
   (interactive)
-  (if (or (bookmarkp-current-list-have-marked-p)
+  (if (or (bmkext-current-list-have-marked-p)
           (save-excursion
             (goto-char (point-min))
             (re-search-forward "^>\\|^D" (point-max) t)))
       (progn
         (if current-prefix-arg
-            (bookmarkp-bmenu-unmark-all-2)
-            (bookmarkp-bmenu-unmark-all-1))
-        (bookmarkp-count-marked))
+            (bmkext-bmenu-unmark-all-2)
+            (bmkext-bmenu-unmark-all-1))
+        (bmkext-count-marked))
       (message "Nothing to unmark here!")))
 
 
-(defun bookmarkp-bmenu-unmark-all-1 (&optional del mark)
+(defun bmkext-bmenu-unmark-all-1 (&optional del mark)
   "Unmark all bookmarks or only bookmarks marked with flag > or D.
 Whitout args unmark all.
 If DEL is non--nil unmark only bookmarks with flag D.
@@ -1780,7 +1762,7 @@ If MARK is non--nil unmark only bookmarks with flag >."
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-unmark-all-2 ()
+(defun bmkext-bmenu-unmark-all-2 ()
   "Provide an interactive interface to unmark bookmarks."
   (with-current-buffer "*Bookmark List*"
     (let ((prompt "(U)nmark, (I)gnore, (P)recedent line, (N)ext line, (!)Unmark all remaining, (Q)uit")
@@ -1816,15 +1798,15 @@ If MARK is non--nil unmark only bookmarks with flag >."
                 (?Q (throw 'break nil))))))))))
 
 
-(defun bookmarkp-count-marked ()
+(defun bmkext-count-marked ()
   "Send message with number of marked and unmarked bookmarks in current display."
-  (let* ((marked   (length bookmarkp-bookmark-marked-list))
-         (unmarked (- (length bookmarkp-latest-bookmark-alist) marked)))
+  (let* ((marked   (length bmkext-bookmark-marked-list))
+         (unmarked (- (length bmkext-latest-bookmark-alist) marked)))
     (message "%s Marked, %s Unmarked" marked unmarked)))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-regexp-mark (regexp)
+(defun bmkext-bmenu-regexp-mark (regexp)
   "Mark bookmarks that match REGEXP."
   (interactive "sRegexp: ")
   (with-current-buffer "*Bookmark List*"
@@ -1833,30 +1815,30 @@ If MARK is non--nil unmark only bookmarks with flag >."
     (while (re-search-forward regexp (point-max) t)
       (when (bookmark-bmenu-check-position)
         (bookmark-bmenu-mark))))
-  (bookmarkp-count-marked))
+  (bmkext-count-marked))
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-hide-marked ()
+(defun bmkext-bmenu-hide-marked ()
   "Hide all marked bookmarks."
   (interactive)
-  (when (or (bookmarkp-current-list-have-marked-p)
-            (bookmarkp-current-list-have-marked-p 
-             bookmarkp-bmenu-before-hide-marked-list))
-    (let ((bookmark-alist  bookmarkp-latest-bookmark-alist)
-          (bookmarkp-bmenu-called-from-inside-flag t)
+  (when (or (bmkext-current-list-have-marked-p)
+            (bmkext-current-list-have-marked-p 
+             bmkext-bmenu-before-hide-marked-list))
+    (let ((bookmark-alist  bmkext-latest-bookmark-alist)
+          (bmkext-bmenu-called-from-inside-flag t)
           status)
-      (if bookmarkp-bmenu-before-hide-marked-list
+      (if bmkext-bmenu-before-hide-marked-list
           ;; unhide marked
           (progn
-            (setq bookmark-alist bookmarkp-bmenu-before-hide-marked-list)
-            (setq bookmarkp-bmenu-before-hide-marked-list nil)
-            (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+            (setq bookmark-alist bmkext-bmenu-before-hide-marked-list)
+            (setq bmkext-bmenu-before-hide-marked-list nil)
+            (setq bmkext-latest-bookmark-alist  bookmark-alist)
             (setq status 'show))
           ;; hide marked
-          (setq bookmarkp-bmenu-before-hide-marked-list bookmarkp-latest-bookmark-alist)
-          (setq bookmark-alist (bookmarkp-non-marked-bookmarks-only))
-          (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+          (setq bmkext-bmenu-before-hide-marked-list bmkext-latest-bookmark-alist)
+          (setq bookmark-alist (bmkext-non-marked-bookmarks-only))
+          (setq bmkext-latest-bookmark-alist  bookmark-alist)
           (setq status 'hiden))
       (bookmark-bmenu-surreptitiously-rebuild-list)
       (if (eq status 'hiden)
@@ -1867,24 +1849,24 @@ If MARK is non--nil unmark only bookmarks with flag >."
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-hide-unmarked ()
+(defun bmkext-bmenu-hide-unmarked ()
   "Hide all unmarked bookmarks."
   (interactive)
-  (when (bookmarkp-current-list-have-marked-p)
-    (let ((bookmark-alist  bookmarkp-latest-bookmark-alist)
-          (bookmarkp-bmenu-called-from-inside-flag t)
+  (when (bmkext-current-list-have-marked-p)
+    (let ((bookmark-alist  bmkext-latest-bookmark-alist)
+          (bmkext-bmenu-called-from-inside-flag t)
           status)
-      (if bookmarkp-bmenu-before-hide-unmarked-list
+      (if bmkext-bmenu-before-hide-unmarked-list
           ;; unhide non marked
           (progn                                                  
-            (setq bookmark-alist bookmarkp-bmenu-before-hide-unmarked-list)
-            (setq bookmarkp-bmenu-before-hide-unmarked-list nil)
-            (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+            (setq bookmark-alist bmkext-bmenu-before-hide-unmarked-list)
+            (setq bmkext-bmenu-before-hide-unmarked-list nil)
+            (setq bmkext-latest-bookmark-alist  bookmark-alist)
             (setq status 'show))
           ;; hide non-marked
-          (setq bookmarkp-bmenu-before-hide-unmarked-list bookmarkp-latest-bookmark-alist)
-          (setq bookmark-alist (bookmarkp-marked-bookmarks-only))
-          (setq bookmarkp-latest-bookmark-alist  bookmark-alist)
+          (setq bmkext-bmenu-before-hide-unmarked-list bmkext-latest-bookmark-alist)
+          (setq bookmark-alist (bmkext-marked-bookmarks-only))
+          (setq bmkext-latest-bookmark-alist  bookmark-alist)
           (setq status 'hiden))
       (bookmark-bmenu-surreptitiously-rebuild-list)
       (if (eq status 'hiden)
@@ -1895,79 +1877,79 @@ If MARK is non--nil unmark only bookmarks with flag >."
 
 
 ;;;###autoload
-(defun bookmarkp-bmenu-toggle-marks ()
+(defun bmkext-bmenu-toggle-marks ()
   "Toggle mark on each bookmark in menu-list."
   (interactive)
   (with-current-buffer "*Bookmark List*"
     (save-excursion
       (goto-char (point-min))
       (bookmark-bmenu-check-position)
-      (if (bookmarkp-current-list-have-marked-p)
+      (if (bmkext-current-list-have-marked-p)
           (while (not (eobp))
             (let ((bmk (bookmark-bmenu-bookmark)))
-              (if (member bmk bookmarkp-bookmark-marked-list)
+              (if (member bmk bmkext-bookmark-marked-list)
                   (bookmark-bmenu-unmark)
                   (bookmark-bmenu-mark))))
-          (bookmarkp-bmenu-mark-all-bookmarks)))
-    (bookmarkp-count-marked)))
+          (bmkext-bmenu-mark-all-bookmarks)))
+    (bmkext-count-marked)))
 
 
 ;; Predicates --------------------------------------------------------
 
-(defun bookmarkp-region-bookmark-p (bookmark)
+(defun bmkext-region-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK has region information.
 BOOKMARK is a bookmark name or a bookmark record."
-  (and (bookmarkp-get-end-position bookmark)
+  (and (bmkext-get-end-position bookmark)
        (/= (bookmark-get-position bookmark)
-           (bookmarkp-get-end-position bookmark))))
+           (bmkext-get-end-position bookmark))))
 
-(defun bookmarkp-gnus-bookmark-p (bookmark)
+(defun bmkext-gnus-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Gnus bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-gnus))
+  (eq (bookmark-get-handler bookmark) 'bmkext-jump-gnus))
 
-(defun bookmarkp-w3m-bookmark-p (bookmark)
+(defun bmkext-w3m-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a W3m bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-w3m))
+  (eq (bookmark-get-handler bookmark) 'bmkext-jump-w3m))
 
-(defun bookmarkp-info-bookmark-p (bookmark)
+(defun bmkext-info-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is an Info bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
   (eq (bookmark-get-handler bookmark) 'Info-bookmark-jump))
 
-(defun bookmarkp-woman-bookmark-p (bookmark)
+(defun bmkext-woman-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Woman bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-woman))
+  (eq (bookmark-get-handler bookmark) 'bmkext-jump-woman))
 
-(defun bookmarkp-man-bookmark-p (bookmark)
+(defun bmkext-man-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Man bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-man))
+  (eq (bookmark-get-handler bookmark) 'bmkext-jump-man))
 
-(defun bookmarkp-woman-man-bookmark-p (bookmark)
+(defun bmkext-woman-man-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Man or Woman bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (or (bookmarkp-man-bookmark-p bookmark)
-      (bookmarkp-woman-bookmark-p bookmark)))
+  (or (bmkext-man-bookmark-p bookmark)
+      (bmkext-woman-bookmark-p bookmark)))
 
-(defun bookmarkp-file-bookmark-p (bookmark)
+(defun bmkext-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a file or directory.
 BOOKMARK is a bookmark name or a bookmark record.
 This excludes bookmarks of a more specific kind (Info, Gnus, and W3m)."
   (let* ((filename   (bookmark-get-filename bookmark))
-         (isnonfile  (equal filename bookmarkp-non-file-filename))) 
+         (isnonfile  (equal filename bmkext-non-file-filename))) 
     (and filename (not isnonfile) (not (bookmark-get-handler bookmark)))))
 
-(defun bookmarkp-non-file-bookmark-p (bookmark)
+(defun bmkext-non-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a non-file bookmark (e.g *scratch*).
 This excludes bookmarks of a more specific kind (Info, Gnus, and W3m)."
   (let* ((filename   (bookmark-get-filename bookmark))
-         (isnonfile  (equal filename bookmarkp-non-file-filename))) 
+         (isnonfile  (equal filename bmkext-non-file-filename))) 
     (and isnonfile (not (bookmark-get-handler bookmark)))))
 
-(defun bookmarkp-remote-file-bookmark-p (bookmark)
+(defun bmkext-remote-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a remote file or directory.
 BOOKMARK is a bookmark name or a bookmark record."
   (let* ((file      (bookmark-get-filename bookmark))
@@ -1977,80 +1959,80 @@ BOOKMARK is a bookmark name or a bookmark record."
                              (and (fboundp 'ffap-file-remote-p) (ffap-file-remote-p file))))))
     (and rem-file  (not (bookmark-get-handler bookmark))  rem-file)))
 
-(defun bookmarkp-local-file-bookmark-p (bookmark)
+(defun bmkext-local-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a local file or directory.
 BOOKMARK is a bookmark name or a bookmark record.
 This excludes bookmarks of a more specific kind (Info, Gnus, and W3m)."
-  (and (bookmarkp-file-bookmark-p bookmark)
-       (not (bookmarkp-remote-file-bookmark-p bookmark))))
+  (and (bmkext-file-bookmark-p bookmark)
+       (not (bmkext-remote-file-bookmark-p bookmark))))
 
-(defun bookmarkp-local-directory-bookmark-p (bookmark)
+(defun bmkext-local-directory-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK bookmarks a local directory.
 BOOKMARK is a bookmark name or a bookmark record."
   (let ((file  (bookmark-get-filename bookmark)))
-    (and (bookmarkp-local-file-bookmark-p bookmark) (file-directory-p file))))
+    (and (bmkext-local-file-bookmark-p bookmark) (file-directory-p file))))
 
-(defun bookmarkp-bookmark-marked-p (bookmark)
+(defun bmkext-bookmark-marked-p (bookmark)
   "Return non-nil if BOOKMARK is a marked bookmark."
-  (member (car bookmark) bookmarkp-bookmark-marked-list))
+  (member (car bookmark) bmkext-bookmark-marked-list))
 
 ;; Filter Functions --------------------------------------------------
 
-(defun bookmarkp-region-alist-only ()
+(defun bmkext-region-alist-only ()
   "`bookmark-alist', filtered to retain only bookmarks that have regions.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-region-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-region-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-gnus-alist-only ()
+(defun bmkext-gnus-alist-only ()
   "`bookmark-alist', filtered to retain only Gnus bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-gnus-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-gnus-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-w3m-alist-only ()
+(defun bmkext-w3m-alist-only ()
   "`bookmark-alist', filtered to retain only W3m bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-w3m-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-w3m-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-info-alist-only ()
+(defun bmkext-info-alist-only ()
   "`bookmark-alist', filtered to retain only Info bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-info-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-info-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-woman-alist-only ()
+(defun bmkext-woman-alist-only ()
   "`bookmark-alist', filtered to retain only Woman bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-woman-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-woman-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-man-alist-only ()
+(defun bmkext-man-alist-only ()
   "`bookmark-alist', filtered to retain only Man bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-man-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-man-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-woman-man-alist-only ()
+(defun bmkext-woman-man-alist-only ()
   "`bookmark-alist', filtered to retain only Man or Woman bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-woman-man-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-woman-man-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-remote-file-alist-only ()
+(defun bmkext-remote-file-alist-only ()
   "`bookmark-alist', filtered to retain only remote-file bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-remote-file-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-remote-file-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-local-file-alist-only ()
+(defun bmkext-local-file-alist-only ()
   "`bookmark-alist', filtered to retain only local-file bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-local-file-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-local-file-bookmark-p bookmark-alist))
 
 
-(defun bookmarkp-file-alist-only (&optional hide-remote)
+(defun bmkext-file-alist-only (&optional hide-remote)
   "`bookmark-alist', filtered to retain only file and directory bookmarks.
 This excludes bookmarks that might contain file information but are
 particular in some way - for example, Info bookmarks or Gnus bookmarks.
@@ -2059,57 +2041,57 @@ Non-nil argument HIDE-REMOTE means do not include remote file or
 directory bookmarks.
 
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if
+  (bmkext-remove-if
    #'(lambda (bookmark)
-       (or (bookmarkp-non-file-bookmark-p bookmark)
-           (bookmarkp-gnus-bookmark-p bookmark)
-           (bookmarkp-w3m-bookmark-p bookmark)
-           (bookmarkp-woman-man-bookmark-p bookmark)
-           (bookmarkp-info-bookmark-p bookmark)
-           (and hide-remote (bookmarkp-remote-file-bookmark-p bookmark))))
+       (or (bmkext-non-file-bookmark-p bookmark)
+           (bmkext-gnus-bookmark-p bookmark)
+           (bmkext-w3m-bookmark-p bookmark)
+           (bmkext-woman-man-bookmark-p bookmark)
+           (bmkext-info-bookmark-p bookmark)
+           (and hide-remote (bmkext-remote-file-bookmark-p bookmark))))
    bookmark-alist))
 
 
-(defun bookmarkp-non-file-alist-only ()
+(defun bmkext-non-file-alist-only ()
   "`bookmark-alist', filtered to retain only non-file bookmarks.
 A new list is returned (no side effects)."
-  (bookmarkp-remove-if-not #'bookmarkp-non-file-bookmark-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-non-file-bookmark-p bookmark-alist))
 
 
 ;;; Marked bookmarks
 
-(defun bookmarkp-marked-bookmarks-only ()
+(defun bmkext-marked-bookmarks-only ()
   "Return the list of marked bookmarks."
-  (bookmarkp-remove-if-not #'bookmarkp-bookmark-marked-p bookmark-alist))
+  (bmkext-remove-if-not #'bmkext-bookmark-marked-p bookmark-alist))
 
-(defun bookmarkp-non-marked-bookmarks-only ()
+(defun bmkext-non-marked-bookmarks-only ()
   "Return the list of not marked bookmarks."
-  (bookmarkp-remove-if #'bookmarkp-bookmark-marked-p bookmark-alist))
+  (bmkext-remove-if #'bmkext-bookmark-marked-p bookmark-alist))
 
 
-(defun bookmarkp-current-list-have-marked-p (&optional alist)
-  "Return non--nil if `bookmarkp-latest-bookmark-alist' have marked bookmarks."
-  (when bookmarkp-bookmark-marked-list
-    (let ((last-alist (or alist bookmarkp-latest-bookmark-alist)))
+(defun bmkext-current-list-have-marked-p (&optional alist)
+  "Return non--nil if `bmkext-latest-bookmark-alist' have marked bookmarks."
+  (when bmkext-bookmark-marked-list
+    (let ((last-alist (or alist bmkext-latest-bookmark-alist)))
       (catch 'break
         (dolist (i last-alist)
-          (when (bookmarkp-bookmark-marked-p i)
+          (when (bmkext-bookmark-marked-p i)
             (throw 'break t)))))))
 
 
 ;; Other Functions ---------------------------------------------------
 
-(defun bookmarkp-get-buffer-name (bookmark)
+(defun bmkext-get-buffer-name (bookmark)
   "Return the buffer-name of BOOKMARK.
 BOOKMARK is a bookmark name or a bookmark record."
   (bookmark-prop-get bookmark 'buffer-name))
 
-(defun bookmarkp-get-end-position (bookmark)
+(defun bmkext-get-end-position (bookmark)
   "Return the end-position of REGION in BOOKMARK.
 BOOKMARK is a bookmark name or a bookmark record."
   (bookmark-prop-get bookmark 'end-position))
 
-(defun bookmarkp-root-or-sudo-logged-p ()
+(defun bmkext-root-or-sudo-logged-p ()
   "Return t if the user logged in using Tramp as `root' or `sudo'.
 Otherwise, return nil."
   (let ((su-or-sudo-regex  "\\(su\\|sudo\\)"))
@@ -2117,79 +2099,79 @@ Otherwise, return nil."
       (dolist (i (mapcar #'buffer-name (buffer-list)))
         (when (string-match (format "*tramp/%s ." su-or-sudo-regex) i) (throw 'break t))))))
 
-(defun bookmarkp-region-record-front-context-string (breg ereg)
+(defun bmkext-region-record-front-context-string (breg ereg)
   "Return the region prefix, at BREG.
-Return at most `bookmarkp-region-search-size' or (- EREG BREG) chars."
+Return at most `bmkext-region-search-size' or (- EREG BREG) chars."
   (buffer-substring-no-properties
-   breg (+ breg (min bookmarkp-region-search-size (- ereg breg)))))
+   breg (+ breg (min bmkext-region-search-size (- ereg breg)))))
 
-(defun bookmarkp-record-front-context-string (breg)
+(defun bmkext-record-front-context-string (breg)
   "Return `bookmark-search-size' chars, starting at position BREG.
 Return nil if there are not that many chars."
   (and (>= (- (point-max) breg) bookmark-search-size)
        (buffer-substring-no-properties breg (+ breg bookmark-search-size))))
 
-(defun bookmarkp-region-record-rear-context-string (breg)
+(defun bmkext-region-record-rear-context-string (breg)
   "Return the text preceding the region beginning, BREG.
-Return at most `bookmarkp-region-search-size' chars."
+Return at most `bmkext-region-search-size' chars."
   (buffer-substring-no-properties
-   (max (- breg bookmarkp-region-search-size) (point-min))
+   (max (- breg bmkext-region-search-size) (point-min))
    breg))
 
-(defun bookmarkp-record-rear-context-string (breg)
+(defun bmkext-record-rear-context-string (breg)
   "Return `bookmark-search-size' chars that precede BREG (inclusive).
 Return nil if there are not that many chars."
   (and (>= (- breg (point-min)) bookmark-search-size)
        (buffer-substring-no-properties breg (- breg bookmark-search-size))))
 
-(defun bookmarkp-record-front-context-region-string (breg ereg)
+(defun bmkext-record-front-context-region-string (breg ereg)
   "Return the region suffix, ending at EREG.
-Return at most `bookmarkp-region-search-size' or (- EREG BREG) chars."
+Return at most `bmkext-region-search-size' or (- EREG BREG) chars."
   (buffer-substring-no-properties
-   (- ereg (min bookmarkp-region-search-size (- ereg breg)))
+   (- ereg (min bmkext-region-search-size (- ereg breg)))
    ereg))
 
-(defun bookmarkp-record-end-context-region-string (ereg)
+(defun bmkext-record-end-context-region-string (ereg)
   "Return the text following the region end, EREG.
-Return at most `bookmarkp-region-search-size' chars."
+Return at most `bmkext-region-search-size' chars."
   (buffer-substring-no-properties
-   ereg (+ ereg (min bookmarkp-region-search-size (- (point-max) (point))))))
+   ereg (+ ereg (min bmkext-region-search-size (- (point-max) (point))))))
 
-(defun bookmarkp-position-after-whitespace (position)
+(defun bmkext-position-after-whitespace (position)
   "Move forward from POSITION, skipping over whitespace.  Return point."
   (goto-char position)
   (skip-chars-forward " \n\t" (point-max))
   (point))
 
-(defun bookmarkp-position-before-whitespace (position)
+(defun bmkext-position-before-whitespace (position)
   "Move backward from POSITION, skipping over whitespace.  Return point."
   (goto-char position)
   (skip-chars-backward " \n\t" (point-min))
   (point))
 
-(defun bookmarkp-save-new-region-location (bookmark beg end)
+(defun bmkext-save-new-region-location (bookmark beg end)
   "Update and save `bookmark-alist' for BOOKMARK, relocating its region.
 BOOKMARK is a bookmark record.
 BEG and END are the new region limits for BOOKMARK.
-Do nothing and return nil if `bookmarkp-save-new-location-flag' is nil.
+Do nothing and return nil if `bmkext-save-new-location-flag' is nil.
 Otherwise, return non-nil if region was relocated."
-  (and bookmarkp-save-new-location-flag
+  (and bmkext-save-new-location-flag
        (y-or-n-p "Region relocated.  Do you want to save new region limits? ")
        (progn
          (bookmark-prop-set bookmark 'front-context-string
-                            (bookmarkp-region-record-front-context-string beg end))
+                            (bmkext-region-record-front-context-string beg end))
          (bookmark-prop-set bookmark 'rear-context-string
-                            (bookmarkp-region-record-rear-context-string beg))
+                            (bmkext-region-record-rear-context-string beg))
          (bookmark-prop-set bookmark 'front-context-region-string
-                            (bookmarkp-record-front-context-region-string beg end))
+                            (bmkext-record-front-context-region-string beg end))
          (bookmark-prop-set bookmark 'rear-context-region-string
-                            (bookmarkp-record-end-context-region-string end))
+                            (bmkext-record-end-context-region-string end))
          (bookmark-prop-set bookmark 'position beg)
          (bookmark-prop-set bookmark 'end-position end)
-         (bookmarkp-maybe-save-bookmark)
+         (bmkext-maybe-save-bookmark)
          t)))
 
-(defun bookmarkp-handle-region-default (bookmark)
+(defun bmkext-handle-region-default (bookmark)
   "Default function to handle BOOKMARK's region.
 BOOKMARK is a bookmark name or a bookmark record.
 Relocate the region if necessary, then activate it.
@@ -2203,7 +2185,7 @@ If region was relocated, save it if user confirms saving."
          (br-str           (bookmark-get-rear-context-string bmk))
          (ar-str           (bookmark-prop-get bookmark 'rear-context-region-string))
          (pos              (bookmark-get-position bmk))
-         (end-pos          (bookmarkp-get-end-position bmk))
+         (end-pos          (bmkext-get-end-position bmk))
          (reg-retrieved-p  t)
          (reg-relocated-p  nil))
     (unless (and (string= bor-str (buffer-substring-no-properties
@@ -2223,7 +2205,7 @@ If region was relocated, save it if user confirms saving."
             (unless (search-forward br-str (point-max) t)
               (when (search-forward ar-str (point-max) t) ; Find END, using `ar-str'.
                 (setq end  (match-beginning 0)
-                      end  (and end (bookmarkp-position-before-whitespace end))))))
+                      end  (and end (bmkext-position-before-whitespace end))))))
         ;; If failed to find END, go to eob and search backward for BEG.
         (unless end (goto-char (point-max)))
         (if (search-backward bor-str (point-min) t) ; Find BEG, using `bor-str'.
@@ -2232,7 +2214,7 @@ If region was relocated, save it if user confirms saving."
             (unless (search-backward ar-str (point-min) t)
               (when (search-backward br-str (point-min) t) ; Find BEG, using `br-str'.
                 (setq beg (match-end 0)
-                      beg  (and beg (bookmarkp-position-after-whitespace beg))))))
+                      beg  (and beg (bmkext-position-after-whitespace beg))))))
         (setq reg-retrieved-p  (or beg end)
               reg-relocated-p  reg-retrieved-p
               ;; If only one of BEG or END was found, the relocated region is only
@@ -2244,7 +2226,7 @@ If region was relocated, save it if user confirms saving."
            (goto-char pos)
            (push-mark end-pos 'nomsg 'activate)
            (setq deactivate-mark  nil)
-           (when bookmarkp-show-end-of-region
+           (when bmkext-show-end-of-region
              (let ((end-win (save-excursion
                               (forward-line (window-height))
                               (end-of-line)
@@ -2255,7 +2237,7 @@ If region was relocated, save it if user confirms saving."
                (when (> end-pos end-win) (recenter 1))))
            ;; Maybe save region.
            (if (and reg-relocated-p
-                    (bookmarkp-save-new-region-location bmk pos end-pos))
+                    (bmkext-save-new-region-location bmk pos end-pos))
                (message "Saved relocated region (from %d to %d)" pos end-pos)
                (message "Region is from %d to %d" pos end-pos)))
           (t                            ; No region.  Go to old start.  Don't push-mark.
@@ -2263,7 +2245,7 @@ If region was relocated, save it if user confirms saving."
            (message "No region from %d to %d" pos end-pos)))))
 
 
-(defun bookmarkp-goto-position (file buf bufname pos forward-str behind-str)
+(defun bmkext-goto-position (file buf bufname pos forward-str behind-str)
   "Go to a bookmark that has no region.
 Arguments are, respectively, the bookmark's file, buffer, buffer name,
 position, and the context strings for the position."
@@ -2274,7 +2256,7 @@ position, and the context strings for the position."
                   (and bufname (get-buffer bufname) (not (string= buf bufname))))
         (signal 'file-error `("Jumping to bookmark" "No such file or directory" file))))
   (set-buffer (or buf bufname))
-  (save-current-buffer (funcall bookmarkp-jump-display-function (current-buffer)))
+  (save-current-buffer (funcall bmkext-jump-display-function (current-buffer)))
   (setq deactivate-mark  t)
   (raise-frame)
   (goto-char pos)
@@ -2290,27 +2272,27 @@ position, and the context strings for the position."
   nil)
 
 ;; W3M support
-(defun bookmarkp-make-w3m-record ()
+(defun bmkext-make-w3m-record ()
   "Make a special entry for w3m buffers."
   (require 'w3m)                        ; For `w3m-current-url'.
   `(,@(bookmark-make-record-default 'point-only)
       (filename . ,w3m-current-url)
-      (handler . bookmarkp-jump-w3m)))
+      (handler . bmkext-jump-w3m)))
 
 (add-hook 'w3m-mode-hook
           #'(lambda ()
               (set (make-local-variable 'bookmark-make-record-function)
-                   'bookmarkp-make-w3m-record)))
+                   'bmkext-make-w3m-record)))
 
-(defun bookmarkp-w3m-set-new-buffer-name ()
+(defun bmkext-w3m-set-new-buffer-name ()
   "Set the w3m buffer name according to the number of w3m buffers already open."
   (let ((len  (length (w3m-list-buffers 'nosort))))
     (if (eq len 0)  "*w3m*"  (format "*w3m*<%d>" (1+ len)))))
 
-(defun bookmarkp-jump-w3m-new-session (bookmark)
+(defun bmkext-jump-w3m-new-session (bookmark)
   "Jump to W3m bookmark BOOKMARK, setting a new tab."
   (let ((file  (bookmark-prop-get bookmark 'filename))
-        (buf   (bookmarkp-w3m-set-new-buffer-name)))
+        (buf   (bmkext-w3m-set-new-buffer-name)))
     (w3m-browse-url file 'newsession)
     (while (not (get-buffer buf)) (sit-for 1)) ; Be sure we have the W3m buffer.
     (with-current-buffer buf
@@ -2320,7 +2302,7 @@ position, and the context strings for the position."
     (bookmark-default-handler
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
-(defun bookmarkp-jump-w3m-only-one-tab (bookmark)
+(defun bmkext-jump-w3m-only-one-tab (bookmark)
   "Close all W3m sessions and jump to BOOKMARK in a new W3m buffer."
   (let ((file  (bookmark-prop-get bookmark 'filename)))
     (w3m-quit 'force)                   ; Be sure we start with an empty W3m buffer.
@@ -2330,16 +2312,16 @@ position, and the context strings for the position."
      `("" (buffer . ,(buffer-name (current-buffer))) .
           ,(bookmark-get-bookmark-record bookmark)))))
 
-(defun bookmarkp-jump-w3m (bookmark)
-  "Handler function for record returned by `bookmarkp-make-w3m-record'.
+(defun bmkext-jump-w3m (bookmark)
+  "Handler function for record returned by `bmkext-make-w3m-record'.
 BOOKMARK is a bookmark name or a bookmark record.
-Use multi-tabs in W3m if `bookmarkp-w3m-allow-multi-tabs' is non-nil."
-  (if bookmarkp-w3m-allow-multi-tabs
-      (bookmarkp-jump-w3m-new-session bookmark)
-      (bookmarkp-jump-w3m-only-one-tab bookmark)))
+Use multi-tabs in W3m if `bmkext-w3m-allow-multi-tabs' is non-nil."
+  (if bmkext-w3m-allow-multi-tabs
+      (bmkext-jump-w3m-new-session bookmark)
+      (bmkext-jump-w3m-only-one-tab bookmark)))
 
 ;; GNUS support.  Does not handle regions.
-(defun bookmarkp-make-gnus-record ()
+(defun bmkext-make-gnus-record ()
   "Make a bookmark entry for a Gnus buffer."
   (require 'gnus)
   (unless (and (eq major-mode 'gnus-summary-mode) gnus-article-current)
@@ -2349,21 +2331,21 @@ Use multi-tabs in W3m if `bookmarkp-w3m-allow-multi-tabs' is non-nil."
          (head  (gnus-summary-article-header art))
          (id    (mail-header-id head)))
     `(,@(bookmark-make-record-default 'point-only)
-        (filename . ,bookmarkp-non-file-filename)
+        (filename . ,bmkext-non-file-filename)
         (group . ,grp) (article . ,art)
-        (message-id . ,id) (handler . bookmarkp-jump-gnus))))
+        (message-id . ,id) (handler . bmkext-jump-gnus))))
 
 (add-hook 'gnus-summary-mode-hook
           #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
-                            'bookmarkp-make-gnus-record)))
+                            'bmkext-make-gnus-record)))
 
 ;; Raise an error if we try to bookmark from here [1]
 (add-hook 'gnus-article-mode-hook
           #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
-                            'bookmarkp-make-gnus-record)))
+                            'bmkext-make-gnus-record)))
 
-(defun bookmarkp-jump-gnus (bookmark)
-  "Handler function for record returned by `bookmarkp-make-gnus-record'.
+(defun bmkext-jump-gnus (bookmark)
+  "Handler function for record returned by `bmkext-make-gnus-record'.
 BOOKMARK is a bookmark name or a bookmark record."
   (let ((group    (bookmark-prop-get bookmark 'group))
         (article  (bookmark-prop-get bookmark 'article))
@@ -2377,18 +2359,18 @@ BOOKMARK is a bookmark name or a bookmark record."
 
 ;;; Woman support
 
-(defun bookmarkp-make-woman-record ()
+(defun bmkext-make-woman-record ()
   "Make a bookmark entry for a Woman buffer."
   `(,@(bookmark-make-record-default 'point-only)
       (filename . ,woman-last-file-name)
-      (handler . bookmarkp-jump-woman)))
+      (handler . bmkext-jump-woman)))
 
 (add-hook 'woman-mode-hook
           #'(lambda ()
               (set (make-local-variable 'bookmark-make-record-function)
-                   'bookmarkp-make-woman-record)))
+                   'bmkext-make-woman-record)))
 
-(defun bookmarkp-jump-woman (bookmark)
+(defun bmkext-jump-woman (bookmark)
   "Default bookmark handler for Woman buffers."
   (let* ((file (bookmark-prop-get bookmark 'filename))
          (buf  (save-window-excursion
@@ -2398,26 +2380,26 @@ BOOKMARK is a bookmark name or a bookmark record."
 
 ;;; Man Support
 
-(defun bookmarkp-make-man-record ()
+(defun bmkext-make-man-record ()
   "Make a bookmark entry for a Man buffer."
   `(,@(bookmark-make-record-default 'point-only)
-      (filename . ,bookmarkp-non-file-filename)
-      (handler . bookmarkp-jump-man)))
+      (filename . ,bmkext-non-file-filename)
+      (handler . bmkext-jump-man)))
 
 
 (add-hook 'Man-mode-hook
           #'(lambda ()
               (set (make-local-variable 'bookmark-make-record-function)
-                   'bookmarkp-make-man-record)))
+                   'bmkext-make-man-record)))
 
 
-(defun bookmarkp-jump-man (bookmark)
+(defun bmkext-jump-man (bookmark)
   "Default bookmark handler for Man buffers."
   (let* ((buf               (bookmark-prop-get bookmark 'buffer-name))
          (buf-lst           (split-string buf))
          (node              (replace-regexp-in-string "\*" "" (car (last buf-lst))))
          (ind               (when (> (length buf-lst) 2) (second buf-lst)))
-         (Man-notify-method (case bookmarkp-jump-display-function
+         (Man-notify-method (case bmkext-jump-display-function
                               ('switch-to-buffer 'pushy)
                               ('pop-to-buffer    'friendly)
                               ('display-buffer   'quiet))))
@@ -2429,8 +2411,8 @@ BOOKMARK is a bookmark name or a bookmark record."
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(provide 'bookmark+)
+(provide 'bookmark-extensions)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; bookmark+.el ends here
+;;; bookmark-extensions.el ends here
 
