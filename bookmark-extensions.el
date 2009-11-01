@@ -2,12 +2,13 @@
 
 ;; Filename: bookmark-extensions.el
 
-;; Author: Thierry Volpiatto
+;; Author: Drew Adams, Thierry Volpiatto
 ;; Maintainer: Thierry Volpiatto <thierry.volpiatto@gmail.com>
 
+;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
 ;; Copyright (C) 2009, Thierry Volpiatto, all rights reserved.
 
-;; Created: <2009-11-01 Dim. 08:39>
+;; Created: Fri Sep 15 07:58:41 2000
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
