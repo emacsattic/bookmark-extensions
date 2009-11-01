@@ -299,7 +299,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.1")
+(defconst bmkext-version-number "2.6.3")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -573,6 +573,13 @@ Used in `bookmark-set' to get the default bookmark name."
 
 (defvar bmkext-search-timer nil
   "Timer used for searching")
+
+;; Preserve compatibility with bookmark+.el in .emacs.bmk.
+(defalias 'bookmarkp-jump-gnus 'bmkext-jump-gnus)
+(defalias 'bookmarkp-jump-w3m 'bmkext-jump-w3m)
+(defalias 'bookmarkp-jump-woman 'bmkext-jump-woman)
+(defalias 'bookmarkp-jump-man 'bmkext-jump-man)
+
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
 ;;
@@ -1331,29 +1338,6 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
   (setq bookmark-alist nil)
   (bookmark-load bookmark-default-file))
 
-(defun bmkext-bmkp2bmkext ()
-  "Convert your `bookmark-default-file' recorded with bookmark+.el to a format usable here."
-  (interactive)
-  (let* ((gen        (gensym ".emacs.bmk"))
-         (saved-file (concat "~/" (symbol-name gen)))
-         (old-entry  "^ (handler . bookmarkp-")
-         (new-entry  " (handler . bmkext-")
-         (count      0))
-    (copy-file bookmark-default-file saved-file)
-    (with-current-buffer (find-file-noselect bookmark-default-file)
-      (unwind-protect
-           (progn
-             (goto-char (point-min))
-             (while (re-search-forward old-entry (point-max) t)
-               (incf count)
-               (replace-match new-entry)))
-        (save-buffer)))
-    (if (> count 0)
-        (progn
-          (message "%d occurences of `%s' replaced by `%s'" count old-entry new-entry)
-          (sit-for 1) (when (y-or-n-p "Reload your bookmark-file?") (bmkext-reload-file)))
-        (message "Nothing to change here your `.emacs.bmk' format is good!"))))
-
 (defun bmkext-maybe-save-bookmark ()
   "Increment save counter and maybe save `bookmark-alist'."
   (setq bookmark-alist-modification-count (1+ bookmark-alist-modification-count))
@@ -1594,6 +1578,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
                              (save-match-data
                                (string-match tramp-file-name-regexp isfile))))
          (isw3m         (bmkext-w3m-bookmark-p bookmark-name))
+         (isman         (bmkext-woman-man-bookmark-p bookmark-name))
          (issu          (and istramp (string-match bmkext-su-or-sudo-regexp
                                                    isfile)))
          (isregion      (bmkext-region-bookmark-p bookmark-name))
@@ -1613,8 +1598,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            (isw3m                ; W3m
             `(mouse-face highlight follow-link t face bmkext-w3m
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))
-           ((or (eq ishandler 'bmkext-jump-woman) ; Woman pages
-                (eq ishandler 'bmkext-jump-man))  ; Man pages
+           (isman                ; Woman and Man pages
             `(mouse-face highlight follow-link t face bmkext-woman
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))
            ((and issu (not (bmkext-root-or-sudo-logged-p))) ; Root/sudo not logged
@@ -1941,12 +1925,14 @@ BOOKMARK is a bookmark name or a bookmark record."
 (defun bmkext-gnus-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Gnus bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (eq (bookmark-get-handler bookmark) 'bmkext-jump-gnus))
+  (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-gnus)
+      (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-gnus)))
 
 (defun bmkext-w3m-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a W3m bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (eq (bookmark-get-handler bookmark) 'bmkext-jump-w3m))
+  (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-w3m)
+      (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-w3m)))
 
 (defun bmkext-info-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is an Info bookmark.
@@ -1956,12 +1942,14 @@ BOOKMARK is a bookmark name or a bookmark record."
 (defun bmkext-woman-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Woman bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (eq (bookmark-get-handler bookmark) 'bmkext-jump-woman))
+  (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-woman)
+      (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-woman)))
 
 (defun bmkext-man-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Man bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
-  (eq (bookmark-get-handler bookmark) 'bmkext-jump-man))
+  (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-man)
+      (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-man)))
 
 (defun bmkext-woman-man-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Man or Woman bookmark.
