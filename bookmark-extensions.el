@@ -70,6 +70,8 @@
 ;;  * Commands defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "bmkext-")
 ;; `bmkext-version'
+;; `bmkext-reload-file'
+;; `bmkext-bmkp2bmkext'
 ;; `bmkext-bmenu-sort-by-visit-frequency'
 ;; `bmkext-bmenu-sort-by-last-time-visited'
 ;; `bmkext-bmenu-sort-alphabetically'
@@ -293,7 +295,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.0")
+(defconst bmkext-version-number "2.6.1")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1185,7 +1187,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
       (switch-to-buffer (get-buffer-create "*Bookmark List*"))
       (set-buffer (get-buffer-create "*Bookmark List*")))
   (let* ((inhibit-read-only  t)
-         (alternate-title    (if title title "% Bookmark+"))
+         (alternate-title    (if title title "% Bookmark"))
          (len-alt-title      (- (length alternate-title) 2)))
     (erase-buffer)
     (insert (format "%s\n- %s\n" alternate-title (make-string len-alt-title ?-)))
@@ -1318,7 +1320,36 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
   "A copy of list XS with only elements that satisfy predicate PRED."
   (loop for i in xs when (funcall pred i) collect i into result
      finally return result))
-  
+
+(defun bmkext-reload-file ()
+  "Reset `bookmark-alist' from `bookmark-default-file'."
+  (interactive)
+  (setq bookmark-alist nil)
+  (bookmark-load bookmark-default-file))
+
+(defun bmkext-bmkp2bmkext ()
+  "Convert your `bookmark-default-file' recorded with bookmark+.el to a format usable here."
+  (interactive)
+  (let* ((gen        (gensym ".emacs.bmk"))
+         (saved-file (concat "~/" (symbol-name gen)))
+         (old-entry  "^ (handler . bookmarkp-")
+         (new-entry  " (handler . bmkext-")
+         (count      0))
+    (copy-file bookmark-default-file saved-file)
+    (with-current-buffer (find-file-noselect bookmark-default-file)
+      (unwind-protect
+           (progn
+             (goto-char (point-min))
+             (while (re-search-forward old-entry (point-max) t)
+               (incf count)
+               (replace-match new-entry)))
+        (save-buffer)))
+    (if (> count 0)
+        (progn
+          (message "%d occurences of `%s' replaced by `%s'" count old-entry new-entry)
+          (sit-for 1) (when (y-or-n-p "Reload your bookmark-file?") (bmkext-reload-file)))
+        (message "Nothing to change here your `.emacs.bmk' format is good!"))))
+
 (defun bmkext-maybe-save-bookmark ()
   "Increment save counter and maybe save `bookmark-alist'."
   (setq bookmark-alist-modification-count (1+ bookmark-alist-modification-count))
@@ -1496,7 +1527,7 @@ Try to follow position of last bookmark in menu-list."
   (let ((bookmark-alist (bmkext-filtered-alist-by-regexp-only regexp alist))
         (bmkext-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ Filtered by regexp" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark Filtered by regexp" 'filteredp)))
 
 
 ;;;###autoload
@@ -1624,7 +1655,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bmkext-file-alist-only arg))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ Files&Directories" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark Files&Directories" 'filteredp)))
          
 
 ;;;###autoload
@@ -1634,7 +1665,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist (bmkext-non-file-alist-only))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ Non--Files" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark Non--Files" 'filteredp)))
 
 
 ;;;###autoload
@@ -1644,7 +1675,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bmkext-info-alist-only))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ Info" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark Info" 'filteredp)))
 
 
 ;;;###autoload
@@ -1654,7 +1685,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bmkext-w3m-alist-only))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ W3m" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark W3m" 'filteredp)))
 
 
 ;;;###autoload
@@ -1664,7 +1695,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bmkext-gnus-alist-only))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ Gnus" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark Gnus" 'filteredp)))
 
 
 ;;;###autoload
@@ -1674,7 +1705,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bmkext-region-alist-only))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ Regions" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark Regions" 'filteredp)))
 
 
 ;;;###autoload
@@ -1684,7 +1715,7 @@ With a prefix argument, do not include remote files or directories."
   (let ((bookmark-alist  (bmkext-woman-man-alist-only))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark+ Man&Woman pages" 'filteredp)))
+    (bookmark-bmenu-list "% Bookmark Man&Woman pages" 'filteredp)))
 
 
 ;;;###autoload
