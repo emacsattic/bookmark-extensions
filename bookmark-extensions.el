@@ -75,7 +75,6 @@
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "bmkext-")
 ;; `bmkext-version'
 ;; `bmkext-reload-file'
-;; `bmkext-bmkp2bmkext'
 ;; `bmkext-bmenu-sort-by-visit-frequency'
 ;; `bmkext-bmenu-sort-by-last-time-visited'
 ;; `bmkext-bmenu-sort-alphabetically'
@@ -243,6 +242,7 @@
 ;; `bmkext-bmenu-reverse-sort-p'
 ;; `bmkext-search-pattern'
 ;; `bmkext-search-timer'
+;; `bmkext-signal-quit'
 
 ;;  ***** NOTE: The following variables defined in `bookmark.el'
 ;;              have been REDEFINED HERE.
@@ -272,12 +272,20 @@
 ;;
 ;;    - Better bookmark relocation, if the contextual text changes.
 ;;
+;;  ** Get the last version of file **
+;;
+;;  Use command:
+;;  hg clone http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
+;;  For development version:
+;;  hg update -C development
 ;;
 ;;  ** How To Use Bookmark-Extensions **
-;;
+;;  
 ;;  Put this library in your `load-path'.
 ;;  Add this to your init file (~/.emacs) : (require 'bookmark-extensions)
 ;;
+;;  As usual use C-h m from *Bookmark List* buffer (C-x r l) to learn 
+;;  new commands that are not in vanilla bookmark.
 ;;
 ;;  ** New Bookmark Structure **
 ;;
@@ -299,7 +307,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.5")
+(defconst bmkext-version-number "2.6.6")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
