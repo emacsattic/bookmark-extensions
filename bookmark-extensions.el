@@ -299,7 +299,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.3")
+(defconst bmkext-version-number "2.6.4")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -573,6 +573,10 @@ Used in `bookmark-set' to get the default bookmark name."
 
 (defvar bmkext-search-timer nil
   "Timer used for searching")
+
+(defvar bmkext-signal-quit nil
+  "Similar to `quit-flag' but local to `bmkext-bmenu-search'.
+See (info \"(elisp)quittinq\")")
 
 ;; Preserve compatibility with bookmark+.el in .emacs.bmk.
 (defalias 'bookmarkp-jump-gnus 'bmkext-jump-gnus)
@@ -1486,8 +1490,9 @@ Try to follow position of last bookmark in menu-list."
 (defun bmkext-read-search-input ()
   "Read each keyboard input and add it to `bmkext-search-pattern'."
   (setq bmkext-search-pattern "")    ; Always reset pattern to empty string
-  (let ((tmp-list ())
-        (prompt   (propertize bmkext-search-prompt 'face '((:foreground "cyan"))))
+  (let ((tmp-list     ())
+        (prompt       (propertize bmkext-search-prompt 'face '((:foreground "cyan"))))
+        (inhibit-quit t)
         char)
     (catch 'break
       (while 1
@@ -1500,6 +1505,7 @@ Try to follow position of last bookmark in menu-list."
             (?\d (pop tmp-list)         ; Delete last char of `bmkext-search-pattern' with DEL
                  (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
                  (throw 'continue nil))
+            (?\C-g (setq bmkext-signal-quit t) (throw 'break (message "Quit")))
             (t
              (push (text-char-description char) tmp-list)
              (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
@@ -1524,18 +1530,31 @@ Try to follow position of last bookmark in menu-list."
 We make search in the current list displayed i.e `bmkext-latest-bookmark-alist'.
 If a prefix arg is given search in the whole `bookmark-alist'."
   (interactive "P")
-  (lexical-let ((bmk-list (if all bookmark-alist bmkext-latest-bookmark-alist)))
-    (unwind-protect
-         (progn
-           (setq bmkext-search-timer
-                 (run-with-idle-timer 0 bmkext-search-delay
-                                      #'(lambda ()
-                                          (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list))))
-           (bmkext-read-search-input))
-      (bmkext-bmenu-cancel-search))))
+  (when (get-buffer "*Bookmark List*")
+    (with-current-buffer "*Bookmark List*"
+      (lexical-let ((bmk-list (if all bookmark-alist bmkext-latest-bookmark-alist))
+                    (ctitle   (save-excursion (goto-char (point-min))
+                                              (buffer-substring (point-at-bol) (point-at-eol)))))
+        (unwind-protect
+             (progn
+               (setq bmkext-search-timer
+                     (run-with-idle-timer
+                      0 bmkext-search-delay
+                      #'(lambda ()
+                          (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list))))
+               (bmkext-read-search-input))
+          (if bmkext-signal-quit
+              (let ((bookmark-alist bmk-list)
+                    (bmkext-bmenu-called-from-inside-flag t))
+                (bookmark-bmenu-list ctitle)
+                (bmkext-bmenu-cancel-search))
+              (message "%d bookmarks found matching [%s]"
+                       (length bmkext-latest-bookmark-alist) bmkext-search-pattern)
+              (bmkext-bmenu-cancel-search)))))))
 
 (defun bmkext-bmenu-cancel-search ()
   "Cancel timer used for searching in bookmarks."
+  (setq bmkext-signal-quit nil)
   (cancel-timer bmkext-search-timer)
   (setq bmkext-search-timer nil))
 
