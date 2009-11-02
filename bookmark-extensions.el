@@ -1516,12 +1516,12 @@ Try to follow position of last bookmark in menu-list."
   "Return a filtered ALIST with (only) bookmarks matching REGEXP."
   (bmkext-remove-if-not #'(lambda (x) (string-match regexp (car x))) alist))
 
-(defun bmkext-bmenu-filter-alist-by-regexp (regexp alist)
+(defun bmkext-bmenu-filter-alist-by-regexp (regexp alist title)
   "Display (only) bookmarks of ALIST matching REGEXP."
   (let ((bookmark-alist (bmkext-filtered-alist-by-regexp-only regexp alist))
         (bmkext-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
     (setq bmkext-latest-bookmark-alist bookmark-alist)
-    (bookmark-bmenu-list "% Bookmark Filtered by regexp" 'filteredp)))
+    (bookmark-bmenu-list title 'filteredp)))
 
 
 ;;;###autoload
@@ -1530,27 +1530,29 @@ Try to follow position of last bookmark in menu-list."
 We make search in the current list displayed i.e `bmkext-latest-bookmark-alist'.
 If a prefix arg is given search in the whole `bookmark-alist'."
   (interactive "P")
-  (when (get-buffer "*Bookmark List*")
-    (with-current-buffer "*Bookmark List*"
-      (lexical-let ((bmk-list (if all bookmark-alist bmkext-latest-bookmark-alist))
-                    (ctitle   (save-excursion (goto-char (point-min))
-                                              (buffer-substring (point-at-bol) (point-at-eol)))))
-        (unwind-protect
-             (progn
-               (setq bmkext-search-timer
-                     (run-with-idle-timer
-                      0 bmkext-search-delay
-                      #'(lambda ()
-                          (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list))))
-               (bmkext-read-search-input))
-          (if bmkext-signal-quit
-              (let ((bookmark-alist bmk-list)
-                    (bmkext-bmenu-called-from-inside-flag t))
-                (bookmark-bmenu-list ctitle)
-                (bmkext-bmenu-cancel-search))
-              (message "%d bookmarks found matching [%s]"
-                       (length bmkext-latest-bookmark-alist) bmkext-search-pattern)
-              (bmkext-bmenu-cancel-search)))))))
+  (when (string= (buffer-name (current-buffer)) "*Bookmark List*")
+    (lexical-let* ((ctitle   (save-excursion (goto-char (point-min))
+                                             (buffer-substring (point-at-bol) (point-at-eol))))
+                   (ntitle   "% Bookmark Filtered by regexp")
+                   (bmk-list (if all
+                                 (prog1 bookmark-alist (setq ntitle "% Bookmark"))
+                                 bmkext-latest-bookmark-alist)))
+      (unwind-protect
+           (progn
+             (setq bmkext-search-timer
+                   (run-with-idle-timer
+                    0 bmkext-search-delay
+                    #'(lambda ()
+                        (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list ntitle))))
+             (bmkext-read-search-input))
+        (if bmkext-signal-quit
+            (let ((bookmark-alist bmk-list)
+                  (bmkext-bmenu-called-from-inside-flag t))
+              (bookmark-bmenu-list ctitle)
+              (bmkext-bmenu-cancel-search))
+            (message "%d bookmarks found matching `%s'"
+                     (length bmkext-latest-bookmark-alist) bmkext-search-pattern)
+            (bmkext-bmenu-cancel-search))))))
 
 (defun bmkext-bmenu-cancel-search ()
   "Cancel timer used for searching in bookmarks."
