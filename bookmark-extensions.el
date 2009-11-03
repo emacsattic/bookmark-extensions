@@ -222,7 +222,6 @@
 ;; `bookmark-bmenu-mode'
 ;; `bookmark-make-record-default'
 ;; `bookmark-bmenu-bookmark'
-;; `bookmark-bmenu-check-position'
 ;; `bookmark--jump-via'
 ;; `bookmark-prop-set'
 ;; `bookmark-default-handler'
@@ -269,8 +268,6 @@
 ;;      bookmark that records a region, the region is activated.  See
 ;;      option `bmkext-use-region-flag'.  `C-u' reverses the
 ;;      behavior specified by the value of the option.
-;;
-;;    - Better bookmark relocation, if the contextual text changes.
 ;;
 ;;    - Incremental searching of bookmarks (ala anything)
 ;;
@@ -398,8 +395,8 @@
 (define-key bookmark-bmenu-mode-map "*" nil)
 
 
-(defadvice bookmark-bmenu-mode (before bookmark+-add-keymap () activate)
-  "Extras keys added by bookmark+:\\<bookmark-bmenu-mode-map>
+(defadvice bookmark-bmenu-mode (before bmkext-add-keymap () activate)
+  "Extras keys added by bmkext:\\<bookmark-bmenu-mode-map>
 \\[bmkext-bmenu-edit-bookmark]\t- Edit bookmark
 \\[bmkext-bmenu-list-only-file-bookmarks]\t- List only file and directory \
 bookmarks (`C-u' for local only)
@@ -573,7 +570,7 @@ Used in `bookmark-set' to get the default bookmark name."
   "Timer used for searching")
 
 (defvar bmkext-signal-quit nil
-  "Similar to `quit-flag' but local to `bmkext-bmenu-search'.
+  "Non nil make `bmkext-bmenu-search' quit immediately.
 See (info \"(elisp)quittinq\")")
 
 ;; Preserve compatibility with bookmark+.el in .emacs.bmk.
@@ -585,7 +582,7 @@ See (info \"(elisp)quittinq\")")
 
 ;; REPLACES ORIGINAL DOC STRING in `bookmark.el'.
 ;;
-;; Doc string reflects Bookmark+ enhancements.
+;; Doc string reflects Bookmark-extensions enhancements.
 ;;
 
 ;; Apparently, we need to add this `defvar' stump, in order to get the documentation
@@ -626,7 +623,7 @@ Bookmarks created using vanilla Emacs (`bookmark.el'):
   for a specific kind of bookmark.  This is the case for Info
   bookmarks, for instance (starting with Emacs 23).
 
-Bookmarks created using Bookmark+ are the same as for vanilla Emacs,
+Bookmarks created using Bmkext are the same as for vanilla Emacs,
 except for the following differences.
 
 1. If no file is associated with the bookmark, then FILENAME is nil.
@@ -1166,7 +1163,7 @@ Use `customize-face' if you want to change the appearance.
 
 The optional args are for non-interactive use.
 TITLE is a string to be used as the title.
- The default title is `% Bookmark+'.
+ The default title is `% Bookmark'.
 The leftmost column of a bookmark entry shows `D' if the bookmark is
  flagged for deletion, or `>' if it is marked for displaying.
 
@@ -1302,7 +1299,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
         (beginning-of-line)))))
 
 
-;;; Bookmark+ Functions (`bmkext-*') ------------------------------
+;;; Bmkext Functions (`bmkext-*') ------------------------------
 
 ;; Don't require cl at runtime.
 (defun bmkext-remove-if (pred xs)
@@ -1478,9 +1475,9 @@ Try to follow position of last bookmark in menu-list."
         (catch 'continue
           (condition-case nil
               (setq char (read-char (concat prompt bmkext-search-pattern)))
-            (error (throw 'break nil)))
+            (error (throw 'break nil))) ; Break if char is an event.
           (case char
-            ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break and exit code.
+            ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break and exit loop.
             (?\d (pop tmp-list)         ; Delete last char of `bmkext-search-pattern' with DEL
                  (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
                  (throw 'continue nil))
