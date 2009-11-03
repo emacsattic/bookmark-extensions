@@ -272,12 +272,14 @@
 ;;
 ;;    - Better bookmark relocation, if the contextual text changes.
 ;;
+;;    - Incremental searching of bookmarks (ala anything)
+;;
 ;;  ** Get the last version of file **
 ;;
 ;;  Use command:
 ;;  hg clone http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
-;;  For development version:
-;;  hg update -C development
+;;  To switch to development branch:
+;;  hg update -C development 
 ;;
 ;;  ** How To Use Bookmark-Extensions **
 ;;  
@@ -307,7 +309,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.6")
+(defconst bmkext-version-number "2.6.7")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -330,21 +332,9 @@
 ;;;###autoload
 (define-key ctl-x-map "p" bookmark-map)
 ;;;###autoload
-(define-key ctl-x-map "pj" 'bookmark-jump-other-window)
+(define-key bookmark-map "j" 'bookmark-jump)
 ;;;###autoload
 (define-key bookmark-map "o" 'bookmark-jump-other-window)
-;;;###autoload
-(define-key bookmark-map "q" 'bookmark-jump-other-window)
-;;;###autoload
-(define-key bookmark-map "F" 'bmkext-bmenu-list-only-file-bookmarks)
-;;;###autoload
-(define-key bookmark-map "G" 'bmkext-bmenu-list-only-gnus-bookmarks)
-;;;###autoload
-(define-key bookmark-map "I" 'bmkext-bmenu-list-only-info-bookmarks)
-;;;###autoload
-(define-key bookmark-map "R" 'bmkext-bmenu-list-only-region-bookmarks)
-;;;###autoload
-(define-key bookmark-map "W" 'bmkext-bmenu-list-only-w3m-bookmarks)
 
 ;; *-bmenu-mode-map
 
@@ -881,25 +871,6 @@ Optional BACKUP means move up."
       (forward-line 0) (forward-char 3)
       (get-text-property (point) 'bmkext-bookmark-name))))
 
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;; Return t instead of returning `bookmark-alist'
-;; to increase performances of display.
-;;
-(defun bookmark-bmenu-check-position ()
-  "Ensure point is not outside of bookmark list.
-e.g in the first two lines or on end line.
-Returns non-nil if on a line with a bookmark and
-`bookmark-alist' is not empty."
-  (unless (zerop (length bookmark-alist)) ; Be sure we have bookmarks
-    (cond ((< (count-lines (point-min) (point)) 2)
-           (goto-char (point-min))
-           (forward-line 2) t)
-          ((and (bolp) (eobp))
-           (beginning-of-line 0) t)
-          (t
-           t))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -2454,9 +2425,10 @@ BOOKMARK is a bookmark name or a bookmark record."
          (node              (replace-regexp-in-string "\*" "" (car (last buf-lst))))
          (ind               (when (> (length buf-lst) 2) (second buf-lst)))
          (Man-notify-method (case bmkext-jump-display-function
-                              ('switch-to-buffer 'pushy)
-                              ('pop-to-buffer    'friendly)
-                              ('display-buffer   'quiet))))
+                              ('switch-to-buffer              'pushy)
+                              ('switch-to-buffer-other-window 'friendly)
+                              ('display-buffer                'quiet)
+                              (t                              'friendly))))
     (man (if ind (format "%s(%s)" node ind) node))
     (while (get-process "man") (sit-for 1))
     (bookmark-default-handler
