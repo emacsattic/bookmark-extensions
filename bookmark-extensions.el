@@ -306,7 +306,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.7")
+(defconst bmkext-version-number "2.6.8")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1522,19 +1522,20 @@ If a prefix arg is given search in the whole `bookmark-alist'."
                     #'(lambda ()
                         (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list ntitle))))
              (bmkext-read-search-input))
-        (if bmkext-signal-quit          ; C-g hit, rebuild alist as before.
-            (let ((bookmark-alist bmk-list)
-                  (bmkext-bmenu-called-from-inside-flag t))
-              (bookmark-bmenu-list ctitle)
-              (bmkext-bmenu-cancel-search))
-            ;; Else show the narrowed alist only.
-            (message "%d bookmarks found matching `%s'"
-                     (length bmkext-latest-bookmark-alist) bmkext-search-pattern)
-            (bmkext-bmenu-cancel-search))))))
+        (progn
+          (bmkext-bmenu-cancel-search)
+          (if bmkext-signal-quit        ; C-g hit, rebuild alist as before.
+              (let ((bookmark-alist                       bmk-list)
+                    (bmkext-bmenu-called-from-inside-flag t))
+                (bookmark-bmenu-list ctitle))
+              ;; Else show the narrowed alist only.
+              (message "%d bookmarks found matching `%s'"
+                       (length bmkext-latest-bookmark-alist) bmkext-search-pattern))
+          (setq bmkext-signal-quit nil))))))
+          
 
 (defun bmkext-bmenu-cancel-search ()
   "Cancel timer used for searching in bookmarks."
-  (setq bmkext-signal-quit nil)
   (cancel-timer bmkext-search-timer)
   (setq bmkext-search-timer nil))
 
