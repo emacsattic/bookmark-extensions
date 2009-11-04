@@ -306,7 +306,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.8")
+(defconst bmkext-version-number "2.6.9")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1509,6 +1509,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
   (when (string= (buffer-name (current-buffer)) "*Bookmark List*")
     (lexical-let* ((ctitle   (save-excursion (goto-char (point-min))
                                              (buffer-substring (point-at-bol) (point-at-eol))))
+                   (bmk      (bookmark-bmenu-bookmark))
                    (ntitle   "% Bookmark Filtered by regexp")
                    (bmk-list (if all    ; Prefix arg
                                  (prog1 bookmark-alist (setq ntitle "% Bookmark"
@@ -1527,7 +1528,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
           (if bmkext-signal-quit        ; C-g hit, rebuild alist as before.
               (let ((bookmark-alist                       bmk-list)
                     (bmkext-bmenu-called-from-inside-flag t))
-                (bookmark-bmenu-list ctitle))
+                (bookmark-bmenu-list ctitle) (bmkext-bmenu-goto-bookmark-named bmk))
               ;; Else show the narrowed alist only.
               (message "%d bookmarks found matching `%s'"
                        (length bmkext-latest-bookmark-alist) bmkext-search-pattern))
