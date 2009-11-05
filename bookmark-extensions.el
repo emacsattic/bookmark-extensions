@@ -155,7 +155,7 @@
 ;; `bmkext-sort-p-1'
 ;; `bmkext-bmenu-maybe-sort'
 ;; `bmkext-bmenu-sort-1'
-;; `bmkext-bmenu-goto-bookmark-named'
+;; `bmkext-bmenu-goto-bookmark'
 ;; `bmkext-read-search-input'
 ;; `bmkext-filtered-alist-by-regexp-only'
 ;; `bmkext-bmenu-filter-alist-by-regexp'
@@ -241,7 +241,7 @@
 ;; `bmkext-bmenu-reverse-sort-p'
 ;; `bmkext-search-pattern'
 ;; `bmkext-search-timer'
-;; `bmkext-signal-quit'
+;; `bmkext-quit-flag'
 
 ;;  ***** NOTE: The following variables defined in `bookmark.el'
 ;;              have been REDEFINED HERE.
@@ -306,7 +306,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.9")
+(defconst bmkext-version-number "2.6.10")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -569,7 +569,7 @@ Used in `bookmark-set' to get the default bookmark name."
 (defvar bmkext-search-timer nil
   "Timer used for searching")
 
-(defvar bmkext-signal-quit nil
+(defvar bmkext-quit-flag nil
   "Non nil make `bmkext-bmenu-search' quit immediately.
 See (info \"(elisp)quittinq\")")
 
@@ -1279,7 +1279,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
               (message "Deleting %s bookmarks...done" count))
             (message "Nothing to delete here"))
         (if o-str
-            (bmkext-bmenu-goto-bookmark-named o-str)
+            (bmkext-bmenu-goto-bookmark o-str)
             (goto-char o-point) (beginning-of-line)))
       (message "OK, nothing deleted")))
 
@@ -1430,10 +1430,10 @@ Try to follow position of last bookmark in menu-list."
                                      (message "Sorting alphabetically"))))
       (unless batch
         (bookmark-bmenu-surreptitiously-rebuild-list)
-        (bmkext-bmenu-goto-bookmark-named bmk)))))
+        (bmkext-bmenu-goto-bookmark bmk)))))
 
-(defun bmkext-bmenu-goto-bookmark-named (name)
-  "Go to the first bookmark whose name matches NAME."
+(defun bmkext-bmenu-goto-bookmark (name)
+  "Move point to bookmark whith name NAME."
   (goto-char (point-min))
   (bookmark-bmenu-check-position)
   (while (not (equal name (bookmark-bmenu-bookmark)))
@@ -1481,7 +1481,7 @@ Try to follow position of last bookmark in menu-list."
             (?\d (pop tmp-list)         ; Delete last char of `bmkext-search-pattern' with DEL
                  (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
                  (throw 'continue nil))
-            (?\C-g (setq bmkext-signal-quit t) (throw 'break (message "Quit")))
+            (?\C-g (setq bmkext-quit-flag t) (throw 'break (message "Quit")))
             (t
              (push (text-char-description char) tmp-list)
              (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
@@ -1525,14 +1525,14 @@ If a prefix arg is given search in the whole `bookmark-alist'."
              (bmkext-read-search-input))
         (progn
           (bmkext-bmenu-cancel-search)
-          (if bmkext-signal-quit        ; C-g hit, rebuild alist as before.
+          (if bmkext-quit-flag        ; C-g hit, rebuild alist as before.
               (let ((bookmark-alist                       bmk-list)
                     (bmkext-bmenu-called-from-inside-flag t))
-                (bookmark-bmenu-list ctitle) (bmkext-bmenu-goto-bookmark-named bmk))
+                (bookmark-bmenu-list ctitle) (bmkext-bmenu-goto-bookmark bmk))
               ;; Else show the narrowed alist only.
               (message "%d bookmarks found matching `%s'"
                        (length bmkext-latest-bookmark-alist) bmkext-search-pattern))
-          (setq bmkext-signal-quit nil))))))
+          (setq bmkext-quit-flag nil))))))
           
 
 (defun bmkext-bmenu-cancel-search ()
