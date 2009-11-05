@@ -306,7 +306,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.10")
+(defconst bmkext-version-number "2.6.11")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1477,7 +1477,7 @@ Try to follow position of last bookmark in menu-list."
               (setq char (read-char (concat prompt bmkext-search-pattern)))
             (error (throw 'break nil))) ; Break if char is an event.
           (case char
-            ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break and exit loop.
+            ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break search loop and lead to [1].
             (?\d (pop tmp-list)         ; Delete last char of `bmkext-search-pattern' with DEL
                  (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
                  (throw 'continue nil))
@@ -1523,9 +1523,9 @@ If a prefix arg is given search in the whole `bookmark-alist'."
                     #'(lambda ()
                         (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list ntitle))))
              (bmkext-read-search-input))
-        (progn
+        (progn  ; [1] Stop timer.
           (bmkext-bmenu-cancel-search)
-          (if bmkext-quit-flag        ; C-g hit, rebuild alist as before.
+          (if bmkext-quit-flag        ; C-g hit, rebuild menu list as before.
               (let ((bookmark-alist                       bmk-list)
                     (bmkext-bmenu-called-from-inside-flag t))
                 (bookmark-bmenu-list ctitle) (bmkext-bmenu-goto-bookmark bmk))
