@@ -306,7 +306,7 @@
 (require 'bookmark)
 (eval-when-compile (require 'cl))
 
-(defconst bmkext-version-number "2.6.11")
+(defconst bmkext-version-number "2.6.12")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -445,7 +445,7 @@ bookmarks (`C-u' for local only)
   :group 'bookmarkp)
 
 (defface bmkext-local-file-without-region
-    '((t (:foreground "Blue")))
+    '((t (:foreground "Deepskyblue2")))
   "*Face used for a bookmarked local file (without a region)."
   :group 'bookmarkp)
 
