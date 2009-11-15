@@ -98,6 +98,8 @@
 ;; `bmkext-bmenu-hide-marked'
 ;; `bmkext-bmenu-hide-unmarked'
 ;; `bmkext-bmenu-toggle-marks'
+;; `bmkext-import-or-sync-w3m-bmks'
+;; `bmkext-remove-w3m-imported'
 
 ;;  * Commands redefined here:(from `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "^bookmark-")
@@ -129,6 +131,8 @@
 ;; `bmkext-search-prompt'
 ;; `bmkext-search-delay'
 ;; `bmkext-local-man-name-regexp'
+;; `bmkext-w3m-bookmarks-regexp'
+;; `bmkext-always-save-w3m-imported'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
@@ -210,6 +214,11 @@
 ;; `bmkext-jump-w3m-new-session'
 ;; `bmkext-jump-w3m-only-one-tab'
 ;; `bmkext-jump-w3m'
+;; `bmkext-w3m-bookmarks-to-alist'
+;; `bmkext-format-w3m-bmk'
+;; `bmkext-create-alist-from-w3m'
+;; `bmkext-remove-imported-w3m-bmks-from-alist'
+;; `bmkext-have-w3m-imported-p'
 ;; `bmkext-make-gnus-record'
 ;; `bmkext-jump-gnus'
 ;; `bmkext-make-woman-record'
@@ -308,7 +317,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.15")
+(defconst bmkext-version-number "2.6.16")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2381,7 +2390,6 @@ Use multi-tabs in W3m if `bmkext-w3m-allow-multi-tabs' is non-nil."
   "Create a bmkext bookmark compatible entry from BOOKMARK.
 BOOKMARK is an element of alist created with `bmkext-w3m-bookmarks-to-alist'.
 It have the form (title . url)."
-  (interactive)
   (let ((title   (car bookmark))
         (fname   (cdr bookmark))
         (buf     "*w3m*")
