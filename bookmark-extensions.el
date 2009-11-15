@@ -305,8 +305,10 @@
 
 (require 'bookmark)
 (eval-when-compile (require 'cl))
+(eval-when-compile (require 'w3m nil t))
+(eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.12")
+(defconst bmkext-version-number "2.6.13")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -427,94 +429,94 @@ bookmarks (`C-u' for local only)
 (defface bmkext-gnus
     '((t (:foreground "magenta")))
   "*Face used for a gnus bookmark."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-info
     '((t (:foreground "green")))
   "*Face used for a bookmarked Info node."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-local-directory
     '((t (:foreground "DarkRed" :background "LightGray")))
   "*Face used for a bookmarked local directory."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-local-file-with-region
     '((t (:foreground "Indianred2")))
   "*Face used for a region bookmark in a local file."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-local-file-without-region
     '((t (:foreground "Deepskyblue2")))
   "*Face used for a bookmarked local file (without a region)."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-non-file
     '((t (:foreground "grey")))
   "*Face used for a bookmarked buffer not associated with a file."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-remote-file
     '((t (:foreground "pink")))
   "*Face used for a bookmarked tramp remote file (/ssh:)."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-su-or-sudo
     '((t (:foreground "red")))
   "*Face used for a bookmarked tramp file (/su: or /sudo:)."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-w3m
     '((t (:foreground "yellow")))
   "*Face used for a bookmarked w3m url."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 (defface bmkext-woman
     '((t (:foreground "Orange4")))
   "*Face used for a bookmarked w3m url."
-  :group 'bookmarkp)
+  :group 'bmkext)
 
 
 ;;; User Options (Customizable) --------------------------------------
 
-(defgroup bookmark-plus nil
+(defgroup bookmark-ext nil
   "Bookmark enhancements."
   :prefix "bmkext-" :group 'bookmark)
 
 (defcustom bmkext-use-region-flag t
   "*Non-nil means jumping to bookmark activates bookmarked region, if any."
-  :type 'boolean :group 'bookmarkp)
+  :type 'boolean :group 'bmkext)
 
 (defcustom bmkext-region-search-size 40
   "*Same as `bookmark-search-size', but specialized for bookmark regions."
-  :type 'integer :group 'bookmarkp)
+  :type 'integer :group 'bmkext)
 
 (defcustom bmkext-save-new-location-flag t
   "*Non-nil means save relocated bookmarks.
 If nil, then the new bookmark location is visited, but it is not saved
 as part of the bookmark definition."
-  :type 'boolean :group 'bookmarkp)
+  :type 'boolean :group 'bmkext)
 
 (defcustom bmkext-handle-region-function 'bmkext-handle-region-default
   "*Function to handle a bookmarked region."
-  :type 'function :group 'bookmarkp)
+  :type 'function :group 'bmkext)
 
 (defcustom bmkext-su-or-sudo-regexp "\\(/su:\\|/sudo:\\)"
   "*Regexp to recognize `su' or `sudo' Tramp bookmarks."
-  :type 'regexp :group 'bookmarkp)
+  :type 'regexp :group 'bmkext)
 
 (defcustom bmkext-w3m-allow-multi-tabs t
   "*Non-nil means jump to W3m bookmarks in a new session."
-  :type 'boolean :group 'bookmarkp)
+  :type 'boolean :group 'bmkext)
 
 (defcustom bmkext-show-end-of-region t
   "*Show end of region with `exchange-point-and-mark' when activating a region.
 If nil show only beginning of region."
-  :type 'boolean :group 'bookmarkp)
+  :type 'boolean :group 'bmkext)
 
 (defcustom bmkext-bookmark-name-length-max 70
   "*Maximum number of characters used to name a bookmark with region."
-  :type 'integer :group 'bookmarkp)
+  :type 'integer :group 'bmkext)
 
 (defcustom bmkext-bmenu-sort-function 'bmkext-visited-more-p
   "*Prefered function to sort bookmarks.
@@ -522,20 +524,28 @@ Possible values are:
 `bmkext-visited-more-p' - sort by visit frequency
 `bmkext-last-time-p' - sort by more recents visits
 `bmkext-alpha-more-p' - sort alphabetically."
-  :type '(choice (const :tag "None" nil) function) :group 'bookmarkp)
+  :type '(choice (const :tag "None" nil) function) :group 'bmkext)
 
 (defcustom bmkext-search-prompt "Pattern: "
   "*Prompt used for `bmkext-bmenu-search'."
-  :type 'string :group 'bookmarkp)
+  :type 'string :group 'bmkext)
 
 (defcustom bmkext-search-delay 0.6
   "*Display when searching bookmarks is updated all `bmkext-search-delay' seconds."
-  :type 'integer :group 'bookmarkp)
+  :type 'integer :group 'bmkext)
 
 (defcustom bmkext-local-man-name-regexp "^NOM$"
   "*The translation of the uppercase word NAME in your language.
 Used in `bookmark-set' to get the default bookmark name."
-  :type 'string :group 'bookmarkp)
+  :type 'string :group 'bmkext)
+
+(defcustom bmkext-w3m-bookmarks-regexp ">[^><]+.[^</a>]"
+  "*The regexp used to parse `w3m-bookmark-file'."
+  :type 'regexp :group 'bmkext)
+
+(defcustom bmkext-always-save-w3m-imported nil
+  "*When non--nil always save imported w3m bookmarks."
+  :type 'boolean :group 'bmkext)
 
 ;;; Internal Variables --------------------------------------------------
 
@@ -1100,6 +1110,9 @@ from there)."
     (let ((print-length  nil)
           (print-level   nil))
       (bookmark-insert-file-format-version-stamp)
+      (unless (and bmkext-always-save-w3m-imported
+                   (bmkext-have-w3m-imported-p))
+        (bmkext-remove-w3m-imported))
       (progn (insert "(")
              (dolist (i  bookmark-alist)
                (let* ((str       (car i))
@@ -2343,6 +2356,108 @@ Use multi-tabs in W3m if `bmkext-w3m-allow-multi-tabs' is non-nil."
   (if bmkext-w3m-allow-multi-tabs
       (bmkext-jump-w3m-new-session bookmark)
       (bmkext-jump-w3m-only-one-tab bookmark)))
+
+;; W3m bookmarks importation
+(defun bmkext-w3m-bookmarks-to-alist ()
+  "Parse html `w3m-bookmark-file' and return an alist with title/url as elements."
+  (let (bookmarks-alist url title)
+    (with-temp-buffer
+      (insert-file-contents w3m-bookmark-file)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (forward-line)
+        (when (re-search-forward "href=" nil t)
+          (beginning-of-line)
+          (when (re-search-forward "\\(http\\|file\\)://[^>]*" nil t)
+            (setq url (concat "\"" (match-string 0))))
+          (beginning-of-line)
+          (when (re-search-forward bmkext-w3m-bookmarks-regexp nil t)
+            (setq title (match-string 0)))
+          (push (cons title url) bookmarks-alist))))
+    (nreverse bookmarks-alist)))
+
+
+(defun bmkext-format-w3m-bmk (bookmark)
+  "Create a bmkext bookmark compatible entry from BOOKMARK.
+BOOKMARK is an element of alist created with `bmkext-w3m-bookmarks-to-alist'.
+It have the form (title . url)."
+  (interactive)
+  (let ((title   (car bookmark))
+        (fname   (cdr bookmark))
+        (buf     "*w3m*")
+        (beg     1)
+        (end     1)
+        (origin  "w3m-imported")
+        (handler 'bmkext-jump-w3m)
+        (ctime   (float-time)))
+    (setq title (replace-regexp-in-string "^\>" "" title))
+    (setq fname (replace-regexp-in-string "\"" "" fname))
+    `(,@`(,title
+          (filename . ,fname) 
+          (buffer-name . ,buf)
+          (front-context-string)
+          (rear-context-string)
+          (front-context-region-string)
+          (rear-context-region-string)
+          (visits . 0)
+          (time . ,ctime)
+          (position . ,beg)
+          (end-position . ,end)
+          (origin . ,origin)
+          (handler . ,handler)))))
+
+
+(defun bmkext-create-alist-from-w3m ()
+  "Create a bmkext alist from `w3m-bookmark-file'.
+All doublons are removed."
+  (loop
+     with w3m-bmks = (bmkext-w3m-bookmarks-to-alist)
+     with actuals-bmk = (bookmark-all-names)
+     with new-list
+     for i in w3m-bmks
+     for title = (replace-regexp-in-string "^\>" "" (car i))
+     for exists = (member title actuals-bmk)
+     for fm-bmk = (bmkext-format-w3m-bmk i)
+     for doublons = (assoc title new-list)
+     unless (or exists doublons)
+     collect fm-bmk into new-list
+     finally return new-list))
+
+
+(defun bmkext-remove-imported-w3m-bmks-from-alist ()
+  "Return a `bookmark-alist' without all bookmarks imported from `w3m-bookmark-file'."
+  (bmkext-remove-if #'(lambda (x) (bookmark-prop-get x 'origin)) bookmark-alist))
+
+
+(defun bmkext-have-w3m-imported-p ()
+  "Check if `bookmark-alist' have w3m bookmarks imported from `w3m-bookmark-file'."
+  (loop for i in bookmark-alist
+     for ori = (bookmark-prop-get i 'origin)
+     when (and ori (string= ori "w3m-imported"))
+     return t))
+
+
+(defun bmkext-import-or-sync-w3m-bmks ()
+  "Import w3m bookmarks from `w3m-bookmark-file' in Emacs bookmarks."
+  (interactive)
+  (let ((imported-bmks (bmkext-create-alist-from-w3m)))
+    (if imported-bmks
+        (progn
+          (setq bookmark-alist (append imported-bmks bookmark-alist))
+          (message "`%d' W3m bookmarks imported successfully." (length imported-bmks)))
+        (message "No w3m bookmarks found, use `v' in w3m to see your bookmarks."))))
+
+
+(defun bmkext-remove-w3m-imported ()
+  "Remove all w3m bookmarks imported from `bookmark-alist'."
+  (interactive)
+  (let ((cur-len (length bookmark-alist)))
+    (if (bmkext-have-w3m-imported-p)
+        (progn
+          (setq bookmark-alist (bmkext-remove-imported-w3m-bmks-from-alist))
+          (message "`%d' W3m bookmarks removed" (- cur-len (length bookmark-alist))))
+        (message "No imported w3m bookmarks found"))))
+
 
 ;; GNUS support.  Does not handle regions.
 (defun bmkext-make-gnus-record ()
