@@ -308,7 +308,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.13")
+(defconst bmkext-version-number "2.6.14")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2444,6 +2444,7 @@ All doublons are removed."
     (if imported-bmks
         (progn
           (setq bookmark-alist (append imported-bmks bookmark-alist))
+          (when bmkext-always-save-w3m-imported (bmkext-maybe-save-bookmark))
           (message "`%d' W3m bookmarks imported successfully." (length imported-bmks)))
         (message "No w3m bookmarks found, use `v' in w3m to see your bookmarks."))))
 
