@@ -308,7 +308,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.14")
+(defconst bmkext-version-number "2.6.15")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1164,7 +1164,7 @@ Don't affect the buffer ring order."
 ;; 2. Handles also region bookmarks and buffer (non-file) bookmarks.
 ;;
 ;;;###autoload
-(defun bookmark-bmenu-list (&optional title filteredp)
+(defsubst bookmark-bmenu-list (&optional title filteredp)
   "Display a list of existing bookmarks, in buffer `*Bookmark List*'.
 The following faces are used for the list entries.
 Use `customize-face' if you want to change the appearance.
@@ -1584,7 +1584,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
           (message "Aborting bookmark deletion")))))
 
 
-(defun bmkext-bmenu-propertize-item (bookmark-name start end)
+(defsubst bmkext-bmenu-propertize-item (bookmark-name start end)
   "Add text properties to BOOKMARK-NAME, from START to END."
   (let* ((isfile        (bookmark-get-filename bookmark-name))
          (isremote      (and isfile (file-remote-p isfile)))
