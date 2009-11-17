@@ -317,7 +317,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.17")
+(defconst bmkext-version-number "2.6.18")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -984,6 +984,23 @@ See `bookmark-jump'."
                                         bmkext-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer-other-window)))
 
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; In some cases, if `bookmark-alist' is set locally
+;; we have to get the value of bookmark form `bmkext-latest-bookmark-alist'
+;;
+(defun bookmark-get-bookmark (bookmark &optional noerror)
+  "Return the bookmark record corresponding to BOOKMARK.
+If BOOKMARK is a string, look for the corresponding bookmark record in
+`bookmark-alist'; return it if found, otherwise error.  Else if
+BOOKMARK is already a bookmark record, just return it."
+  (cond
+   ((consp bookmark) bookmark)
+   ((stringp bookmark)
+    (or (assoc-string bookmark bookmark-alist bookmark-completion-ignore-case)
+        (assoc-string bookmark bmkext-latest-bookmark-alist bookmark-completion-ignore-case)
+        (unless noerror (error "Invalid bookmark %s" bookmark))))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
