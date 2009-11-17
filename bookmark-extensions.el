@@ -317,7 +317,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.16")
+(defconst bmkext-version-number "2.6.17")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -419,7 +419,7 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-list-only-info-bookmarks]\t- List only Info bookmarks
 \\[bmkext-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man  pages
 \\[bmkext-bmenu-list-only-region-bookmarks]\t- List only region bookmarks
-\\[bmkext-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks
+\\[bmkext-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks (`C-u' show also bookmarks from `w3m-bookmark-file')
 \\[bmkext-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
 \\[bmkext-bmenu-hide-marked]\t- Hide marked bookmarks
 \\[bmkext-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
@@ -1690,10 +1690,13 @@ With a prefix argument, do not include remote files or directories."
 
 
 ;;;###autoload
-(defun bmkext-bmenu-list-only-w3m-bookmarks ()
-  "Display (only) the w3m bookmarks."
-  (interactive)
-  (let ((bookmark-alist  (bmkext-w3m-alist-only))
+(defun bmkext-bmenu-list-only-w3m-bookmarks (&optional import)
+  "Display (only) the w3m bookmarks.
+IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-bookmark-file')."
+  (interactive "P")
+  (let ((bookmark-alist  (if import
+                             (append (bmkext-create-alist-from-w3m) (bmkext-w3m-alist-only))
+                             (bmkext-w3m-alist-only)))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark W3m" 'filteredp)))
