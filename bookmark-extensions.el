@@ -317,7 +317,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.18")
+(defconst bmkext-version-number "2.6.19")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2406,7 +2406,7 @@ Use multi-tabs in W3m if `bmkext-w3m-allow-multi-tabs' is non-nil."
     (nreverse bookmarks-alist)))
 
 
-(defun bmkext-format-w3m-bmk (bookmark)
+(defun bmkext-format-w3m-bmk (bookmark &optional origin)
   "Create a bmkext bookmark compatible entry from BOOKMARK.
 BOOKMARK is an element of alist created with `bmkext-w3m-bookmarks-to-alist'.
 It have the form (title . url)."
@@ -2415,7 +2415,7 @@ It have the form (title . url)."
         (buf     "*w3m*")
         (beg     1)
         (end     1)
-        (origin  "w3m-imported")
+        (origin  (if origin origin "w3m-imported"))
         (handler 'bmkext-jump-w3m)
         (ctime   (float-time)))
     (setq title (replace-regexp-in-string "^\>" "" title))
@@ -2433,7 +2433,6 @@ It have the form (title . url)."
           (end-position . ,end)
           (origin . ,origin)
           (handler . ,handler)))))
-
 
 (defun bmkext-create-alist-from-w3m ()
   "Create a bmkext alist from `w3m-bookmark-file'.

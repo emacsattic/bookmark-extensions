@@ -91,7 +91,7 @@
 
 (defun bmkext-bookmark-firefox-page (bmk)
   (setq bookmark-alist
-        (append (list (bmkext-format-w3m-bmk bmkext-firefox-info)) bookmark-alist)))
+        (append (list (bmkext-format-w3m-bmk bmkext-firefox-info "firefox-imported")) bookmark-alist)))
 
 
 (provide 'bookmark-firefox-handler)
