@@ -65,6 +65,9 @@
 ;; 
 ;;; Code:
 
+(require 'url)
+(autoload 'url-unhex-string "url")
+
 (defvar bmkext-firefox-info nil)
 (defun bmkext-get-firefox-bmk (bmk)
   (interactive)
