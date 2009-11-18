@@ -317,7 +317,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.21")
+(defconst bmkext-version-number "2.6.22")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -553,7 +553,9 @@ Used in `bookmark-set' to get the default bookmark name."
   :type 'regexp :group 'bmkext)
 
 (defcustom bmkext-always-save-w3m-imported nil
-  "*When non--nil always save imported w3m bookmarks."
+  "*When non--nil always save imported w3m bookmarks.
+You maybe will not want to set that to non--nil as you can see
+your externals w3m bookmarks at any moment with C-u W without saving to file."
   :type 'boolean :group 'bmkext)
 
 ;;; Internal Variables --------------------------------------------------
