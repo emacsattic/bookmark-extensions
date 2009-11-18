@@ -317,7 +317,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.19")
+(defconst bmkext-version-number "2.6.20")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2453,7 +2453,7 @@ All doublons are removed."
 
 (defun bmkext-remove-imported-w3m-bmks-from-alist ()
   "Return a `bookmark-alist' without all bookmarks imported from `w3m-bookmark-file'."
-  (bmkext-remove-if #'(lambda (x) (bookmark-prop-get x 'origin)) bookmark-alist))
+  (bmkext-remove-if #'(lambda (x) (string= (bookmark-prop-get x 'origin) "w3m-imported")) bookmark-alist))
 
 
 (defun bmkext-have-w3m-imported-p ()
