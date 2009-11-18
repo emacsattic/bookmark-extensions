@@ -317,7 +317,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.20")
+(defconst bmkext-version-number "2.6.21")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1712,7 +1712,10 @@ With a prefix argument, do not include remote files or directories."
 IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-bookmark-file')."
   (interactive "P")
   (let ((bookmark-alist  (if import
-                             (append (bmkext-create-alist-from-w3m) (bmkext-w3m-alist-only))
+                             (let ((ext-list (bmkext-create-alist-from-w3m)))
+                               (prog1
+                                   (append ext-list (bmkext-w3m-alist-only))
+                                 (message "`%d' W3m bookmarks have been imported." (length ext-list))))
                              (bmkext-w3m-alist-only)))
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
