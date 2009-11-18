@@ -71,15 +71,19 @@
   (let* ((split (split-string bmk "::emacsbookmark::"))
          (url   (replace-regexp-in-string "emacsbookmark://" "" (car split)))
          (title (cadr split)))
-    (setq url (url-unhex-string url))
-    (setq title (url-unhex-string title))
+    (setq url (url-unhex-string url t))
+    (setq title (url-unhex-string title t))
     (setq bmkext-firefox-info (cons title url))
-    (if (y-or-n-p (format "Really add to Emacs Bookmarks <%s>?" title))
+    (if (y-or-n-p (format "Really bookmark from Firefox <%s>?" title))
         (progn
-          (bmkext-bookmark-firefox-page bmkext-firefox-info)
-          (bmkext-maybe-save-bookmark)
-          (call-interactively (bookmark-bmenu-list))
-          (call-interactively (bmkext-bmenu-goto-bookmark title))))))
+          (if (not (member title (bookmark-all-names)))
+              (progn
+                (bmkext-bookmark-firefox-page bmkext-firefox-info)
+                (bmkext-maybe-save-bookmark)
+                (call-interactively #'bookmark-bmenu-list)
+                (bmkext-bmenu-goto-bookmark title))
+              (message "Bookmark <%s> already exists." title)))
+        (message "Abort Firefox bookmarking"))))
 
 
 (defun bmkext-bookmark-firefox-page (bmk)
