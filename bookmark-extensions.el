@@ -133,6 +133,7 @@
 ;; `bmkext-local-man-name-regexp'
 ;; `bmkext-w3m-bookmarks-regexp'
 ;; `bmkext-always-save-w3m-imported'
+;; `bmkext-external-browse-url-function'
 
 ;;  * Faces defined here:
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'faces)
@@ -214,6 +215,7 @@
 ;; `bmkext-jump-w3m-new-session'
 ;; `bmkext-jump-w3m-only-one-tab'
 ;; `bmkext-jump-w3m'
+;; `bmkext-jump-url-external'
 ;; `bmkext-w3m-bookmarks-to-alist'
 ;; `bmkext-format-w3m-bmk'
 ;; `bmkext-create-alist-from-w3m'
@@ -233,6 +235,7 @@
 ;; `bookmark-bmenu-bookmark'
 ;; `bookmark--jump-via'
 ;; `bookmark-prop-set'
+;; `bookmark-get-bookmark'
 ;; `bookmark-default-handler'
 ;; `bookmark-location'
 ;; `bookmark-write-file'
@@ -317,7 +320,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.22")
+(defconst bmkext-version-number "2.6.23")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -420,6 +423,7 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man  pages
 \\[bmkext-bmenu-list-only-region-bookmarks]\t- List only region bookmarks
 \\[bmkext-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks (`C-u' show also bookmarks from `w3m-bookmark-file')
+\\[bookmark-bmenu-this-window]\t- If bookmark is an URL C-u jump to external browser
 \\[bmkext-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
 \\[bmkext-bmenu-hide-marked]\t- Hide marked bookmarks
 \\[bmkext-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
@@ -557,6 +561,10 @@ Used in `bookmark-set' to get the default bookmark name."
 You maybe will not want to set that to non--nil as you can see
 your externals w3m bookmarks at any moment with C-u W without saving to file."
   :type 'boolean :group 'bmkext)
+
+(defcustom bmkext-external-browse-url-function 'browse-url-firefox
+  "*Function used to call an external navigator on w3m entries with a prefix arg."
+  :type 'function :group 'bmkext)
 
 ;;; Internal Variables --------------------------------------------------
 
@@ -2386,10 +2394,21 @@ position, and the context strings for the position."
 (defun bmkext-jump-w3m (bookmark)
   "Handler function for record returned by `bmkext-make-w3m-record'.
 BOOKMARK is a bookmark name or a bookmark record.
-Use multi-tabs in W3m if `bmkext-w3m-allow-multi-tabs' is non-nil."
-  (if bmkext-w3m-allow-multi-tabs
-      (bmkext-jump-w3m-new-session bookmark)
-      (bmkext-jump-w3m-only-one-tab bookmark)))
+Use multi-tabs in W3m if `bmkext-w3m-allow-multi-tabs' is non-nil.
+If a prefix arg is given, open an external navigator defined in
+`bmkext-external-browse-url-function'."
+  (if (and current-prefix-arg bmkext-external-browse-url-function)
+      (bmkext-jump-url-external bookmark)
+      (if bmkext-w3m-allow-multi-tabs
+          (bmkext-jump-w3m-new-session bookmark)
+          (bmkext-jump-w3m-only-one-tab bookmark))))
+
+(defun bmkext-jump-url-external (bookmark)
+  "Jump to BOOKMARK in an external navigator.
+External navigator is defined by `bmkext-external-browse-url-function'."
+  (let ((file  (bookmark-prop-get bookmark 'filename)))
+    (funcall bmkext-external-browse-url-function file)))
+
 
 ;; W3m bookmarks importation
 (defun bmkext-w3m-bookmarks-to-alist ()
