@@ -2,9 +2,14 @@
  BookmarExtension Documentation
 ================================
 
-================================================
- Adding a new protocol handler to Firefox 3.5.*
-================================================
+Bookmarking a web page from Firefox in Emacs bookmarks
+======================================================
+
+Setting up firefox
+------------------
+
+Adding a new protocol handler to Firefox 3.5.*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adding a new protocol to firefox 3 is not as so easy as it was in
 firefox versions < 3.
@@ -12,9 +17,8 @@ firefox versions < 3.
 In addition to setting the protocols handlers in user.js or pref.js,
 you will have to modify also the complex mimeType.rdf file.
 
-=================================================
- Step1: Adding a new protocol handler to Firefox
-=================================================
+Step1: Adding a new protocol handler to Firefox
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The protocol we are adding is emacsbookmark.
 It will be use to record your current page in firefox to Standard
@@ -32,9 +36,8 @@ the new protocol emacsbookmark.
 Here it is the script that we will use to send info about our web page
 to Emacs.
 
-=============================
- Step2: Create a bookmarklet
-=============================
+Step2: Create a bookmarklet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Go to the bookmark bar in firefox, right click on it and choose add a
 new bookmark:
@@ -44,17 +47,22 @@ In address, add:
 
 javascript:location.href='emacsbookmark://' + location.href + '::emacsbookmark::' + escape(document.title)
 
-======================================
- Step3: Modify the mimeTypes.rdf file
-======================================
+Step3: Modify the mimeTypes.rdf file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First save the original file.
+First save the original mimeTypes.rdf file.
 
-Then add these lines at the end of the file just before the </RDF:RDF>
-end balise. (replace "/home/thierry/bin" by what you need)
+Then just after the 3 first lines:
 
+<?xml version="1.0"?>
+<RDF:RDF xmlns:NC="http://home.netscape.com/NC-rdf#"
+         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 
-<!-- Emacsbookmark Section 1 -->
+Add the following lines:
+
+------------------------------------------------------------------------------------------------
+
+<!-- Emacsbookmark Section -->
   <RDF:Description RDF:about="urn:scheme:externalApplication:emacsbookmark"
                    NC:prettyName="emacsbookmark"
                    NC:path="/home/thierry/bin/emacsbookmark" />
@@ -63,9 +71,7 @@ end balise. (replace "/home/thierry/bin" by what you need)
                    NC:value="emacsbookmark">
     <NC:handlerProp RDF:resource="urn:scheme:handler:emacsbookmark"/>
   </RDF:Description>
-<!-- End Emacsbookmark Section1 -->
 
-<!-- Emacsbookmark Section2 -->
   <RDF:Description RDF:about="urn:handler:local:/home/thierry/bin/emacsbookmark"
                    NC:prettyName="emacsbookmark"
                    NC:path="/home/thierry/bin/emacsbookmark" />
@@ -79,20 +85,23 @@ end balise. (replace "/home/thierry/bin" by what you need)
     <NC:externalApplication RDF:resource="urn:scheme:externalApplication:emacsbookmark"/>
     <NC:possibleApplication RDF:resource="urn:handler:local:/home/thierry/bin/emacsbookmark"/>
   </RDF:Description>
-<!-- End Emacsbookmark Section2 -->
+<!-- End Emacsbookmark Section -->
 
-==================================
- Install the script emacsbookmark
-==================================
+-------------------------------------------------------------------------------------------------
+
+Be sure nxml-mode is turned on, it should show you "(nxlml valid)" in
+the mode-line.
+
+Install the script emacsbookmark
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Copy the file emacsbookmark somewhere in your PATH.
 Be sure to make it executable with:
 
 chmod +x emacsbookmark
 
-========================
- Install the elisp code
-========================
+Install the elisp code
+~~~~~~~~~~~~~~~~~~~~~~
 
 Put file bookmark-firefox-handler.el in your elisp directory.
 Then add to your .emacs:
@@ -102,13 +111,18 @@ Then add to your .emacs:
 Load the file bookmark-firefox-handler or eval the code above or
 restart emacs.
 
-===========================
- Launch or restart Firefox
-===========================
+Launch or restart Firefox
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open a page somewhere, now click on the bookmarklet emacsbookmark, 
 and go back to emacs [1].
 
+Note: If you didn't start server in emacs, you will not be able to use
+      emacsclient.
+
 Say yes (y) and you will have your page bookmarked in your
 Emacs Bookmarks.
  
+[1] If you use stumpwm, you should be able to raise emacs automaticly
+    when emacsclient is called from external applications.
+    (I will add doc soon as the stumpwm wiki is down actually)
