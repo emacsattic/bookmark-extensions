@@ -14,11 +14,14 @@ Adding a new protocol handler to Firefox 3.5.*
 Adding a new protocol to firefox 3 is not as so easy as it was in
 firefox versions < 3.
 
+1) Manually by editing files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 In addition to setting the protocols handlers in user.js or pref.js,
 you will have to modify also the complex mimeType.rdf file.
 
-Step1: Adding a new protocol handler to Firefox
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step1: add the protocol handler
+-------------------------------
 
 The protocol we are adding is emacsbookmark.
 It will be use to record your current page in firefox to Standard
@@ -37,7 +40,7 @@ Here it is the script that we will use to send info about our web page
 to Emacs.
 
 Step2: Create a bookmarklet
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 Go to the bookmark bar in firefox, right click on it and choose add a
 new bookmark:
@@ -48,7 +51,7 @@ In address, add:
 javascript:location.href='emacsbookmark://' + location.href + '::emacsbookmark::' + escape(document.title)
 
 Step3: Modify the mimeTypes.rdf file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 First save the original mimeTypes.rdf file.
 
@@ -92,8 +95,27 @@ Add the following lines:
 Be sure nxml-mode is turned on, it should show you "(nxlml valid)" in
 the mode-line.
 
+2) Automatic install of a protocol to firefox
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install firefox-protocol.el:
+
+(require 'firefox-protocol)
+
+Facultative: (needed if you use firefox for the first time)
+Launch firefox, that will create a new directory if you use firefox
+for the first time.
+Exit firefox.
+
+Now from Emacs run:
+
+M-x firefox-protocol-installer-install
+
+Start Firefox and setup your bookmarklet as described before in Step2.
+
+
 Install the script emacsbookmark
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+================================
 
 Copy the file emacsbookmark somewhere in your PATH.
 Be sure to make it executable with:
@@ -101,7 +123,7 @@ Be sure to make it executable with:
 chmod +x emacsbookmark
 
 Install the elisp code
-~~~~~~~~~~~~~~~~~~~~~~
+======================
 
 Put file bookmark-firefox-handler.el in your elisp directory.
 Then add to your .emacs:
@@ -112,7 +134,7 @@ Load the file bookmark-firefox-handler or eval the code above or
 restart emacs.
 
 Launch or restart Firefox
-~~~~~~~~~~~~~~~~~~~~~~~~~
+=========================
 
 Open a page somewhere, now click on the bookmarklet emacsbookmark, 
 and go back to emacs [1].

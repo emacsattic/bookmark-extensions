@@ -1468,15 +1468,17 @@ Try to follow position of last bookmark in menu-list."
           (bmkext-bmenu-called-from-inside-flag t))
       (setq bmkext-bmenu-sort-function method)
       (case method
-        ('bmkext-visited-more-p (if bmkext-bmenu-reverse-sort-p
-                                       (message "Sorting by visit frequency [REVERSED]")
-                                       (message "Sorting by visit frequency")))
-        ('bmkext-last-time-more-p (if bmkext-bmenu-reverse-sort-p
-                                         (message "Sorting by last time visited [REVERSED]")
-                                         (message "Sorting by last time visited")))
+        ('bmkext-visited-more-p
+         (if bmkext-bmenu-reverse-sort-p
+             (message "Sorting by visit frequency [REVERSED]")
+             (message "Sorting by visit frequency")))
+        ('bmkext-last-time-more-p
+         (if bmkext-bmenu-reverse-sort-p
+             (message "Sorting by last time visited [REVERSED]")
+                                      (message "Sorting by last time visited")))
         ('bmkext-alpha-more-p (if bmkext-bmenu-reverse-sort-p
-                                     (message "Sorting alphabetically [REVERSED]")
-                                     (message "Sorting alphabetically"))))
+                                  (message "Sorting alphabetically [REVERSED]")
+                                  (message "Sorting alphabetically"))))
       (unless batch
         (bookmark-bmenu-surreptitiously-rebuild-list)
         (bmkext-bmenu-goto-bookmark bmk)))))
@@ -1526,14 +1528,16 @@ Try to follow position of last bookmark in menu-list."
               (setq char (read-char (concat prompt bmkext-search-pattern)))
             (error (throw 'break nil))) ; Break if char is an event.
           (case char
-            ((or ?\e ?\r) (throw 'break nil))    ; RET or ESC break search loop and lead to [1].
-            (?\d (pop tmp-list)         ; Delete last char of `bmkext-search-pattern' with DEL
-                 (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
+            ((or ?\e ?\r) (throw 'break nil)) ; RET or ESC break search loop and lead to [1].
+            (?\d (pop tmp-list) ; Delete last char of `bmkext-search-pattern' with DEL
+                 (setq bmkext-search-pattern
+                       (mapconcat 'identity (reverse tmp-list) ""))
                  (throw 'continue nil))
             (?\C-g (setq bmkext-quit-flag t) (throw 'break (message "Quit")))
             (t
              (push (text-char-description char) tmp-list)
-             (setq bmkext-search-pattern (mapconcat 'identity (reverse tmp-list) ""))
+             (setq bmkext-search-pattern
+                   (mapconcat 'identity (reverse tmp-list) ""))
              (throw 'continue nil))))))))
 
 
