@@ -52,14 +52,14 @@
 (defvar firefox-default-mimeTypes-file "mimeTypes.rdf")
 
 (defun firefox-protocol-handler-backup ()
-  (let ((mimeType-fname (concat (firefox-protocol-get-user-init-dir)
-                                firefox-default-mimeTypes-file))
-        (user-fname     (concat (firefox-protocol-get-user-init-dir)
-                                firefox-default-user-file))
-        (new-mimeType-fname (symbol-name
-                             (gensym (file-name-sans-extension mimeType-fname))))
-        (new-fs-file-fname (symbol-name
-                            (gensym (file-name-sans-extension user-fname)))))
+  (let* ((mimeType-fname (concat (firefox-protocol-get-user-init-dir)
+                                 firefox-default-mimeTypes-file))
+         (user-fname     (concat (firefox-protocol-get-user-init-dir)
+                                 firefox-default-user-file))
+         (new-mimeType-fname (symbol-name
+                              (gensym (file-name-sans-extension mimeType-fname))))
+         (new-fs-file-fname (symbol-name
+                             (gensym (file-name-sans-extension user-fname)))))
     (when (file-exists-p firefox-default-mimeTypes-file)
       (copy-file mimeType-fname (concat new-mimeType-fname ".rdf")))
     (when (file-exists-p firefox-default-user-file)    
