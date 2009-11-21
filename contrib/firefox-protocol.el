@@ -60,9 +60,9 @@
                               (gensym (file-name-sans-extension mimeType-fname))))
          (new-fs-file-fname (symbol-name
                              (gensym (file-name-sans-extension user-fname)))))
-    (when (file-exists-p firefox-default-mimeTypes-file)
+    (when (file-exists-p mimeType-fname)
       (copy-file mimeType-fname (concat new-mimeType-fname ".rdf")))
-    (when (file-exists-p firefox-default-user-file)    
+    (when (file-exists-p user-fname)    
     (copy-file user-fname (concat new-fs-file-fname ".js")))))
     
 (defun firefox-protocol-installer-install (name path)
@@ -78,7 +78,7 @@
         (user-fname     (concat (firefox-protocol-get-user-init-dir)
                                 firefox-default-user-file)))
     ;; Write new protocol or replace an old entry to user.js file.
-    (with-current-buffer (find-file-noselect firefox-default-user-file)
+    (with-current-buffer (find-file-noselect user-fname)
       (goto-char (point-min))
       ;; If entry already exists, remove it and replace by new one.
       ;; Else we go at end of buffer and add new entry.
@@ -100,8 +100,8 @@
     ;; Notify mimeTypes.rdf about new handler.
     ;; If file doesn't exists, create it and add appropriate headers
     ;; and end balise.
-    (unless (file-exists-p firefox-default-mimeTypes-file)
-      (with-current-buffer (find-file-noselect firefox-default-mimeTypes-file)
+    (unless (file-exists-p mimeType-fname)
+      (with-current-buffer (find-file-noselect mimeType-fname)
         (goto-char (point-min))
         (insert
          "<?xml version=\"1.0\"?>\n"
@@ -111,7 +111,7 @@
         (nxml-mode)
         (indent-region (point-min) (point-max))
         (save-buffer)))
-    (with-current-buffer (find-file-noselect firefox-default-mimeTypes-file)
+    (with-current-buffer (find-file-noselect mimeType-fname)
       ;; If entry already exists, remove it and replace by new one.
       ;; Else go to line 3 just after headers.
       (goto-char (point-min))
