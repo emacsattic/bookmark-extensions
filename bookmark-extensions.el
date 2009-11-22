@@ -402,6 +402,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bmkext-bmenu-list-only-w3m-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "D" 'bmkext-bmenu-delicious)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "%" nil)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "%m" 'bmkext-bmenu-regexp-mark)
@@ -2490,7 +2492,7 @@ All doublons are removed."
      when (and ori (string= ori "w3m-imported"))
      return t))
 
-
+;;;###autoload
 (defun bmkext-import-or-sync-w3m-bmks ()
   "Import w3m bookmarks from `w3m-bookmark-file' in Emacs bookmarks."
   (interactive)
@@ -2502,7 +2504,7 @@ All doublons are removed."
           (message "`%d' W3m bookmarks imported successfully." (length imported-bmks)))
         (message "No w3m bookmarks found, use `v' in w3m to see your bookmarks."))))
 
-
+;;;###autoload
 (defun bmkext-remove-w3m-imported ()
   "Remove all w3m bookmarks imported from `bookmark-alist'."
   (interactive)
@@ -2513,6 +2515,62 @@ All doublons are removed."
           (message "`%d' W3m bookmarks removed" (- cur-len (length bookmark-alist))))
         (message "No imported w3m bookmarks found"))))
 
+
+;;; Delicious bookmarks importation
+;;
+;; Dependency needed: http://mercurial.intuxication.org/hg/anything-delicious
+;;
+(defun bmkext-create-alist-from-delicious ()
+  "Create a bmkext alist from `anything-c-delicious-cache-file'."
+  (require 'anything-delicious nil t)
+  (if (fboundp 'anything-set-up-delicious-bookmarks-alist)
+      (loop
+         with delicious-bmks = (anything-set-up-delicious-bookmarks-alist)
+         with new-list
+         for i in delicious-bmks
+         ;for title = (replace-regexp-in-string "\\(\\[\\{1\\}.*\\]\\{1\\}\\)" "" (car i))
+         ;do (setcar i title)
+         for fm-bmk = (bmkext-format-w3m-bmk i "delicious-imported")
+         collect fm-bmk into new-list
+         finally return new-list)
+      (error "anything-delicious library not found, please install it.")))
+
+(defun bmkext-bmenu-list-only-delicious-bookmarks ()
+  "Display (only) the Delicious bookmarks."
+  (let ((bookmark-alist (bmkext-create-alist-from-delicious)))
+    (setq bmkext-bmenu-called-from-inside-flag t)
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
+    (bookmark-bmenu-list "% Bookmark Delicious" 'filteredp)
+    (message "`%d' bookmarks imported from Delicious." (length bookmark-alist))))
+
+;;;###autoload
+(defun bmkext-bmenu-refresh-delicious ()
+  (interactive)
+  (if (fboundp 'anything-wget-retrieve-delicious)
+      (progn
+        (message "Synchronising with Delicious...")
+        (anything-wget-retrieve-delicious 'bmkext-delicious-refresh-sentinel))
+      (error "anything-delicious library not found, please install it.")))
+
+
+(defun bmkext-delicious-refresh-sentinel (process event)
+  (message "%s is %s Synchronising with Delicious...Done." process event)
+  (setq anything-c-delicious-cache nil)
+  (bmkext-bmenu-list-only-delicious-bookmarks))
+
+;;;###autoload
+(defun bmkext-bmenu-delicious (&optional refresh)
+  (interactive "P")
+  (if refresh
+      (bmkext-bmenu-refresh-delicious)
+      (bmkext-bmenu-list-only-delicious-bookmarks)))
+
+;; TODO
+;; Put list in cache to speed up things
+;; modify deletion to handle delicious
+;; Filter by tags (or sort)
+;; Colorize tags
+;; Don't sort, show the last first like in anything
 
 ;; GNUS support.  Does not handle regions.
 (defun bmkext-make-gnus-record ()
