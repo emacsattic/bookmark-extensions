@@ -320,7 +320,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.23")
+(defconst bmkext-version-number "2.6.24")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1376,9 +1376,8 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
   "Edit bookmark's name and file name, and maybe save them.
 BOOKMARK-NAME is the current (old) name of the bookmark to be renamed."
   (let* ((bookmark-filename  (bookmark-get-filename bookmark-name))
-         (new-name           (read-from-minibuffer "Name: " nil nil nil nil bookmark-name))
-         (new-filename       (read-from-minibuffer "FileName: " nil nil nil nil
-                                                   bookmark-filename)))
+         (new-name           (read-from-minibuffer "Name: " bookmark-name))
+         (new-filename       (read-from-minibuffer "FileName: " bookmark-filename)))
     (when (and (not (equal new-name "")) (not (equal new-filename ""))
                (y-or-n-p "Save changes?"))
       (bookmark-rename bookmark-name new-name 'batch)

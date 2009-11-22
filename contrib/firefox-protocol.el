@@ -63,7 +63,7 @@
     (when (file-exists-p mimeType-fname)
       (copy-file mimeType-fname (concat new-mimeType-fname ".rdf")))
     (when (file-exists-p user-fname)    
-    (copy-file user-fname (concat new-fs-file-fname ".js")))))
+      (copy-file user-fname (concat new-fs-file-fname ".js")))))
     
 (defun firefox-protocol-installer-install (name path)
   (interactive "sProtocolName: \nsHandlerFileName: ")

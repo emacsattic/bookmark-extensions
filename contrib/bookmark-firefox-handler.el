@@ -77,7 +77,7 @@
     (setq url (url-unhex-string url t))
     (setq title (url-unhex-string title t))
     (setq bmkext-firefox-info (cons title url))
-    (if (y-or-n-p (format "Really bookmark from Firefox <%s>?" title))
+    (if (y-or-n-p (format "Bookmark (%s) from Firefox?" title))
         (progn
           (if (not (member title (bookmark-all-names)))
               (progn
@@ -85,7 +85,7 @@
                 (bmkext-maybe-save-bookmark)
                 (call-interactively #'bookmark-bmenu-list)
                 (bmkext-bmenu-goto-bookmark title))
-              (message "Bookmark <%s> already exists." title)))
+              (message "Bookmark (%s) already exists." title)))
         (message "Abort Firefox bookmarking"))))
 
 
