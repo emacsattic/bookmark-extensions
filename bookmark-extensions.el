@@ -320,7 +320,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.24")
+(defconst bmkext-version-number "2.6.25")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1268,11 +1268,11 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
         (goto-char (point-min))
         (forward-line 2)
         (setq bookmark-bmenu-hidden-bookmarks  (nreverse bookmark-bmenu-hidden-bookmarks))
-        (setq bookmark-bmenu-bookmark-column 2)
         (save-excursion
-          (let ((inhibit-read-only t))
+          (let ((inhibit-read-only t)
+                (column 2))
             (while bookmark-bmenu-hidden-bookmarks
-              (move-to-column bookmark-bmenu-bookmark-column t)
+              (move-to-column column t)
               (bookmark-kill-line)
               (let ((name  (car bookmark-bmenu-hidden-bookmarks))
                     (start (point))
