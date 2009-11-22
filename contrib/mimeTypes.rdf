@@ -2,7 +2,7 @@
 <RDF:RDF xmlns:NC="http://home.netscape.com/NC-rdf#"
          xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 
-<!-- Emacsbookmark Section 1 -->
+<!-- Emacsbookmark Section -->
   <RDF:Description RDF:about="urn:scheme:externalApplication:emacsbookmark"
                    NC:prettyName="emacsbookmark"
                    NC:path="/home/thierry/bin/emacsbookmark" />
@@ -11,9 +11,7 @@
                    NC:value="emacsbookmark">
     <NC:handlerProp RDF:resource="urn:scheme:handler:emacsbookmark"/>
   </RDF:Description>
-<!-- End Emacsbookmark Section1 -->
 
-<!-- Emacsbookmark Section2 -->
   <RDF:Description RDF:about="urn:handler:local:/home/thierry/bin/emacsbookmark"
                    NC:prettyName="emacsbookmark"
                    NC:path="/home/thierry/bin/emacsbookmark" />
@@ -27,6 +25,6 @@
     <NC:externalApplication RDF:resource="urn:scheme:externalApplication:emacsbookmark"/>
     <NC:possibleApplication RDF:resource="urn:handler:local:/home/thierry/bin/emacsbookmark"/>
   </RDF:Description>
-<!-- End Emacsbookmark Section2 -->
+<!-- End Emacsbookmark Section -->
 
 </RDF:RDF>

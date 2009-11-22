@@ -320,7 +320,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.25")
+(defconst bmkext-version-number "2.6.26")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1452,13 +1452,15 @@ Also: S1 < S2 if S1 was visited but S2 was not.
         Reverse the result if `bmkext-reverse-sort-p' is non-nil.
         Do nothing if `bmkext-bmenu-sort-function' is nil."
   (let ((bmk-alist (or alist (copy-sequence bookmark-alist))))
-    (when (and bmk-alist bmkext-bmenu-sort-function)
-      (sort
-       bmk-alist
-       (if bmkext-bmenu-reverse-sort-p
-           (lambda (a b)
-             (not (funcall bmkext-bmenu-sort-function a b)))
-           bmkext-bmenu-sort-function)))))
+    (when bmk-alist
+      (if bmkext-bmenu-sort-function
+          (sort
+           bmk-alist
+           (if bmkext-bmenu-reverse-sort-p
+               (lambda (a b)
+                 (not (funcall bmkext-bmenu-sort-function a b)))
+               bmkext-bmenu-sort-function))
+          bmk-alist))))
 
 
 (defun bmkext-bmenu-sort-1 (method &optional batch)
@@ -2537,7 +2539,8 @@ All doublons are removed."
 
 (defun bmkext-bmenu-list-only-delicious-bookmarks ()
   "Display (only) the Delicious bookmarks."
-  (let ((bookmark-alist (bmkext-create-alist-from-delicious)))
+  (let ((bookmark-alist (bmkext-create-alist-from-delicious))
+        (bmkext-bmenu-sort-function nil))
     (setq bmkext-bmenu-called-from-inside-flag t)
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Delicious" 'filteredp)
