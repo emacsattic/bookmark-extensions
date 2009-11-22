@@ -320,7 +320,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.26")
+(defconst bmkext-version-number "2.6.27")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -909,8 +909,8 @@ Optional BACKUP means move up."
   "Select this line's bookmark in this window."
   (interactive)
   (let ((bookmark (bookmark-bmenu-bookmark)))
-  (when (bookmark-bmenu-check-position)
-    (bookmark--jump-via bookmark 'switch-to-buffer))))
+    (when (bookmark-bmenu-check-position)
+      (bookmark--jump-via bookmark 'switch-to-buffer))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1234,28 +1234,30 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
     (erase-buffer)
     (insert (format "%s\n- %s\n" alternate-title (make-string len-alt-title ?-)))
     (add-text-properties (point-min) (point) '(font-lock-face bookmark-menu-heading))
-    (mapc (lambda (full-record)
-            ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.
-            (let ((name        (bookmark-name-from-full-record full-record))
-                  (annotation  (bookmark-get-annotation full-record))
-                  (marked      (bmkext-bookmark-marked-p full-record))
-                  (start       (+ 2 (point)))
-                  end)
-              (insert (cond ((and annotation (not (string-equal annotation "")) marked) ">*")
-                            ((and annotation (not (string-equal annotation "")))  " *")
-                            (marked "> ")
-                            (t "  "))
-                      name)
-              (setq end (point))
-              (bmkext-bmenu-propertize-item name start end)
-              (insert "\n")))
-          (bmkext-bmenu-maybe-sort))
+    (loop
+       with sorted-alist = (bmkext-bmenu-maybe-sort)
+       for full-record in sorted-alist
+       ;; If a bookmark has an annotation, prepend a "*" in the list of bookmarks.  
+       for name        = (bookmark-name-from-full-record full-record)
+       for annotation  = (bookmark-get-annotation full-record)
+       for marked      = (bmkext-bookmark-marked-p full-record)
+       for start       = (+ 2 (point))
+       for end         = 0
+       do
+         (progn
+           (insert (cond ((and annotation (not (string-equal annotation "")) marked) ">*")
+                         ((and annotation (not (string-equal annotation "")))  " *")
+                         (marked "> ")
+                         (t "  "))
+                   name)
+           (setq end (point))
+           (bmkext-bmenu-propertize-item name start end)
+           (insert "\n")))
     (goto-char (point-min))
     (forward-line 2)
     (bookmark-bmenu-mode)
-    (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))
-    (when (fboundp 'fit-frame-if-one-window) (fit-frame-if-one-window))))
-
+    (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))))
+    
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -2522,24 +2524,29 @@ All doublons are removed."
 ;;
 ;; Dependency needed: http://mercurial.intuxication.org/hg/anything-delicious
 ;;
+(defvar bmkext-delicious-cache nil)
 (defun bmkext-create-alist-from-delicious ()
   "Create a bmkext alist from `anything-c-delicious-cache-file'."
   (require 'anything-delicious nil t)
   (if (fboundp 'anything-set-up-delicious-bookmarks-alist)
-      (loop
-         with delicious-bmks = (anything-set-up-delicious-bookmarks-alist)
-         with new-list
-         for i in delicious-bmks
-         ;for title = (replace-regexp-in-string "\\(\\[\\{1\\}.*\\]\\{1\\}\\)" "" (car i))
-         ;do (setcar i title)
-         for fm-bmk = (bmkext-format-w3m-bmk i "delicious-imported")
-         collect fm-bmk into new-list
-         finally return new-list)
+      (setq bmkext-delicious-cache
+            (loop
+               with delicious-bmks = (anything-set-up-delicious-bookmarks-alist)
+               with new-list
+               for i in delicious-bmks
+               for fm-bmk = (bmkext-format-w3m-bmk i "delicious-imported")
+               for doublon-p = (assoc (car i) new-list)
+               unless doublon-p
+               collect fm-bmk into new-list
+               finally return new-list))
       (error "anything-delicious library not found, please install it.")))
+
 
 (defun bmkext-bmenu-list-only-delicious-bookmarks ()
   "Display (only) the Delicious bookmarks."
-  (let ((bookmark-alist (bmkext-create-alist-from-delicious))
+  (let ((bookmark-alist (if bmkext-delicious-cache
+                            bmkext-delicious-cache
+                            (bmkext-create-alist-from-delicious)))
         (bmkext-bmenu-sort-function nil))
     (setq bmkext-bmenu-called-from-inside-flag t)
     (setq bmkext-latest-bookmark-alist bookmark-alist)
@@ -2558,7 +2565,8 @@ All doublons are removed."
 
 (defun bmkext-delicious-refresh-sentinel (process event)
   (message "%s is %s Synchronising with Delicious...Done." process event)
-  (setq anything-c-delicious-cache nil)
+  (setq anything-c-delicious-cache nil
+        bmkext-delicious-cache nil)
   (bmkext-bmenu-list-only-delicious-bookmarks))
 
 ;;;###autoload
