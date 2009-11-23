@@ -100,6 +100,8 @@
 ;; `bmkext-bmenu-toggle-marks'
 ;; `bmkext-import-or-sync-w3m-bmks'
 ;; `bmkext-remove-w3m-imported'
+;; `bmkext-bmenu-refresh-delicious'
+;; `bmkext-bmenu-delicious'
 
 ;;  * Commands redefined here:(from `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "^bookmark-")
@@ -221,6 +223,9 @@
 ;; `bmkext-create-alist-from-w3m'
 ;; `bmkext-remove-imported-w3m-bmks-from-alist'
 ;; `bmkext-have-w3m-imported-p'
+;; `bmkext-create-alist-from-delicious'
+;; `bmkext-bmenu-list-only-delicious-bookmarks'
+;; `bmkext-delicious-refresh-sentinel'
 ;; `bmkext-make-gnus-record'
 ;; `bmkext-jump-gnus'
 ;; `bmkext-make-woman-record'
@@ -254,6 +259,7 @@
 ;; `bmkext-search-pattern'
 ;; `bmkext-search-timer'
 ;; `bmkext-quit-flag'
+;; `bmkext-delicious-cache'
 
 ;;  ***** NOTE: The following variables defined in `bookmark.el'
 ;;              have been REDEFINED HERE.
@@ -320,7 +326,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.27")
+(defconst bmkext-version-number "2.6.28")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -921,7 +927,7 @@ Optional BACKUP means move up."
   "Helper function for `bookmark-jump(-other-window)'.
 BOOKMARK is a bookmark name or a bookmark record.
 DISPLAY-FUNCTION is the function that displays the bookmark."
-  (bmkext-update-time-and-increment-visits bookmark)
+  (bmkext-update-time-and-increment-visits bookmark 'batch)
   (setq bmkext-jump-display-function  display-function)
   (bookmark-handle-bookmark bookmark)
   (let ((win  (get-buffer-window (current-buffer) 0)))
@@ -2419,7 +2425,8 @@ External navigator is defined by `bmkext-external-browse-url-function'."
     (funcall bmkext-external-browse-url-function file)))
 
 
-;; W3m bookmarks importation
+;;; W3m bookmarks importation
+
 (defun bmkext-w3m-bookmarks-to-alist ()
   "Parse html `w3m-bookmark-file' and return an alist with title/url as elements."
   (let (bookmarks-alist url title)
@@ -2521,9 +2528,8 @@ All doublons are removed."
 
 
 ;;; Delicious bookmarks importation
-;;
 ;; Dependency needed: http://mercurial.intuxication.org/hg/anything-delicious
-;;
+
 (defvar bmkext-delicious-cache nil)
 (defun bmkext-create-alist-from-delicious ()
   "Create a bmkext alist from `anything-c-delicious-cache-file'."
@@ -2577,11 +2583,11 @@ All doublons are removed."
       (bmkext-bmenu-list-only-delicious-bookmarks)))
 
 ;; TODO
-;; Put list in cache to speed up things
+;; Put list in cache to speed up things => ok
 ;; modify deletion to handle delicious
 ;; Filter by tags (or sort)
 ;; Colorize tags
-;; Don't sort, show the last first like in anything
+;; Don't sort, show the last first like in anything => ok but FIXME when jump.
 
 ;; GNUS support.  Does not handle regions.
 (defun bmkext-make-gnus-record ()
