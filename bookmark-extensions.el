@@ -326,7 +326,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.31")
+(defconst bmkext-version-number "2.6.32")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2431,8 +2431,8 @@ External navigator is defined by `bmkext-external-browse-url-function'."
 ;;
 ;; Html routines
 ;;
-(defvar bmkext-w3m-bookmark-url-regexp "\\(http\\|file\\)://[^>]*")
-(defvar bmkext-firefox-bookmark-url-regexp "\\(http\\|file\\)://[^ ]*")
+(defvar bmkext-w3m-bookmark-url-regexp "\\(https\\|http\\|ftp\\|file\\)://[^>]*")
+(defvar bmkext-firefox-bookmark-url-regexp "\\(https\\|http\\|ftp\\|about\\|file\\)://[^ ]*")
 (defun bmkext-html-bookmarks-to-alist (file url-regexp)
   "Parse html `w3m-bookmark-file' and return an alist with title/url as elements."
   (let (bookmarks-alist url title)
@@ -2540,6 +2540,7 @@ ORIGIN mention where come from this bookmark."
 ;;; W3m bookmarks importation
 
 (defun bmkext-w3m-bookmarks-to-alist ()
+  "Create an alist structured like `bookmark-alist' from `w3m-bookmark-file'."
   (bmkext-html-bookmarks-to-alist
    w3m-bookmark-file
    bmkext-w3m-bookmark-url-regexp))
@@ -2549,7 +2550,7 @@ ORIGIN mention where come from this bookmark."
 
 (defvar bmkext-delicious-cache nil)
 (defun bmkext-create-alist-from-delicious ()
-  "Create a bmkext alist from `anything-c-delicious-cache-file'."
+  "Create a bmkext alist from XML file `anything-c-delicious-cache-file'."
   (require 'anything-delicious nil t)
   (if (fboundp 'anything-set-up-delicious-bookmarks-alist)
       (setq bmkext-delicious-cache

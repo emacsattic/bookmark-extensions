@@ -57,40 +57,40 @@ First save the original mimeTypes.rdf file.
 
 Then just after the 3 first lines:
 
-<?xml version="1.0"?>
-<RDF:RDF xmlns:NC="http://home.netscape.com/NC-rdf#"
-         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+
+.. <?xml version="1.0"?>
+.. <RDF:RDF xmlns:NC="http://home.netscape.com/NC-rdf#"
+..          xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+
 
 Add the following lines:
 
-------------------------------------------------------------------------------------------------
 
-<!-- Emacsbookmark Section -->
-  <RDF:Description RDF:about="urn:scheme:externalApplication:emacsbookmark"
-                   NC:prettyName="emacsbookmark"
-                   NC:path="/home/thierry/bin/emacsbookmark" />
+.. <!-- Emacsbookmark Section -->
+..   <RDF:Description RDF:about="urn:scheme:externalApplication:emacsbookmark"
+..                    NC:prettyName="emacsbookmark"
+..                    NC:path="/home/thierry/bin/emacsbookmark" />
 
-  <RDF:Description RDF:about="urn:scheme:emacsbookmark"
-                   NC:value="emacsbookmark">
-    <NC:handlerProp RDF:resource="urn:scheme:handler:emacsbookmark"/>
-  </RDF:Description>
+..   <RDF:Description RDF:about="urn:scheme:emacsbookmark"
+..                    NC:value="emacsbookmark">
+..     <NC:handlerProp RDF:resource="urn:scheme:handler:emacsbookmark"/>
+..   </RDF:Description>
 
-  <RDF:Description RDF:about="urn:handler:local:/home/thierry/bin/emacsbookmark"
-                   NC:prettyName="emacsbookmark"
-                   NC:path="/home/thierry/bin/emacsbookmark" />
+..   <RDF:Description RDF:about="urn:handler:local:/home/thierry/bin/emacsbookmark"
+..                    NC:prettyName="emacsbookmark"
+..                    NC:path="/home/thierry/bin/emacsbookmark" />
 
-  <RDF:Seq RDF:about="urn:schemes:root">  
-    <RDF:li RDF:resource="urn:scheme:emacsbookmark"/>
-  </RDF:Seq>
+..   <RDF:Seq RDF:about="urn:schemes:root">  
+..     <RDF:li RDF:resource="urn:scheme:emacsbookmark"/>
+..   </RDF:Seq>
 
-  <RDF:Description RDF:about="urn:scheme:handler:emacsbookmark"
-                   NC:alwaysAsk="false">
-    <NC:externalApplication RDF:resource="urn:scheme:externalApplication:emacsbookmark"/>
-    <NC:possibleApplication RDF:resource="urn:handler:local:/home/thierry/bin/emacsbookmark"/>
-  </RDF:Description>
-<!-- End Emacsbookmark Section -->
+..   <RDF:Description RDF:about="urn:scheme:handler:emacsbookmark"
+..                    NC:alwaysAsk="false">
+..     <NC:externalApplication RDF:resource="urn:scheme:externalApplication:emacsbookmark"/>
+..     <NC:possibleApplication RDF:resource="urn:handler:local:/home/thierry/bin/emacsbookmark"/>
+..   </RDF:Description>
+.. <!-- End Emacsbookmark Section -->
 
--------------------------------------------------------------------------------------------------
 
 Be sure nxml-mode is turned on, it should show you "(nxlml valid)" in
 the mode-line.
