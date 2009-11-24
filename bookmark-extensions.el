@@ -326,7 +326,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.30")
+(defconst bmkext-version-number "2.6.31")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2441,7 +2441,7 @@ External navigator is defined by `bmkext-external-browse-url-function'."
       (goto-char (point-min))
       (while (not (eobp))
         (forward-line)
-        (when (re-search-forward "href=" nil t)
+        (when (re-search-forward "href=\\|^ *<DT><A HREF=" nil t)
           (beginning-of-line)
           (when (re-search-forward url-regexp nil t)
             (setq url (concat "\"" (match-string 0))))
@@ -2452,7 +2452,7 @@ External navigator is defined by `bmkext-external-browse-url-function'."
     (nreverse bookmarks-alist)))
 
 
-(defun bmkext-create-alist-from-html (file regexp &optional origin)
+(defun bmkext-create-alist-from-html (file regexp &optional origin all)
   "Create a bmkext alist from `w3m-bookmark-file'.
 All doublons are removed."
   (loop
@@ -2464,7 +2464,7 @@ All doublons are removed."
      for exists = (member title actuals-bmk)
      for fm-bmk = (bmkext-format-html-bmk i origin)
      for doublons = (assoc title new-list)
-     unless (or exists doublons)
+     unless (or (unless all exists) doublons)
      collect fm-bmk into new-list
      finally return new-list))
 
@@ -2508,6 +2508,7 @@ ORIGIN mention where come from this bookmark."
 ;; user_pref("browser.bookmarks.autoExportHTML", true);
 
 (defun bmkext-get-firefox-user-init-dir ()
+  "Guess the default Firefox user directory name."
   (let* ((moz-dir (concat (getenv "HOME") "/.mozilla/firefox/"))
          (moz-user-dir (with-current-buffer (find-file-noselect (concat moz-dir "profiles.ini"))
                          (goto-char (point-min))
@@ -2516,21 +2517,21 @@ ORIGIN mention where come from this bookmark."
     (file-name-as-directory (concat moz-dir moz-user-dir))))
 
 (defun bmkext-guess-firefox-bookmark-file ()
+  "Return the path of the Firefox bookmarks file."
   (concat (bmkext-get-firefox-user-init-dir) "bookmarks.html"))
 
 (defun bmkext-firefox-bookmarks-to-alist ()
-  (bmkext-html-bookmarks-to-alist
+  "Create a `bookmark-alist' from Firefox bookmarks."
+  (bmkext-create-alist-from-html
    (bmkext-guess-firefox-bookmark-file)
-   bmkext-firefox-bookmark-url-regexp))
+   bmkext-firefox-bookmark-url-regexp
+   "firefox-imported" 'all))
 
 ;;;###autoload
 (defun bmkext-bmenu-list-only-firefox-bookmarks ()
   "Display (only) the Firefox imported bookmarks."
   (interactive)
-  (let ((bookmark-alist (bmkext-create-alist-from-html
-                         (bmkext-guess-firefox-bookmark-file)
-                         bmkext-firefox-bookmark-url-regexp
-                         "firefox-imported")))
+  (let ((bookmark-alist (bmkext-firefox-bookmarks-to-alist)))
     (setq bmkext-bmenu-called-from-inside-flag t)
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Firefox" 'filteredp)
