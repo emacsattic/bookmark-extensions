@@ -40,21 +40,13 @@
 
 (eval-when-compile (require 'cl))
 
-(defun firefox-protocol-get-user-init-dir ()
-  (let* ((moz-dir (concat (getenv "HOME") "/.mozilla/firefox/"))
-         (moz-user-dir (with-current-buffer (find-file-noselect (concat moz-dir "profiles.ini"))
-                         (goto-char (point-min))
-                         (when (search-forward "Path=" nil t)
-                           (buffer-substring-no-properties (point) (point-at-eol))))))
-    (file-name-as-directory (concat moz-dir moz-user-dir))))
-         
 (defvar firefox-default-user-file "user.js")
 (defvar firefox-default-mimeTypes-file "mimeTypes.rdf")
 
 (defun firefox-protocol-handler-backup ()
-  (let* ((mimeType-fname (concat (firefox-protocol-get-user-init-dir)
+  (let* ((mimeType-fname (concat (bmkext-get-firefox-user-init-dir)
                                  firefox-default-mimeTypes-file))
-         (user-fname     (concat (firefox-protocol-get-user-init-dir)
+         (user-fname     (concat (bmkext-get-firefox-user-init-dir)
                                  firefox-default-user-file))
          (new-mimeType-fname (symbol-name
                               (gensym (file-name-sans-extension mimeType-fname))))
@@ -73,9 +65,9 @@
         (regexp-end-section-js    (format "// End Section %s" name))
         (regexp-start-section-rdf (format "<!-- Section %s -->" name))
         (regexp-end-section-rdf   (format "<!-- End Section %s -->" name))
-        (mimeType-fname (concat (firefox-protocol-get-user-init-dir)
+        (mimeType-fname (concat (bmkext-get-firefox-user-init-dir)
                                 firefox-default-mimeTypes-file))
-        (user-fname     (concat (firefox-protocol-get-user-init-dir)
+        (user-fname     (concat (bmkext-get-firefox-user-init-dir)
                                 firefox-default-user-file)))
     ;; Write new protocol or replace an old entry to user.js file.
     (with-current-buffer (find-file-noselect user-fname)

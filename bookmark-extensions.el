@@ -326,7 +326,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.28")
+(defconst bmkext-version-number "2.6.29")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1737,7 +1737,8 @@ With a prefix argument, do not include remote files or directories."
 IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-bookmark-file')."
   (interactive "P")
   (let ((bookmark-alist  (if import
-                             (let ((ext-list (bmkext-create-alist-from-w3m)))
+                             (let ((ext-list (bmkext-create-alist-from-html
+                                              w3m-bookmark-file bmkext-w3m-bookmark-url-regexp)))
                                (prog1
                                    (append ext-list (bmkext-w3m-alist-only))
                                  (message "`%d' W3m bookmarks have been imported." (length ext-list))))
@@ -2425,19 +2426,23 @@ External navigator is defined by `bmkext-external-browse-url-function'."
     (funcall bmkext-external-browse-url-function file)))
 
 
-;;; W3m bookmarks importation
-
-(defun bmkext-w3m-bookmarks-to-alist ()
+;;;; External bookmarks importation
+;;
+;; Html routines
+;;
+(defvar bmkext-w3m-bookmark-url-regexp "\\(http\\|file\\)://[^>]*")
+(defvar bmkext-firefox-bookmark-url-regexp "\\(http\\|file\\)://[^ ]*")
+(defun bmkext-html-bookmarks-to-alist (file url-regexp)
   "Parse html `w3m-bookmark-file' and return an alist with title/url as elements."
   (let (bookmarks-alist url title)
     (with-temp-buffer
-      (insert-file-contents w3m-bookmark-file)
+      (insert-file-contents file)
       (goto-char (point-min))
       (while (not (eobp))
         (forward-line)
         (when (re-search-forward "href=" nil t)
           (beginning-of-line)
-          (when (re-search-forward "\\(http\\|file\\)://[^>]*" nil t)
+          (when (re-search-forward url-regexp nil t)
             (setq url (concat "\"" (match-string 0))))
           (beginning-of-line)
           (when (re-search-forward bmkext-w3m-bookmarks-regexp nil t)
@@ -2446,10 +2451,27 @@ External navigator is defined by `bmkext-external-browse-url-function'."
     (nreverse bookmarks-alist)))
 
 
-(defun bmkext-format-w3m-bmk (bookmark &optional origin)
+(defun bmkext-create-alist-from-html (file regexp &optional origin)
+  "Create a bmkext alist from `w3m-bookmark-file'.
+All doublons are removed."
+  (loop
+     with w3m-bmks = (bmkext-html-bookmarks-to-alist file regexp)
+     with actuals-bmk = (bookmark-all-names)
+     with new-list
+     for i in w3m-bmks
+     for title = (replace-regexp-in-string "^\>" "" (car i))
+     for exists = (member title actuals-bmk)
+     for fm-bmk = (bmkext-format-html-bmk i origin)
+     for doublons = (assoc title new-list)
+     unless (or exists doublons)
+     collect fm-bmk into new-list
+     finally return new-list))
+
+(defun bmkext-format-html-bmk (bookmark &optional origin)
   "Create a bmkext bookmark compatible entry from BOOKMARK.
-BOOKMARK is an element of alist created with `bmkext-w3m-bookmarks-to-alist'.
-It have the form (title . url)."
+BOOKMARK is an element of alist created with `bmkext-html-bookmarks-to-alist'.
+It have the form (title . url).
+ORIGIN mention where come from this bookmark."
   (let ((title   (car bookmark))
         (fname   (cdr bookmark))
         (buf     "*w3m*")
@@ -2474,21 +2496,53 @@ It have the form (title . url)."
           (origin . ,origin)
           (handler . ,handler)))))
 
-(defun bmkext-create-alist-from-w3m ()
-  "Create a bmkext alist from `w3m-bookmark-file'.
-All doublons are removed."
-  (loop
-     with w3m-bmks = (bmkext-w3m-bookmarks-to-alist)
-     with actuals-bmk = (bookmark-all-names)
-     with new-list
-     for i in w3m-bmks
-     for title = (replace-regexp-in-string "^\>" "" (car i))
-     for exists = (member title actuals-bmk)
-     for fm-bmk = (bmkext-format-w3m-bmk i)
-     for doublons = (assoc title new-list)
-     unless (or exists doublons)
-     collect fm-bmk into new-list
-     finally return new-list))
+;;; Firefox bookmarks importation
+
+;; Note: Since firefox version >=3 firefox don't use anymore
+;; bookmarks.html file. So you will find this file nearly empty.
+;; We need to fill this file to import bookmarks here.
+;; To reactivate this firefox functionality, add the following line
+;; in your user.js file:
+;; user_pref("browser.bookmarks.autoExportHTML", true);
+
+(defun bmkext-get-firefox-user-init-dir ()
+  (let* ((moz-dir (concat (getenv "HOME") "/.mozilla/firefox/"))
+         (moz-user-dir (with-current-buffer (find-file-noselect (concat moz-dir "profiles.ini"))
+                         (goto-char (point-min))
+                         (when (search-forward "Path=" nil t)
+                           (buffer-substring-no-properties (point) (point-at-eol))))))
+    (file-name-as-directory (concat moz-dir moz-user-dir))))
+
+(defun bmkext-guess-firefox-bookmark-file ()
+  (concat (bmkext-get-firefox-user-init-dir) "bookmarks.html"))
+
+;;;###autoload
+(define-key bookmark-bmenu-mode-map "P" 'bmkext-bmenu-list-only-firefox-bookmarks)
+
+(defun bmkext-firefox-bookmarks-to-alist ()
+  (bmkext-html-bookmarks-to-alist
+   (bmkext-guess-firefox-bookmark-file)
+   bmkext-firefox-bookmark-url-regexp))
+
+;;;###autoload
+(defun bmkext-bmenu-list-only-firefox-bookmarks ()
+  "Display (only) the Firefox imported bookmarks."
+  (interactive)
+  (let ((bookmark-alist (bmkext-create-alist-from-html
+                         (bmkext-guess-firefox-bookmark-file)
+                         bmkext-firefox-bookmark-url-regexp
+                         "firefox-imported")))
+    (setq bmkext-bmenu-called-from-inside-flag t)
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
+    (bookmark-bmenu-list "% Bookmark Firefox" 'filteredp)
+    (message "`%d' bookmarks imported from Firefox." (length bookmark-alist))))
+
+;;; W3m bookmarks importation
+
+(defun bmkext-w3m-bookmarks-to-alist ()
+  (bmkext-html-bookmarks-to-alist
+   w3m-bookmark-file
+   bmkext-w3m-bookmark-url-regexp))
 
 
 (defun bmkext-remove-imported-w3m-bmks-from-alist ()
@@ -2507,7 +2561,9 @@ All doublons are removed."
 (defun bmkext-import-or-sync-w3m-bmks ()
   "Import w3m bookmarks from `w3m-bookmark-file' in Emacs bookmarks."
   (interactive)
-  (let ((imported-bmks (bmkext-create-alist-from-w3m)))
+  (let ((imported-bmks (bmkext-create-alist-from-html
+                        w3m-bookmark-file
+                        bmkext-w3m-bookmark-url-regexp)))
     (if imported-bmks
         (progn
           (setq bookmark-alist (append imported-bmks bookmark-alist))
@@ -2540,7 +2596,7 @@ All doublons are removed."
                with delicious-bmks = (anything-set-up-delicious-bookmarks-alist)
                with new-list
                for i in delicious-bmks
-               for fm-bmk = (bmkext-format-w3m-bmk i "delicious-imported")
+               for fm-bmk = (bmkext-format-html-bmk i "delicious-imported")
                for doublon-p = (assoc (car i) new-list)
                unless doublon-p
                collect fm-bmk into new-list
