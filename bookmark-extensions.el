@@ -326,7 +326,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.29")
+(defconst bmkext-version-number "2.6.30")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -410,6 +410,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "D" 'bmkext-bmenu-delicious)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "P" 'bmkext-bmenu-list-only-firefox-bookmarks)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "%" nil)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "%m" 'bmkext-bmenu-regexp-mark)
@@ -431,6 +433,8 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man  pages
 \\[bmkext-bmenu-list-only-region-bookmarks]\t- List only region bookmarks
 \\[bmkext-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks (`C-u' show also bookmarks from `w3m-bookmark-file')
+\\[bmkext-bmenu-list-only-firefox-bookmarks]\t- List only Firefox bookmarks
+\\[bmkext-bmenu-delicious]\t- List only Delicious bookmarks (`C-u' refresh list from delicious server)
 \\[bookmark-bmenu-this-window]\t- If bookmark is an URL C-u jump to external browser
 \\[bmkext-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
 \\[bmkext-bmenu-hide-marked]\t- Hide marked bookmarks
@@ -1154,9 +1158,6 @@ from there)."
     (let ((print-length  nil)
           (print-level   nil))
       (bookmark-insert-file-format-version-stamp)
-      (unless (and bmkext-always-save-w3m-imported
-                   (bmkext-have-w3m-imported-p))
-        (bmkext-remove-w3m-imported))
       (progn (insert "(")
              (dolist (i  bookmark-alist)
                (let* ((str       (car i))
@@ -2496,6 +2497,7 @@ ORIGIN mention where come from this bookmark."
           (origin . ,origin)
           (handler . ,handler)))))
 
+
 ;;; Firefox bookmarks importation
 
 ;; Note: Since firefox version >=3 firefox don't use anymore
@@ -2515,9 +2517,6 @@ ORIGIN mention where come from this bookmark."
 
 (defun bmkext-guess-firefox-bookmark-file ()
   (concat (bmkext-get-firefox-user-init-dir) "bookmarks.html"))
-
-;;;###autoload
-(define-key bookmark-bmenu-mode-map "P" 'bmkext-bmenu-list-only-firefox-bookmarks)
 
 (defun bmkext-firefox-bookmarks-to-alist ()
   (bmkext-html-bookmarks-to-alist
@@ -2543,45 +2542,6 @@ ORIGIN mention where come from this bookmark."
   (bmkext-html-bookmarks-to-alist
    w3m-bookmark-file
    bmkext-w3m-bookmark-url-regexp))
-
-
-(defun bmkext-remove-imported-w3m-bmks-from-alist ()
-  "Return a `bookmark-alist' without all bookmarks imported from `w3m-bookmark-file'."
-  (bmkext-remove-if #'(lambda (x) (string= (bookmark-prop-get x 'origin) "w3m-imported")) bookmark-alist))
-
-
-(defun bmkext-have-w3m-imported-p ()
-  "Check if `bookmark-alist' have w3m bookmarks imported from `w3m-bookmark-file'."
-  (loop for i in bookmark-alist
-     for ori = (bookmark-prop-get i 'origin)
-     when (and ori (string= ori "w3m-imported"))
-     return t))
-
-;;;###autoload
-(defun bmkext-import-or-sync-w3m-bmks ()
-  "Import w3m bookmarks from `w3m-bookmark-file' in Emacs bookmarks."
-  (interactive)
-  (let ((imported-bmks (bmkext-create-alist-from-html
-                        w3m-bookmark-file
-                        bmkext-w3m-bookmark-url-regexp)))
-    (if imported-bmks
-        (progn
-          (setq bookmark-alist (append imported-bmks bookmark-alist))
-          (when bmkext-always-save-w3m-imported (bmkext-maybe-save-bookmark))
-          (message "`%d' W3m bookmarks imported successfully." (length imported-bmks)))
-        (message "No w3m bookmarks found, use `v' in w3m to see your bookmarks."))))
-
-;;;###autoload
-(defun bmkext-remove-w3m-imported ()
-  "Remove all w3m bookmarks imported from `bookmark-alist'."
-  (interactive)
-  (let ((cur-len (length bookmark-alist)))
-    (if (bmkext-have-w3m-imported-p)
-        (progn
-          (setq bookmark-alist (bmkext-remove-imported-w3m-bmks-from-alist))
-          (message "`%d' W3m bookmarks removed" (- cur-len (length bookmark-alist))))
-        (message "No imported w3m bookmarks found"))))
-
 
 ;;; Delicious bookmarks importation
 ;; Dependency needed: http://mercurial.intuxication.org/hg/anything-delicious
