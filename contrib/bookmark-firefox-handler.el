@@ -28,8 +28,6 @@
 ;; 
 ;;; Commentary:
 ;;
-;; WARNING: use at your own risk
-;;
 ;; It is to bookmark page from firefox to Emacs Bookmarks.
 ;;
 ;; It work just like org-annotation-helper.
@@ -70,6 +68,8 @@
 
 (defvar bmkext-firefox-info nil)
 (defun bmkext-get-firefox-bmk (bmk)
+  "Bookmark a Firefox page in Standards Emacs bookmarks.
+BMK is the value returned by the bookmarklet."
   (interactive)
   (let* ((split (split-string bmk "::emacsbookmark::"))
          (url   (replace-regexp-in-string "emacsbookmark://" "" (car split)))
@@ -81,7 +81,8 @@
         (progn
           (if (not (member title (bookmark-all-names)))
               (progn
-                (bmkext-bookmark-firefox-page bmkext-firefox-info)
+                (setq bookmark-alist
+                      (bmkext-bookmark-firefox-page bmkext-firefox-info))
                 (bmkext-maybe-save-bookmark)
                 (call-interactively #'bookmark-bmenu-list)
                 (bmkext-bmenu-goto-bookmark title))
@@ -90,8 +91,10 @@
 
 
 (defun bmkext-bookmark-firefox-page (bmk)
-  (setq bookmark-alist
-        (append (list (bmkext-format-w3m-bmk bmkext-firefox-info "firefox-imported")) bookmark-alist)))
+  "Return `bookmark-alist' with the firefox bookmark BMK appended to it."
+  (append
+   (list (bmkext-format-w3m-bmk bmkext-firefox-info "firefox-imported"))
+   bookmark-alist))
 
 
 (provide 'bookmark-firefox-handler)
