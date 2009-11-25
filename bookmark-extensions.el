@@ -1632,15 +1632,19 @@ If a prefix arg is given search in the whole `bookmark-alist'."
     (let ((bmk (bookmark-bmenu-bookmark))
           (pos (point)))
       (if (y-or-n-p "Delete this bookmark? ")
-          (progn
-              (if (assoc bmk bmkext-delicious-cache)
-                  (progn
-                    (anything-c-delicious-delete-bookmark
-                     bmk
-                     'bmkext-delicious-get-url-value
-                     'bmkext-delicious-delete-sentinel))
-                  (bookmark-delete bmk) (goto-char pos)))
-            (message "Aborting bookmark deletion")))))
+          (cond ((assoc bmk bmkext-delicious-cache)
+                 (anything-c-delicious-delete-bookmark
+                  bmk
+                  'bmkext-delicious-get-url-value
+                  'bmkext-delicious-delete-sentinel))
+                ((string= (cdr (assoc 'origin (bookmark-get-bookmark bmk 'noerror)))
+                          "firefox-imported")
+                 (message "Operation not supported on this type of bookmark."))
+                ((string= (cdr (assoc 'origin (bookmark-get-bookmark bmk 'noerror)))
+                          "w3m-imported")
+                 (message "Operation not supported on this type of bookmark."))
+                (t (bookmark-delete bmk) (goto-char pos)))
+          (message "Aborting bookmark deletion")))))
 
 
 (defsubst bmkext-bmenu-propertize-item (bookmark-name start end)
