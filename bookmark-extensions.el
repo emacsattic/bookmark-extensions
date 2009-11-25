@@ -2486,8 +2486,8 @@ All doublons are removed."
 BOOKMARK is an element of alist created with `bmkext-html-bookmarks-to-alist'.
 It have the form (title . url).
 ORIGIN mention where come from this bookmark."
-  (let ((title   (car bookmark))
-        (fname   (cdr bookmark))
+  (let ((title   (url-unhex-string (car bookmark)))
+        (fname   (url-unhex-string (cdr bookmark)))
         (buf     "*w3m*")
         (beg     1)
         (end     1)
