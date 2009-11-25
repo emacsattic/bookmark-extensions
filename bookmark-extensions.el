@@ -326,7 +326,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.32")
+(defconst bmkext-version-number "2.6.33")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1632,8 +1632,15 @@ If a prefix arg is given search in the whole `bookmark-alist'."
     (let ((bmk (bookmark-bmenu-bookmark))
           (pos (point)))
       (if (y-or-n-p "Delete this bookmark? ")
-          (progn (bookmark-delete bmk) (goto-char pos))
-          (message "Aborting bookmark deletion")))))
+          (progn
+              (if (assoc bmk bmkext-delicious-cache)
+                  (progn
+                    (anything-c-delicious-delete-bookmark
+                     bmk
+                     'bmkext-delicious-get-url-value
+                     'bmkext-delicious-delete-sentinel))
+                  (bookmark-delete bmk) (goto-char pos)))
+            (message "Aborting bookmark deletion")))))
 
 
 (defsubst bmkext-bmenu-propertize-item (bookmark-name start end)
@@ -2566,9 +2573,9 @@ ORIGIN mention where come from this bookmark."
       (error "anything-delicious library not found, please install it.")))
 
 
-(defun bmkext-bmenu-list-only-delicious-bookmarks ()
+(defun bmkext-bmenu-list-only-delicious-bookmarks (&optional rebuild-cache)
   "Display (only) the Delicious bookmarks."
-  (let ((bookmark-alist (if bmkext-delicious-cache
+  (let ((bookmark-alist (if (and (not rebuild-cache) bmkext-delicious-cache)
                             bmkext-delicious-cache
                             (bmkext-create-alist-from-delicious)))
         (bmkext-bmenu-sort-function nil))
@@ -2576,6 +2583,15 @@ ORIGIN mention where come from this bookmark."
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Delicious" 'filteredp)
     (message "`%d' bookmarks imported from Delicious." (length bookmark-alist))))
+
+(defun bmkext-delicious-get-url-value (bmk)
+  "Get the url of delicious BMK from `bmkext-delicious-cache'."
+  (cdr (assoc 'filename (assoc bmk bmkext-delicious-cache))))
+
+(defun bmkext-delicious-delete-sentinel (process event)
+  "Sentinel used for asynchronous delicious bookmark deletion."
+  (anything-delicious-delete-sentinel process event)
+  (bmkext-bmenu-list-only-delicious-bookmarks 'rebuild-cache))
 
 ;;;###autoload
 (defun bmkext-bmenu-refresh-delicious ()
