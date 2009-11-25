@@ -326,7 +326,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.33")
+(defconst bmkext-version-number "2.6.34")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1130,16 +1130,18 @@ from there)."
   (bookmark-maybe-historicize-string bookmark-name)
   (bookmark-maybe-load-default-file)
   (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
-    (setq bookmark-alist (delete will-go bookmark-alist))
-    ;; Added by db, nil bookmark-current-bookmark if the last
-    ;; occurrence has been deleted
-    (setq bmkext-latest-bookmark-alist (delete will-go bmkext-latest-bookmark-alist))
-    (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
-        (setq bookmark-current-bookmark nil))
-    ;; Don't rebuild the list when using `batch' arg
-    (unless batch
-      (bookmark-bmenu-surreptitiously-rebuild-list))
-    (bmkext-maybe-save-bookmark)))
+    (if (assoc 'origin will-go)
+        (error "Operation not supported on this type of bookmark.")
+        (setq bookmark-alist (delete will-go bookmark-alist))
+        ;; Added by db, nil bookmark-current-bookmark if the last
+        ;; occurrence has been deleted
+        (setq bmkext-latest-bookmark-alist (delete will-go bmkext-latest-bookmark-alist))
+        (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
+            (setq bookmark-current-bookmark nil))
+        ;; Don't rebuild the list when using `batch' arg
+        (unless batch
+          (bookmark-bmenu-surreptitiously-rebuild-list))
+        (bmkext-maybe-save-bookmark))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
