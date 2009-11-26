@@ -334,7 +334,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.36")
+(defconst bmkext-version-number "2.6.37")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1139,7 +1139,9 @@ from there)."
   (bookmark-maybe-historicize-string bookmark-name)
   (bookmark-maybe-load-default-file)
   (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
-    (if (assoc 'origin will-go)
+    (if (or (string= (cdr (assoc 'origin will-go)) "firefox-imported")
+            (string= (cdr (assoc 'origin will-go)) "delicious-imported")
+            (string= (cdr (assoc 'origin will-go)) "w3m-imported"))
         (error "Operation not supported on this type of bookmark.")
         (setq bookmark-alist (delete will-go bookmark-alist))
         ;; Added by db, nil bookmark-current-bookmark if the last

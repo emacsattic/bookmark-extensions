@@ -93,7 +93,7 @@ BMK is the value returned by the bookmarklet."
 (defun bmkext-bookmark-firefox-page (bmk)
   "Return `bookmark-alist' with the firefox bookmark BMK appended to it."
   (append
-   (list (bmkext-format-html-bmk bmkext-firefox-info "firefox-imported"))
+   (list (bmkext-format-html-bmk bmkext-firefox-info "firefox-record"))
    bookmark-alist))
 
 ;; Jump in w3m from firefox

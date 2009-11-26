@@ -15,4 +15,11 @@ fi
 # if you use stumpwm uncomment
 # stumpish eval "(stumpwm::emacs)"
 
+# if you use gnome uncomment (wmctrl needed)
+# wmctrl -xa emacs
+
 emacsclient --eval "(progn (bmkext-get-firefox-bmk \"$1\" ) nil)"
+
+# if you use gnome uncomment
+# sleep 2
+# wmctrl -xa firefox
