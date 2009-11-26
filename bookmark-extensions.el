@@ -326,7 +326,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.34")
+(defconst bmkext-version-number "2.6.35")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -871,7 +871,8 @@ Newline characters are stripped out."
   (when (bookmark-bmenu-check-position)
     (let ((inhibit-read-only t)
           (bmk (bookmark-bmenu-bookmark)))
-      (push bmk bmkext-bookmark-marked-list)
+      (unless (bmkext-bookmark-marked-p bmk)
+        (push bmk bmkext-bookmark-marked-list))
       (delete-char 1)
       (insert ?>)
       (forward-line 1))))
@@ -2083,7 +2084,10 @@ BOOKMARK is a bookmark name or a bookmark record."
 
 (defun bmkext-bookmark-marked-p (bookmark)
   "Return non-nil if BOOKMARK is a marked bookmark."
-  (member (car bookmark) bmkext-bookmark-marked-list))
+  (if (listp bookmark)
+      (member (car bookmark) bmkext-bookmark-marked-list)
+      (member bookmark bmkext-bookmark-marked-list)))
+      
 
 ;; Filter Functions --------------------------------------------------
 
