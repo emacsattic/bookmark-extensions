@@ -98,8 +98,7 @@
 ;; `bmkext-bmenu-hide-marked'
 ;; `bmkext-bmenu-hide-unmarked'
 ;; `bmkext-bmenu-toggle-marks'
-;; `bmkext-import-or-sync-w3m-bmks'
-;; `bmkext-remove-w3m-imported'
+;; `bmkext-bmenu-list-only-firefox-bookmarks'
 ;; `bmkext-bmenu-refresh-delicious'
 ;; `bmkext-bmenu-delicious'
 
@@ -218,14 +217,21 @@
 ;; `bmkext-jump-w3m-only-one-tab'
 ;; `bmkext-jump-w3m'
 ;; `bmkext-jump-url-external'
+;; `bmkext-html-bookmarks-to-alist'
+;; `bmkext-create-alist-from-html'
+;; `bmkext-format-html-bmk'
+;; `bmkext-get-firefox-user-init-dir'
+;; `bmkext-guess-firefox-bookmark-file'
+;; `bmkext-firefox-bookmarks-to-alist'
 ;; `bmkext-w3m-bookmarks-to-alist'
-;; `bmkext-format-w3m-bmk'
-;; `bmkext-create-alist-from-w3m'
-;; `bmkext-remove-imported-w3m-bmks-from-alist'
-;; `bmkext-have-w3m-imported-p'
 ;; `bmkext-create-alist-from-delicious'
 ;; `bmkext-bmenu-list-only-delicious-bookmarks'
+;; `bmkext-delicious-get-url-value'
+;; `bmkext-delicious-delete-sentinel'
 ;; `bmkext-delicious-refresh-sentinel'
+;; `bmkext-format-html-bmk-to-org'
+;; `bmkext-html-bookmarks-to-org'
+;; `bmkext-firefox2org'
 ;; `bmkext-make-gnus-record'
 ;; `bmkext-jump-gnus'
 ;; `bmkext-make-woman-record'
@@ -259,6 +265,8 @@
 ;; `bmkext-search-pattern'
 ;; `bmkext-search-timer'
 ;; `bmkext-quit-flag'
+;; `bmkext-w3m-bookmark-url-regexp'
+;; `bmkext-firefox-bookmark-url-regexp'
 ;; `bmkext-delicious-cache'
 
 ;;  ***** NOTE: The following variables defined in `bookmark.el'
@@ -326,7 +334,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.35")
+(defconst bmkext-version-number "2.6.36")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2384,7 +2392,7 @@ position, and the context strings for the position."
     (goto-char (match-end 0)))
   nil)
 
-;; W3M support
+;;; W3M support
 (defun bmkext-make-w3m-record ()
   "Make a special entry for w3m buffers."
   (require 'w3m)                        ; For `w3m-current-url'.
@@ -2633,7 +2641,38 @@ ORIGIN mention where come from this bookmark."
 ;; Colorize tags
 ;; Don't sort, show the last first like in anything => ok but FIXME when jump.
 
-;; GNUS support.  Does not handle regions.
+;;; Org importation.
+
+(defun bmkext-format-html-bmk-to-org (bmk)
+  "Convert an alist entry (title . url) to org link."
+  (let ((title (replace-regexp-in-string "^\>" "" (car bmk)))
+        (fname (replace-regexp-in-string "\"" "" (cdr bmk))))
+    (concat "** [[" fname "][" title "]]\n")))
+
+(defun bmkext-html-bookmarks-to-org (input-file output-file regexp &optional title-page)
+  "Convert an html bookmark file to org file."
+  (with-current-buffer (find-file-noselect output-file)
+    (erase-buffer) (goto-char (point-min))
+    (when title-page
+      (insert (concat "* " title-page "\n\n")))
+    (loop
+       with alist = (bmkext-html-bookmarks-to-alist input-file regexp)
+       for i in alist
+       do
+         (insert
+          (bmkext-format-html-bmk-to-org i))
+         (save-buffer))))
+  
+;;;###autoload
+(defun bmkext-firefox2org (org-file title)
+  "Print Firefox bookmarks to ORG-FILE."
+  (interactive "sOrgFile: \nsTitlePage: ")
+  (bmkext-html-bookmarks-to-org (bmkext-guess-firefox-bookmark-file)
+                                org-file
+                                bmkext-firefox-bookmark-url-regexp
+                                title))
+
+;;; GNUS support.  Does not handle regions.
 (defun bmkext-make-gnus-record ()
   "Make a bookmark entry for a Gnus buffer."
   (require 'gnus)
