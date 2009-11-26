@@ -96,6 +96,18 @@ BMK is the value returned by the bookmarklet."
    (list (bmkext-format-html-bmk bmkext-firefox-info "firefox-imported"))
    bookmark-alist))
 
+;; Jump in w3m from firefox
+(defun firefox-browse-url-w3m (data)
+  "Switch to emacs w3m from firefox.
+Use this bookmarklet:
+
+javascript:location.href='browsew3m://' + location.href.
+
+Install protocol `browsew3m' binded to path of browsew3m script."
+  (let* ((split (split-string data "browsew3m://"))
+         (url (second split)))
+    (w3m-browse-url url)))
+
 
 (provide 'bookmark-firefox-handler)
 
