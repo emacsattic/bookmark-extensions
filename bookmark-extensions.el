@@ -336,7 +336,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.38")
+(defconst bmkext-version-number "2.6.39")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2626,7 +2626,9 @@ ORIGIN mention where come from this bookmark."
 
 
 (defun bmkext-delicious-refresh-sentinel (process event)
-  (message "%s is %s Synchronising with Delicious...Done." process event)
+  (if (string= event "finished\n")
+      (message "Syncing with Delicious...Done.")
+      (message "Failed to synchronize with Delicious."))
   (setq anything-c-delicious-cache nil
         bmkext-delicious-cache nil)
   (bmkext-bmenu-list-only-delicious-bookmarks))
