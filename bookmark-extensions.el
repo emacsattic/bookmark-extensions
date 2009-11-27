@@ -101,6 +101,7 @@
 ;; `bmkext-bmenu-list-only-firefox-bookmarks'
 ;; `bmkext-bmenu-refresh-delicious'
 ;; `bmkext-bmenu-delicious'
+;; `bmkext-firefox2org-sync'
 
 ;;  * Commands redefined here:(from `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "^bookmark-")
@@ -231,7 +232,8 @@
 ;; `bmkext-delicious-refresh-sentinel'
 ;; `bmkext-format-html-bmk-to-org'
 ;; `bmkext-html-bookmarks-to-org'
-;; `bmkext-firefox2org'
+;; `bmkext-firefox2org-create'
+;; `bmkext-html-bookmarks-to-org-sync'
 ;; `bmkext-make-gnus-record'
 ;; `bmkext-jump-gnus'
 ;; `bmkext-make-woman-record'
@@ -334,7 +336,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.37")
+(defconst bmkext-version-number "2.6.38")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2666,13 +2668,54 @@ ORIGIN mention where come from this bookmark."
          (save-buffer))))
   
 ;;;###autoload
-(defun bmkext-firefox2org (org-file title)
+(defun bmkext-firefox2org-create (org-file title)
   "Print Firefox bookmarks to ORG-FILE."
   (interactive "sOrgFile: \nsTitlePage: ")
   (bmkext-html-bookmarks-to-org (bmkext-guess-firefox-bookmark-file)
                                 org-file
                                 bmkext-firefox-bookmark-url-regexp
                                 title))
+
+(defun bmkext-html-bookmarks-to-org-sync (input-file
+                                          output-file
+                                          regexp
+                                          &optional start-title)
+  "Synchronize html INPUT-FILE with Org OUTPUT-FILE.
+REGEXP is the regexp to use to match entries in INPUT-FILE (e.g Firefox or w3m).
+See `bmkext-firefox-bookmark-url-regexp', `bmkext-w3m-bookmark-url-regexp'.
+START-TITLE is the name with star where we will start (e.g * Firefox Bookmarks)."
+  (with-current-buffer (find-file-noselect output-file)
+    (goto-char (point-min))
+    (org-mode)
+    (when start-title (search-forward start-title) (forward-line 1))
+    (let (org-old org-new)
+      (save-excursion ; 
+        (while (search-forward "** " nil t)
+          (push (concat
+                 (buffer-substring-no-properties (point-at-bol) (point-at-eol)) "\n")
+                org-old)))
+      (setq org-new (loop ; container of all current elm of firefox bmks formatted for org
+                         with alist = (bmkext-html-bookmarks-to-alist input-file regexp)
+                         for i in alist
+                         collect (bmkext-format-html-bmk-to-org i)))
+       (loop
+          for lnk in org-new
+          if (member lnk org-old) ; Old bookmark already exists.
+          do (search-forward "** " nil t) ; We skip it and go forward.
+          else ; Not found in ORG-OLD it's a new one we print it.
+          do
+            (forward-line 0) ; Insert from beg of line.
+            (insert lnk)
+            (search-forward "** " nil t))
+       (save-buffer))))
+
+;;;###autoload
+(defun bmkext-firefox2org-sync (org-file)
+  "Synchronize Firefox bookmarks with ORG-FILE."
+  (interactive "sOrgFile: ")
+  (bmkext-html-bookmarks-to-org-sync (bmkext-guess-firefox-bookmark-file)
+                                     org-file
+                                     bmkext-firefox-bookmark-url-regexp))
 
 ;;; GNUS support.  Does not handle regions.
 (defun bmkext-make-gnus-record ()
