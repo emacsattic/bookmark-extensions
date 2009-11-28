@@ -336,7 +336,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.41")
+(defconst bmkext-version-number "2.6.42")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2453,6 +2453,7 @@ If a prefix arg is given, open an external navigator defined in
   "Jump to BOOKMARK in an external navigator.
 External navigator is defined by `bmkext-external-browse-url-function'."
   (let ((file  (bookmark-prop-get bookmark 'filename)))
+    (bmkext-update-time-and-increment-visits bookmark 'batch)
     (funcall bmkext-external-browse-url-function file)))
 
 
