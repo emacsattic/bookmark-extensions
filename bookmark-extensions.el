@@ -336,7 +336,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.42")
+(defconst bmkext-version-number "2.6.43")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1763,14 +1763,14 @@ With a prefix argument, do not include remote files or directories."
   "Display (only) the w3m bookmarks.
 IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-bookmark-file')."
   (interactive "P")
-  (let ((bookmark-alist  (if import
-                             (let ((ext-list (bmkext-create-alist-from-html
-                                              w3m-bookmark-file bmkext-w3m-bookmark-url-regexp)))
-                               (prog1
-                                   (append ext-list (bmkext-w3m-alist-only))
-                                 (message "`%d' W3m bookmarks have been imported." (length ext-list))))
-                             (bmkext-w3m-alist-only)))
-        (bmkext-bmenu-called-from-inside-flag t))
+  (let* ((ext-list (bmkext-create-alist-from-html
+                    w3m-bookmark-file bmkext-w3m-bookmark-url-regexp))
+         (bookmark-alist  (if import
+                              (prog1
+                                  (append ext-list (bmkext-w3m-alist-only))
+                                (message "`%d' W3m bookmarks have been imported." (length ext-list)))
+                              (bmkext-w3m-alist-only)))
+         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark W3m" 'filteredp)))
 
@@ -2583,24 +2583,23 @@ ORIGIN mention where come from this bookmark."
   "Create a bmkext alist from XML file `anything-c-delicious-cache-file'."
   (require 'anything-delicious nil t)
   (if (fboundp 'anything-set-up-delicious-bookmarks-alist)
-      (setq bmkext-delicious-cache
-            (loop
-               with delicious-bmks = (anything-set-up-delicious-bookmarks-alist)
-               with new-list
-               for i in delicious-bmks
-               for fm-bmk = (bmkext-format-html-bmk i "delicious-imported")
-               for doublon-p = (assoc (car i) new-list)
-               unless doublon-p
-               collect fm-bmk into new-list
-               finally return new-list))
+      (loop
+         with delicious-bmks = (anything-set-up-delicious-bookmarks-alist)
+         with new-list
+         for i in delicious-bmks
+         for fm-bmk = (bmkext-format-html-bmk i "delicious-imported")
+         for doublon-p = (assoc (car i) new-list)
+         unless doublon-p
+         collect fm-bmk into new-list
+         finally return new-list)
       (error "anything-delicious library not found, please install it.")))
-
 
 (defun bmkext-bmenu-list-only-delicious-bookmarks (&optional rebuild-cache)
   "Display (only) the Delicious bookmarks."
   (let ((bookmark-alist (if (and (not rebuild-cache) bmkext-delicious-cache)
                             bmkext-delicious-cache
-                            (bmkext-create-alist-from-delicious)))
+                            (setq bmkext-delicious-cache
+                                  (bmkext-create-alist-from-delicious))))
         (bmkext-bmenu-sort-function nil))
     (setq bmkext-bmenu-called-from-inside-flag t)
     (setq bmkext-latest-bookmark-alist bookmark-alist)
