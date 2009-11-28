@@ -77,7 +77,7 @@ BMK is the value returned by the bookmarklet."
     (setq url (url-unhex-string url t))
     (setq title (url-unhex-string title t))
     (setq bmkext-firefox-info (cons title url))
-    (if (y-or-n-p (format "Bookmark (%s) from Firefox?" title))
+    (if (and title url (y-or-n-p (format "Bookmark (%s) from Firefox?" title)))
         (progn
           (if (not (member title (bookmark-all-names)))
               (progn

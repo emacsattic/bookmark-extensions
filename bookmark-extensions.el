@@ -2463,7 +2463,7 @@ External navigator is defined by `bmkext-external-browse-url-function'."
 (defvar bmkext-w3m-bookmark-url-regexp "\\(https\\|http\\|ftp\\|file\\)://[^>]*")
 (defvar bmkext-firefox-bookmark-url-regexp "\\(https\\|http\\|ftp\\|about\\|file\\)://[^ ]*")
 (defun bmkext-html-bookmarks-to-alist (file url-regexp)
-  "Parse html `w3m-bookmark-file' and return an alist with title/url as elements."
+  "Parse html bookmark FILE and return an alist with (title . url) as elements."
   (let (bookmarks-alist url title)
     (with-temp-buffer
       (insert-file-contents file)
@@ -2482,7 +2482,7 @@ External navigator is defined by `bmkext-external-browse-url-function'."
 
 
 (defun bmkext-create-alist-from-html (file regexp &optional origin all)
-  "Create a bmkext alist from `w3m-bookmark-file'.
+  "Create a bmkext alist from html bookmark FILE.
 All doublons are removed."
   (loop
      with w3m-bmks = (bmkext-html-bookmarks-to-alist file regexp)
