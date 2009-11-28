@@ -336,7 +336,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.40")
+(defconst bmkext-version-number "2.6.41")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2659,15 +2659,17 @@ ORIGIN mention where come from this bookmark."
   "Convert an html bookmark file to org file."
   (with-current-buffer (find-file-noselect output-file)
     (goto-char (point-max))
+    (unless (eq (point-min) (point-max))
+      (newline))
     (when title-page
-      (insert (concat "* " title-page "\n\n")))
+      (insert (concat title-page "\n\n")))
     (loop
        with alist = (bmkext-html-bookmarks-to-alist input-file regexp)
        for i in alist
        do
          (insert
-          (bmkext-format-html-bmk-to-org i))
-         (save-buffer))))
+          (bmkext-format-html-bmk-to-org i)))
+    (save-buffer)))
   
 
 (defvar bmkext-firefox2org-default-title "* Firefox Bookmarks")
