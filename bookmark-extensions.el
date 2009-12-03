@@ -101,7 +101,6 @@
 ;; `bmkext-bmenu-list-only-firefox-bookmarks'
 ;; `bmkext-bmenu-refresh-delicious'
 ;; `bmkext-bmenu-delicious'
-;; `bmkext-firefox2org-sync'
 
 ;;  * Commands redefined here:(from `bookmark.el')
 ;; [EVAL] (traverse-auto-document-lisp-buffer :type 'command :prefix "^bookmark-")
@@ -187,6 +186,7 @@
 ;; `bmkext-region-alist-only'
 ;; `bmkext-gnus-alist-only'
 ;; `bmkext-w3m-alist-only'
+;; `bmkext-w3m-alist-only-imported'
 ;; `bmkext-info-alist-only'
 ;; `bmkext-woman-alist-only'
 ;; `bmkext-man-alist-only'
@@ -230,10 +230,6 @@
 ;; `bmkext-delicious-get-url-value'
 ;; `bmkext-delicious-delete-sentinel'
 ;; `bmkext-delicious-refresh-sentinel'
-;; `bmkext-format-html-bmk-to-org'
-;; `bmkext-html-bookmarks-to-org'
-;; `bmkext-firefox2org-create'
-;; `bmkext-html-bookmarks-to-org-sync'
 ;; `bmkext-make-gnus-record'
 ;; `bmkext-jump-gnus'
 ;; `bmkext-make-woman-record'
@@ -336,7 +332,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.44")
+(defconst bmkext-version-number "2.6.45")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -1763,14 +1759,15 @@ With a prefix argument, do not include remote files or directories."
   "Display (only) the w3m bookmarks.
 IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-bookmark-file')."
   (interactive "P")
-  (let* ((ext-list (bmkext-create-alist-from-html
-                    w3m-bookmark-file bmkext-w3m-bookmark-url-regexp))
-         (bookmark-alist  (if import
-                              (prog1
-                                  (append ext-list (bmkext-w3m-alist-only))
-                                (message "`%d' W3m bookmarks have been imported." (length ext-list)))
-                              (bmkext-w3m-alist-only)))
-         (bmkext-bmenu-called-from-inside-flag t))
+  (let* ((ext-list (bmkext-w3m-alist-only-imported))
+         (local-list (bmkext-w3m-alist-only))
+         (all-w3m (append ext-list local-list))
+         (bookmark-alist (if import
+                            (prog1 all-w3m
+                              (message "`%d' W3m bookmarks have been imported."
+                                       (length ext-list)))
+                            local-list))
+        (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark W3m" 'filteredp)))
 
@@ -2119,6 +2116,12 @@ A new list is returned (no side effects)."
   "`bookmark-alist', filtered to retain only W3m bookmarks.
 A new list is returned (no side effects)."
   (bmkext-remove-if-not #'bmkext-w3m-bookmark-p bookmark-alist))
+
+
+(defun bmkext-w3m-alist-only-imported ()
+  "All W3m imported bookmarks."
+  (bmkext-create-alist-from-html
+   w3m-bookmark-file bmkext-w3m-bookmark-url-regexp))
 
 
 (defun bmkext-info-alist-only ()
