@@ -332,7 +332,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.45")
+(defconst bmkext-version-number "2.6.46")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -583,6 +583,11 @@ your externals w3m bookmarks at any moment with C-u W without saving to file."
 (defcustom bmkext-external-browse-url-function 'browse-url-firefox
   "*Function used to call an external navigator on w3m entries with a prefix arg."
   :type 'function :group 'bmkext)
+
+(defcustom bmkext-firefox-default-directory "~/.mozilla/firefox/"
+  "The Mozilla Firefox User default directory.
+The default value is for GNU/Linux systems."
+  :type 'string :group 'bmkext)
 
 ;;; Internal Variables --------------------------------------------------
 
@@ -2542,12 +2547,14 @@ ORIGIN mention where come from this bookmark."
 
 (defun bmkext-get-firefox-user-init-dir ()
   "Guess the default Firefox user directory name."
-  (let* ((moz-dir (concat (getenv "HOME") "/.mozilla/firefox/"))
-         (moz-user-dir (with-current-buffer (find-file-noselect (concat moz-dir "profiles.ini"))
-                         (goto-char (point-min))
-                         (when (search-forward "Path=" nil t)
-                           (buffer-substring-no-properties (point) (point-at-eol))))))
-    (file-name-as-directory (concat moz-dir moz-user-dir))))
+  (let ((moz-user-dir (with-current-buffer
+                          (find-file-noselect
+                           (concat bmkext-firefox-default-directory "profiles.ini"))
+                        (goto-char (point-min))
+                        (when (search-forward "Path=" nil t)
+                          (buffer-substring-no-properties (point) (point-at-eol))))))
+    (file-name-as-directory
+     (concat bmkext-firefox-default-directory moz-user-dir))))
 
 (defun bmkext-guess-firefox-bookmark-file ()
   "Return the path of the Firefox bookmarks file."
