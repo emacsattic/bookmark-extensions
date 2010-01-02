@@ -716,6 +716,21 @@ region is bookmarked, POS represents the region start position.
 
 ;;; Core Replacements (`bookmark-*' except `bookmark-bmenu-*') -------
 
+(defun bookmark-bmenu-check-position ()
+  "If point is not on a bookmark line, move it to one.
+If before the first bookmark line, move it to the first.
+If after the last, move it to the last.
+Return `bookmark-alist'"
+  (cond ((< (count-lines (point-min) (point)) 2)
+         (goto-char (point-min))
+         (forward-line 2)
+         bookmark-alist)
+        ((and (bolp) (eobp))
+         (beginning-of-line 0)
+         bookmark-alist)
+        (t
+         bookmark-alist)))
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Handles also regions and non-file buffers.
@@ -1600,7 +1615,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            (progn
              (setq bmkext-search-timer
                    (run-with-idle-timer
-                    0 bmkext-search-delay
+                    bmkext-search-delay 'repeat
                     #'(lambda ()
                         (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list ntitle))))
              (bmkext-read-search-input))
