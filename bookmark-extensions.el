@@ -332,7 +332,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.46")
+(defconst bmkext-version-number "2.6.47")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
@@ -2696,10 +2696,11 @@ BOOKMARK is a bookmark name or a bookmark record."
   (let ((group    (bookmark-prop-get bookmark 'group))
         (article  (bookmark-prop-get bookmark 'article))
         (id       (bookmark-prop-get bookmark 'message-id))
-        (buf      (bookmark-prop-get bookmark 'buffer)))
+        buf)
     (gnus-fetch-group group (list article))
     (gnus-summary-insert-cached-articles)
     (gnus-summary-goto-article id nil 'force)
+    (setq buf (current-buffer))
     (bookmark-default-handler
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
