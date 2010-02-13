@@ -6,7 +6,7 @@
 ;; Maintainer: Thierry Volpiatto <thierry.volpiatto@gmail.com>
 
 ;; Copyright (C) 2000-2009, Drew Adams, all rights reserved.
-;; Copyright (C) 2009, Thierry Volpiatto, all rights reserved.
+;; Copyright (C) 2009 ~ 2010, Thierry Volpiatto, all rights reserved.
 
 ;; Created: Fri Sep 15 07:58:41 2000
 
@@ -56,10 +56,11 @@
 ;;    Support bookmarking in `Gnus', `W3m', `Woman', `Man' in addition
 ;;    to Emacs23 vanilla bookmark features.
 ;;
-;;    Support to Emacs versions < 23 is NOT provided.
+;;    Support for `firefox' and `delicious' bookmarks.
 ;;
-;;; Acknowledgements:
-;;    Drew Adams for bookmark+.el.
+;;    Support bookmarking FROM `firefox' into Emacs bookmarks.
+;;
+;;    Support to Emacs versions < 23 is NOT provided.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -842,8 +843,8 @@ bookmarks.)"
                             (goto-char (point-min))
                             (when (or (re-search-forward bmkext-local-man-name-regexp nil t)
                                       (re-search-forward "^NAME$" nil t))
-                            (forward-line 1) (skip-chars-forward " ")
-                            (buffer-substring-no-properties (point) (line-end-position)))))
+                              (forward-line 1) (skip-chars-forward " ")
+                              (buffer-substring-no-properties (point) (line-end-position)))))
                          (t (car record)))))
          (doc-cmd "`\\<minibuffer-local-map>\\[next-history-element]' \ for default")
          (bname   (or name
@@ -1009,8 +1010,8 @@ prefix argument.  A prefix arg temporarily flips the value of
   (unless bookmark-name (error "No bookmark specified"))
   (bookmark-maybe-historicize-string bookmark-name)
   (let ((bmkext-use-region-flag  (if use-region-p
-                                        (not bmkext-use-region-flag)
-                                        bmkext-use-region-flag)))
+                                     (not bmkext-use-region-flag)
+                                     bmkext-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer)))
 
 
@@ -1029,8 +1030,8 @@ See `bookmark-jump'."
   (unless bookmark-name (error "No bookmark specified"))
   (bookmark-maybe-historicize-string bookmark-name)
   (let ((bmkext-use-region-flag  (if use-region-p
-                                        (not bmkext-use-region-flag)
-                                        bmkext-use-region-flag)))
+                                     (not bmkext-use-region-flag)
+                                     bmkext-use-region-flag)))
     (bookmark--jump-via bookmark-name 'switch-to-buffer-other-window)))
 
 
@@ -1045,11 +1046,11 @@ If BOOKMARK is a string, look for the corresponding bookmark record in
 `bookmark-alist'; return it if found, otherwise error.  Else if
 BOOKMARK is already a bookmark record, just return it."
   (cond
-   ((consp bookmark) bookmark)
-   ((stringp bookmark)
-    (or (assoc-string bookmark bookmark-alist bookmark-completion-ignore-case)
-        (assoc-string bookmark bmkext-latest-bookmark-alist bookmark-completion-ignore-case)
-        (unless noerror (error "Invalid bookmark %s" bookmark))))))
+    ((consp bookmark) bookmark)
+    ((stringp bookmark)
+     (or (assoc-string bookmark bookmark-alist bookmark-completion-ignore-case)
+         (assoc-string bookmark bmkext-latest-bookmark-alist bookmark-completion-ignore-case)
+         (unless noerror (error "Invalid bookmark %s" bookmark))))))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1070,8 +1071,8 @@ Return nil or signal `file-error'."
     (if (not (and bmkext-use-region-flag end-pos (/= pos end-pos)))
         ;; Single-position bookmark (no region).  Go to it.
         (bmkext-goto-position file buf bufname pos
-                                 (bookmark-get-front-context-string bmk)
-                                 (bookmark-get-rear-context-string bmk))
+                              (bookmark-get-front-context-string bmk)
+                              (bookmark-get-rear-context-string bmk))
         ;; Bookmark with a region.  Go to it and activate the region.
         (if (and file (file-readable-p file) (not (buffer-live-p buf)))
             (with-current-buffer (find-file-noselect file) (setq buf  (buffer-name)))
@@ -1295,7 +1296,7 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
     (forward-line 2)
     (bookmark-bmenu-mode)
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))))
-    
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1518,7 +1519,7 @@ Try to follow position of last bookmark in menu-list."
         ('bmkext-last-time-more-p
          (if bmkext-bmenu-reverse-sort-p
              (message "Sorting by last time visited [REVERSED]")
-                                      (message "Sorting by last time visited")))
+             (message "Sorting by last time visited")))
         ('bmkext-alpha-more-p (if bmkext-bmenu-reverse-sort-p
                                   (message "Sorting alphabetically [REVERSED]")
                                   (message "Sorting alphabetically"))))
@@ -1629,7 +1630,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
               (message "%d bookmarks found matching `%s'"
                        (length bmkext-latest-bookmark-alist) bmkext-search-pattern))
           (setq bmkext-quit-flag nil))))))
-          
+
 
 (defun bmkext-bmenu-cancel-search ()
   "Cancel timer used for searching in bookmarks."
@@ -1752,7 +1753,7 @@ With a prefix argument, do not include remote files or directories."
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Files&Directories" 'filteredp)))
-         
+
 
 ;;;###autoload
 (defun bmkext-bmenu-list-only-non-file-bookmarks ()
@@ -1783,11 +1784,11 @@ IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-b
          (local-list (bmkext-w3m-alist-only))
          (all-w3m (append ext-list local-list))
          (bookmark-alist (if import
-                            (prog1 all-w3m
-                              (message "`%d' W3m bookmarks have been imported."
-                                       (length ext-list)))
-                            local-list))
-        (bmkext-bmenu-called-from-inside-flag t))
+                             (prog1 all-w3m
+                               (message "`%d' W3m bookmarks have been imported."
+                                        (length ext-list)))
+                             local-list))
+         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark W3m" 'filteredp)))
 
@@ -2116,7 +2117,7 @@ BOOKMARK is a bookmark name or a bookmark record."
   (if (listp bookmark)
       (member (car bookmark) bmkext-bookmark-marked-list)
       (member bookmark bmkext-bookmark-marked-list)))
-      
+
 
 ;; Filter Functions --------------------------------------------------
 
