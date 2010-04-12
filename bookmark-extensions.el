@@ -2666,7 +2666,7 @@ ORIGIN mention where come from this bookmark."
       (bmkext-bmenu-refresh-delicious)
       (bmkext-bmenu-list-only-delicious-bookmarks)))
 
-
+(defalias 'gnus-summary-bookmark-make-record 'bmkext-make-gnus-record)
 ;;; GNUS support.  Does not handle regions.
 (defun bmkext-make-gnus-record ()
   "Make a bookmark entry for a Gnus buffer."
@@ -2706,7 +2706,7 @@ BOOKMARK is a bookmark name or a bookmark record."
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 ;;; Woman support
-
+(defalias 'woman-bookmark-make-record 'bmkext-make-woman-record)
 (defun bmkext-make-woman-record ()
   "Make a bookmark entry for a Woman buffer."
   `(,@(bookmark-make-record-default 'point-only)
@@ -2727,7 +2727,7 @@ BOOKMARK is a bookmark name or a bookmark record."
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 ;;; Man Support
-
+(defalias 'man-bookmark-make-record 'bmkext-make-man-record)
 (defun bmkext-make-man-record ()
   "Make a bookmark entry for a Man buffer."
   `(,@(bookmark-make-record-default 'point-only)
