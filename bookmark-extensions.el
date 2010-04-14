@@ -1420,15 +1420,22 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
 (defun bmkext-edit-bookmark (bookmark-name)
   "Edit bookmark's name and file name, and maybe save them.
 BOOKMARK-NAME is the current (old) name of the bookmark to be renamed."
-  (let* ((bookmark-filename  (bookmark-get-filename bookmark-name))
-         (new-name           (read-from-minibuffer "Name: " bookmark-name))
-         (new-filename       (read-from-minibuffer "FileName: " bookmark-filename)))
-    (when (and (not (equal new-name "")) (not (equal new-filename ""))
+  (let* ((bookmark-fname (bookmark-get-filename bookmark-name))
+         (bookmark-loc   (bookmark-prop-get bookmark-name 'location))
+         (new-name       (read-from-minibuffer "Name: " bookmark-name))
+         (new-loc        (read-from-minibuffer "FileName or Location: "
+                                               (or bookmark-fname bookmark-loc))))
+    (when (and (not (equal new-name "")) (not (equal new-loc ""))
                (y-or-n-p "Save changes?"))
-      (bookmark-rename bookmark-name new-name 'batch)
-      (bookmark-set-filename new-name new-filename)
+      (if bookmark-fname
+          (progn
+            (bookmark-rename bookmark-name new-name 'batch)
+            (bookmark-set-filename new-name new-loc))
+          (bookmark-prop-set
+           (bookmark-get-bookmark bookmark-name) 'location new-loc)
+          (bookmark-rename bookmark-name new-name 'batch))
       (bmkext-maybe-save-bookmark)
-      (list new-name new-filename))))
+      (list new-name new-loc))))
 
 (defun bmkext-increment-visits (bmk)
   "Increment visits entry of bmk.
