@@ -1099,6 +1099,7 @@ Return nil or signal `file-error'."
 BOOKMARK is a bookmark name or a bookmark record."
   (bookmark-maybe-load-default-file)
   (or (bookmark-get-filename bookmark)
+      (bookmark-prop-get bookmark 'location) ; Emacs24
       (bmkext-get-buffer-name bookmark)
       (bookmark-prop-get bookmark 'buffer)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
@@ -2670,96 +2671,96 @@ ORIGIN mention where come from this bookmark."
       (bmkext-bmenu-refresh-delicious)
       (bmkext-bmenu-list-only-delicious-bookmarks)))
 
-(defalias 'gnus-summary-bookmark-make-record 'bmkext-make-gnus-record)
 ;;; GNUS support.  Does not handle regions.
-(defun bmkext-make-gnus-record ()
-  "Make a bookmark entry for a Gnus buffer."
-  (require 'gnus)
-  (unless (and (eq major-mode 'gnus-summary-mode) gnus-article-current)
-    (error "Please retry from the Gnus summary buffer")) ;[1]
-  (let* ((grp   (car gnus-article-current))
-         (art   (cdr gnus-article-current))
-         (head  (gnus-summary-article-header art))
-         (id    (mail-header-id head)))
-    `(,@(bookmark-make-record-default 'point-only)
-        (filename . ,bmkext-non-file-filename)
-        (group . ,grp) (article . ,art)
-        (message-id . ,id) (handler . bmkext-jump-gnus))))
+(when (< emacs-major-version 24)
+  (defun bmkext-make-gnus-record ()
+    "Make a bookmark entry for a Gnus buffer."
+    (require 'gnus)
+    (unless (and (eq major-mode 'gnus-summary-mode) gnus-article-current)
+      (error "Please retry from the Gnus summary buffer")) ;[1]
+    (let* ((grp   (car gnus-article-current))
+           (art   (cdr gnus-article-current))
+           (head  (gnus-summary-article-header art))
+           (id    (mail-header-id head)))
+      `(,@(bookmark-make-record-default 'point-only)
+          (filename . ,bmkext-non-file-filename)
+          (group . ,grp) (article . ,art)
+          (message-id . ,id) (handler . bmkext-jump-gnus))))
 
-(add-hook 'gnus-summary-mode-hook
-          #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
-                            'bmkext-make-gnus-record)))
+  (add-hook 'gnus-summary-mode-hook
+            #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
+                              'bmkext-make-gnus-record)))
 
-;; Raise an error if we try to bookmark from here [1]
-(add-hook 'gnus-article-mode-hook
-          #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
-                            'bmkext-make-gnus-record)))
+  ;; Raise an error if we try to bookmark from here [1]
+  (add-hook 'gnus-article-mode-hook
+            #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
+                              'bmkext-make-gnus-record)))
 
-(defun bmkext-jump-gnus (bookmark)
-  "Handler function for record returned by `bmkext-make-gnus-record'.
+  (defun bmkext-jump-gnus (bookmark)
+    "Handler function for record returned by `bmkext-make-gnus-record'.
 BOOKMARK is a bookmark name or a bookmark record."
-  (let ((group    (bookmark-prop-get bookmark 'group))
-        (article  (bookmark-prop-get bookmark 'article))
-        (id       (bookmark-prop-get bookmark 'message-id))
-        buf)
-    (gnus-fetch-group group (list article))
-    (gnus-summary-insert-cached-articles)
-    (gnus-summary-goto-article id nil 'force)
-    (setq buf (current-buffer))
-    (bookmark-default-handler
-     `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
+    (let ((group    (bookmark-prop-get bookmark 'group))
+          (article  (bookmark-prop-get bookmark 'article))
+          (id       (bookmark-prop-get bookmark 'message-id))
+          buf)
+      (gnus-fetch-group group (list article))
+      (gnus-summary-insert-cached-articles)
+      (gnus-summary-goto-article id nil 'force)
+      (setq buf (current-buffer))
+      (bookmark-default-handler
+       `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 ;;; Woman support
-(defalias 'woman-bookmark-make-record 'bmkext-make-woman-record)
-(defun bmkext-make-woman-record ()
-  "Make a bookmark entry for a Woman buffer."
-  `(,@(bookmark-make-record-default 'point-only)
-      (filename . ,woman-last-file-name)
-      (handler . bmkext-jump-woman)))
+  (defalias 'woman-bookmark-make-record 'bmkext-make-woman-record)
+  (defun bmkext-make-woman-record ()
+    "Make a bookmark entry for a Woman buffer."
+    `(,@(bookmark-make-record-default 'point-only)
+        (filename . ,woman-last-file-name)
+        (handler . bmkext-jump-woman)))
 
-(add-hook 'woman-mode-hook
-          #'(lambda ()
-              (set (make-local-variable 'bookmark-make-record-function)
-                   'bmkext-make-woman-record)))
+  (add-hook 'woman-mode-hook
+            #'(lambda ()
+                (set (make-local-variable 'bookmark-make-record-function)
+                     'bmkext-make-woman-record)))
 
-(defun bmkext-jump-woman (bookmark)
-  "Default bookmark handler for Woman buffers."
-  (let* ((file (bookmark-prop-get bookmark 'filename))
-         (buf  (save-window-excursion
-                 (woman-find-file file) (current-buffer))))
-    (bookmark-default-handler
-     `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
+  (defun bmkext-jump-woman (bookmark)
+    "Default bookmark handler for Woman buffers."
+    (let* ((file (bookmark-prop-get bookmark 'filename))
+           (buf  (save-window-excursion
+                   (woman-find-file file) (current-buffer))))
+      (bookmark-default-handler
+       `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 ;;; Man Support
-(defalias 'man-bookmark-make-record 'bmkext-make-man-record)
-(defun bmkext-make-man-record ()
-  "Make a bookmark entry for a Man buffer."
-  `(,@(bookmark-make-record-default 'point-only)
-      (filename . ,bmkext-non-file-filename)
-      (handler . bmkext-jump-man)))
+  (defalias 'man-bookmark-make-record 'bmkext-make-man-record)
+  (defun bmkext-make-man-record ()
+    "Make a bookmark entry for a Man buffer."
+    `(,@(bookmark-make-record-default 'point-only)
+        (filename . ,bmkext-non-file-filename)
+        (handler . bmkext-jump-man)))
 
 
-(add-hook 'Man-mode-hook
-          #'(lambda ()
-              (set (make-local-variable 'bookmark-make-record-function)
-                   'bmkext-make-man-record)))
+  (add-hook 'Man-mode-hook
+            #'(lambda ()
+                (set (make-local-variable 'bookmark-make-record-function)
+                     'bmkext-make-man-record)))
 
 
-(defun bmkext-jump-man (bookmark)
-  "Default bookmark handler for Man buffers."
-  (let* ((buf               (bookmark-prop-get bookmark 'buffer-name))
-         (buf-lst           (split-string buf))
-         (node              (replace-regexp-in-string "\*" "" (car (last buf-lst))))
-         (ind               (when (> (length buf-lst) 2) (second buf-lst)))
-         (Man-notify-method (case bmkext-jump-display-function
-                              ('switch-to-buffer              'pushy)
-                              ('switch-to-buffer-other-window 'friendly)
-                              ('display-buffer                'quiet)
-                              (t                              'friendly))))
-    (man (if ind (format "%s(%s)" node ind) node))
-    (while (get-process "man") (sit-for 1))
-    (bookmark-default-handler
-     `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
+  (defun bmkext-jump-man (bookmark)
+    "Default bookmark handler for Man buffers."
+    (let* ((buf               (bookmark-prop-get bookmark 'buffer-name))
+           (buf-lst           (split-string buf))
+           (node              (replace-regexp-in-string "\*" "" (car (last buf-lst))))
+           (ind               (when (> (length buf-lst) 2) (second buf-lst)))
+           (Man-notify-method (case bmkext-jump-display-function
+                                ('switch-to-buffer              'pushy)
+                                ('switch-to-buffer-other-window 'friendly)
+                                ('display-buffer                'quiet)
+                                (t                              'friendly))))
+      (man (if ind (format "%s(%s)" node ind) node))
+      (while (get-process "man") (sit-for 1))
+      (bookmark-default-handler
+       `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
