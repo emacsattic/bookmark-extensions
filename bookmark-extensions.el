@@ -2043,6 +2043,7 @@ BOOKMARK is a bookmark name or a bookmark record."
   "Return non-nil if BOOKMARK is a Gnus bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
   (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-gnus)
+      (eq (bookmark-get-handler bookmark) 'gnus-summary-bookmark-jump)
       (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-gnus)))
 
 (defun bmkext-w3m-bookmark-p (bookmark)
@@ -2060,12 +2061,14 @@ BOOKMARK is a bookmark name or a bookmark record."
   "Return non-nil if BOOKMARK is a Woman bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
   (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-woman)
+      (eq (bookmark-get-handler bookmark) 'woman-bookmark-jump)
       (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-woman)))
 
 (defun bmkext-man-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a Man bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
   (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-man)
+      (eq (bookmark-get-handler bookmark) 'Man-bookmark-jump)
       (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-man)))
 
 (defun bmkext-woman-man-bookmark-p (bookmark)
