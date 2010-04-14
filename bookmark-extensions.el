@@ -2672,6 +2672,11 @@ ORIGIN mention where come from this bookmark."
       (bmkext-bmenu-list-only-delicious-bookmarks)))
 
 ;;; GNUS support.  Does not handle regions.
+(when (>= emacs-major-version 24)
+  (defalias 'bmkext-jump-gnus 'gnus-summary-bookmark-jump)
+  (defalias 'bmkext-jump-woman 'woman-bookmark-jump)
+  (defalias 'bmkext-jump-man 'Man-bookmark-jump))
+  
 (when (< emacs-major-version 24)
   (defun bmkext-make-gnus-record ()
     "Make a bookmark entry for a Gnus buffer."
