@@ -748,6 +748,41 @@ words from the buffer into the new bookmark name."
     (unless batch (bookmark-bmenu-surreptitiously-rebuild-list))
     (bmkext-maybe-save-bookmark) newname))
 
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Change arg name: BOOKMARK -> BOOKMARK-NAME.
+;; Increment `bookmark-alist-modification-count' even when using `batch' arg.
+;;
+;;;###autoload
+(defun bookmark-delete (bookmark-name &optional batch)
+  "Delete the bookmark named BOOKMARK-NAME from the bookmark list.
+Removes only the first instance of a bookmark with that name.
+If there are other bookmarks with the same name, they are not deleted.
+Defaults to the \"current\" bookmark (that is, the one most recently
+used in this file), if it exists.  Optional second arg BATCH means do
+not update the bookmark list buffer (probably because we were called
+from there)."
+  (interactive
+   (list (bookmark-completing-read "Delete bookmark"
+				   bookmark-current-bookmark)))
+  (bookmark-maybe-historicize-string bookmark-name)
+  (bookmark-maybe-load-default-file)
+  (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
+    (if (or (string= (cdr (assoc 'origin will-go)) "firefox-imported")
+            (string= (cdr (assoc 'origin will-go)) "delicious-imported")
+            (string= (cdr (assoc 'origin will-go)) "w3m-imported"))
+        (error "Operation not supported on this type of bookmark.")
+        (setq bookmark-alist (delete will-go bookmark-alist))
+        ;; Added by db, nil bookmark-current-bookmark if the last
+        ;; occurrence has been deleted
+        (setq bmkext-latest-bookmark-alist (delete will-go bmkext-latest-bookmark-alist))
+        (or (bookmark-get-bookmark bookmark-current-bookmark 'noerror)
+            (setq bookmark-current-bookmark nil))
+        ;; Don't rebuild the list when using `batch' arg
+        (unless batch
+          (bookmark-bmenu-surreptitiously-rebuild-list))
+        (bmkext-maybe-save-bookmark))))
+
 
 ;;; Menu List Replacements (`bookmark-bmenu-*') ----------------------
 
