@@ -715,6 +715,31 @@ BOOKMARK is a bookmark name or a bookmark record."
       (bookmark-prop-get bookmark 'buffer)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
+(defun bookmark-make-record-default (&optional point-only pos read-only)
+  "Return the record describing the location of a new bookmark.
+Must be at the correct position in the buffer in which the bookmark is
+being set.
+If POINT-ONLY is non-nil, then only return the subset of the
+record that pertains to the location within the buffer.
+If READ-ONLY is non-nil that's mean buffer is read-only and
+there is no need to record front/rear-context-string, position is enough."
+  `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
+    ,@(unless read-only `((front-context-string
+                           . ,(if (>= (- (point-max) (point))
+                                      bookmark-search-size)
+                                  (buffer-substring-no-properties
+                                   (point)
+                                   (+ (point) bookmark-search-size))
+                                  nil))))
+    ,@(unless read-only `((rear-context-string
+                           . ,(if (>= (- (point) (point-min))
+                                      bookmark-search-size)
+                                  (buffer-substring-no-properties
+                                   (point)
+                                   (- (point) bookmark-search-size))
+                                  nil))))
+    (position . ,(or pos (point)))))
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -785,43 +810,6 @@ from there)."
 
 
 ;;; Menu List Replacements (`bookmark-bmenu-*') ----------------------
-
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;; 1. Use  `bookmark-bmenu-surreptitiously-rebuild-list', instead of using
-;; `bookmark-bmenu-list', updating the modification count, and saving.
-;; 2. Update `bmkext-latest-bookmark-alist' to reflect deletion.
-;;
-;;;###autoload
-(defun bookmark-bmenu-execute-deletions (&optional markedp)
-  "Delete bookmarks marked with \\<Buffer-menu-mode-map>\\[Buffer-menu-delete] commands."
-  (interactive "P")
-  (if (or (not markedp) (yes-or-no-p "Delete bookmarks marked `>' (not `D') "))
-      (let* ((o-point    (point))
-             (which-mark (if markedp "^>" "^D"))
-             (o-str      (unless (looking-at which-mark) (bookmark-bmenu-bookmark)))
-             (count      0))
-        (message "Deleting bookmarks...")
-        (goto-char (point-min))
-        (forward-line 2)
-        (while (re-search-forward which-mark (point-max) t)
-          (let ((bmk (bookmark-bmenu-bookmark))) 
-            (bookmark-delete bmk 'batch) ; pass BATCH arg
-            (setq bmkext-latest-bookmark-alist
-                  (delete (assoc bmk bmkext-latest-bookmark-alist)
-                          bmkext-latest-bookmark-alist))
-            (setq count (1+ count))))
-        (if (> count 0)
-            (progn
-              (setq bmkext-bmenu-called-from-inside-flag t)
-              (bookmark-bmenu-surreptitiously-rebuild-list)
-              (message "Deleting %s bookmarks...done" count))
-            (message "Nothing to delete here"))
-        (if o-str
-            (bmkext-bmenu-goto-bookmark o-str)
-            (goto-char o-point) (beginning-of-line)))
-      (message "OK, nothing deleted")))
-
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
