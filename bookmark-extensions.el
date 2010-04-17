@@ -786,6 +786,42 @@ from there)."
 
 ;;; Menu List Replacements (`bookmark-bmenu-*') ----------------------
 
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; 1. Use  `bookmark-bmenu-surreptitiously-rebuild-list', instead of using
+;; `bookmark-bmenu-list', updating the modification count, and saving.
+;; 2. Update `bmkext-latest-bookmark-alist' to reflect deletion.
+;;
+;;;###autoload
+(defun bookmark-bmenu-execute-deletions (&optional markedp)
+  "Delete bookmarks marked with \\<Buffer-menu-mode-map>\\[Buffer-menu-delete] commands."
+  (interactive "P")
+  (if (or (not markedp) (yes-or-no-p "Delete bookmarks marked `>' (not `D') "))
+      (let* ((o-point    (point))
+             (which-mark (if markedp "^>" "^D"))
+             (o-str      (unless (looking-at which-mark) (bookmark-bmenu-bookmark)))
+             (count      0))
+        (message "Deleting bookmarks...")
+        (goto-char (point-min))
+        (forward-line 2)
+        (while (re-search-forward which-mark (point-max) t)
+          (let ((bmk (bookmark-bmenu-bookmark))) 
+            (bookmark-delete bmk 'batch) ; pass BATCH arg
+            (setq bmkext-latest-bookmark-alist
+                  (delete (assoc bmk bmkext-latest-bookmark-alist)
+                          bmkext-latest-bookmark-alist))
+            (setq count (1+ count))))
+        (if (> count 0)
+            (progn
+              (setq bmkext-bmenu-called-from-inside-flag t)
+              (bookmark-bmenu-surreptitiously-rebuild-list)
+              (message "Deleting %s bookmarks...done" count))
+            (message "Nothing to delete here"))
+        (if o-str
+            (bmkext-bmenu-goto-bookmark o-str)
+            (goto-char o-point) (beginning-of-line)))
+      (message "OK, nothing deleted")))
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -2039,102 +2075,135 @@ ORIGIN mention where come from this bookmark."
       (bmkext-bmenu-refresh-delicious)
       (bmkext-bmenu-list-only-delicious-bookmarks)))
 
-;;; GNUS support.  Does not handle regions.
-(when (>= emacs-major-version 24)
-  (defalias 'bmkext-jump-gnus 'gnus-summary-bookmark-jump)
-  (defalias 'bmkext-jump-woman 'woman-bookmark-jump)
-  (defalias 'bmkext-jump-man 'Man-bookmark-jump))
-  
-(when (< emacs-major-version 24)
-  (defun bmkext-make-gnus-record ()
-    "Make a bookmark entry for a Gnus buffer."
-    (require 'gnus)
-    (unless (and (eq major-mode 'gnus-summary-mode) gnus-article-current)
-      (error "Please retry from the Gnus summary buffer")) ;[1]
-    (let* ((grp   (car gnus-article-current))
-           (art   (cdr gnus-article-current))
-           (head  (gnus-summary-article-header art))
-           (id    (mail-header-id head)))
-      `(,@(bookmark-make-record-default 'point-only)
-          (filename . ,bmkext-non-file-filename)
-          (group . ,grp) (article . ,art)
-          (message-id . ,id) (handler . bmkext-jump-gnus))))
+;;;; Special handlers
+(defalias 'bmkext-jump-woman 'woman-bookmark-jump)
+(defalias 'bmkext-jump-man 'Man-bookmark-jump)
 
+;;; Gnus support.  Does not handle regions.
+(defalias 'bmkext-jump-gnus 'gnus-summary-bookmark-jump)
+
+;; Redefine in `gnus-sum.el'.
+;;
+;; Allow to bookmark from article buffer and retrieve position.
+;;
+(defun gnus-summary-bookmark-make-record ()
+  "Make a bookmark entry for a Gnus summary buffer."
+  (let (pos buf)
+    (unless (and (derived-mode-p 'gnus-summary-mode) gnus-article-current)
+      (save-restriction              ; FIXME is it necessary to widen?
+        (widen) (setq pos (point))) ; Set position in gnus-article buffer.
+      (setq buf "art") ; We are recording bookmark from article buffer.
+      (gnus-article-show-summary))      ; Go back in summary buffer.
+    ;; We are now recording bookmark from summary buffer.
+    (unless buf (setq buf "sum"))
+    (let* ((subject (elt (gnus-summary-article-header) 1))
+           (grp     (car gnus-article-current))
+           (art     (cdr gnus-article-current))
+           (head    (gnus-summary-article-header art))
+           (id      (mail-header-id head)))
+      `(,subject
+        ,@(bookmark-make-record-default 'point-only pos 'read-only)
+        (location . ,(format "Gnus-%s %s:%d:%s" buf grp art id))
+        (group . ,grp) (article . ,art)
+        (message-id . ,id) (handler . gnus-summary-bookmark-jump)))))
+
+;; Redefine in `gnus-sum.el'.
+;;
+;; Allow to jump to a bookmark recorded from article buffer.
+;;
+(defun gnus-summary-bookmark-jump (bookmark)
+  "Handler function for record returned by `gnus-summary-bookmark-make-record'.
+BOOKMARK is a bookmark name or a bookmark record."
+  (let ((group    (bookmark-prop-get bookmark 'group))
+        (article  (bookmark-prop-get bookmark 'article))
+        (id       (bookmark-prop-get bookmark 'message-id))
+        (buf      (car (split-string (bookmark-prop-get bookmark 'location)))))
+    (gnus-fetch-group group (list article))
+    (gnus-summary-insert-cached-articles)
+    (gnus-summary-goto-article id nil 'force)
+    ;; FIXME we have to wait article buffer is ready (only large buffer)
+    ;; Is there a better solution to know that?
+    ;; If we don't wait `bookmark-default-handler' will have no chance
+    ;; to set position. However there is no error, just wrong pos.
+    (sit-for 1)
+    (when (string= buf "Gnus-art")
+      (other-window 1))
+    (bookmark-default-handler
+     `(""
+       (buffer . ,(current-buffer))
+       . ,(bookmark-get-bookmark-record bookmark)))))
+
+(add-hook 'gnus-article-mode-hook
+          #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
+                            'gnus-summary-bookmark-make-record)))
+
+
+;;; Only for versions inferior to 24.
+;; Use code of Emacs24.
+(when (< emacs-major-version 24)
   (add-hook 'gnus-summary-mode-hook
             #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
-                              'bmkext-make-gnus-record)))
+                              'gnus-summary-bookmark-make-record)))
 
-  ;; Raise an error if we try to bookmark from here [1]
-  (add-hook 'gnus-article-mode-hook
-            #'(lambda () (set (make-local-variable 'bookmark-make-record-function)
-                              'bmkext-make-gnus-record)))
-
-  (defun bmkext-jump-gnus (bookmark)
-    "Handler function for record returned by `bmkext-make-gnus-record'.
-BOOKMARK is a bookmark name or a bookmark record."
-    (let ((group    (bookmark-prop-get bookmark 'group))
-          (article  (bookmark-prop-get bookmark 'article))
-          (id       (bookmark-prop-get bookmark 'message-id))
-          buf)
-      (gnus-fetch-group group (list article))
-      (gnus-summary-insert-cached-articles)
-      (gnus-summary-goto-article id nil 'force)
-      (setq buf (current-buffer))
-      (bookmark-default-handler
-       `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 ;;; Woman support
   (defalias 'woman-bookmark-make-record 'bmkext-make-woman-record)
-  (defun bmkext-make-woman-record ()
+  (defun woman-bookmark-make-record ()
     "Make a bookmark entry for a Woman buffer."
-    `(,@(bookmark-make-record-default 'point-only)
-        (filename . ,woman-last-file-name)
-        (handler . bmkext-jump-woman)))
+    `(,(Man-default-bookmark-title)
+       ,@(bookmark-make-record-default 'point-only)
+       (location . ,(concat "woman " woman-last-file-name))
+       ;; Use the same form as man's bookmarks, as much as possible.
+       (man-args . ,woman-last-file-name)
+       (handler . woman-bookmark-jump)))
 
-  (add-hook 'woman-mode-hook
-            #'(lambda ()
-                (set (make-local-variable 'bookmark-make-record-function)
-                     'bmkext-make-woman-record)))
-
-  (defun bmkext-jump-woman (bookmark)
+  (defun woman-bookmark-jump (bookmark)
     "Default bookmark handler for Woman buffers."
-    (let* ((file (bookmark-prop-get bookmark 'filename))
+    (let* ((file (bookmark-prop-get bookmark 'man-args))
+           ;; FIXME: we need woman-find-file-noselect, since
+           ;; save-window-excursion can't protect us from the case where
+           ;; woman-find-file creates a new frame.
            (buf  (save-window-excursion
                    (woman-find-file file) (current-buffer))))
       (bookmark-default-handler
        `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
+  (add-hook 'woman-mode-hook
+            #'(lambda ()
+                (set (make-local-variable 'bookmark-make-record-function)
+                     'woman-bookmark-make-record)))
+
+
 ;;; Man Support
-  (defalias 'man-bookmark-make-record 'bmkext-make-man-record)
-  (defun bmkext-make-man-record ()
+  (defalias 'Man-bookmark-make-record 'bmkext-make-man-record)
+  (defun Man-bookmark-make-record ()
     "Make a bookmark entry for a Man buffer."
-    `(,@(bookmark-make-record-default 'point-only)
-        (filename . ,bmkext-non-file-filename)
-        (handler . bmkext-jump-man)))
+    `(,(Man-default-bookmark-title)
+       ,@(bookmark-make-record-default 'point-only)
+       (location . ,(concat "man " Man-arguments))
+       (man-args . ,Man-arguments)
+       (handler . Man-bookmark-jump)))
+
+
+  (defun Man-bookmark-jump (bookmark)
+    "Default bookmark handler for Man buffers."
+    (let* ((man-args (bookmark-prop-get bookmark 'man-args))
+           ;; Let bookmark.el do the window handling.
+           ;; This let-binding needs to be active during the call to both
+           ;; Man-getpage-in-background and accept-process-output.
+           (Man-notify-method 'meek)
+           (buf (Man-getpage-in-background man-args))
+           (proc (get-buffer-process buf)))
+      (while (and proc (eq (process-status proc) 'run))
+        (accept-process-output proc))
+      (bookmark-default-handler
+       `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 
   (add-hook 'Man-mode-hook
             #'(lambda ()
                 (set (make-local-variable 'bookmark-make-record-function)
-                     'bmkext-make-man-record)))
-
-
-  (defun bmkext-jump-man (bookmark)
-    "Default bookmark handler for Man buffers."
-    (let* ((buf               (bookmark-prop-get bookmark 'buffer-name))
-           (buf-lst           (split-string buf))
-           (node              (replace-regexp-in-string "\*" "" (car (last buf-lst))))
-           (ind               (when (> (length buf-lst) 2) (second buf-lst)))
-           (Man-notify-method (case bmkext-jump-display-function
-                                ('switch-to-buffer              'pushy)
-                                ('switch-to-buffer-other-window 'friendly)
-                                ('display-buffer                'quiet)
-                                (t                              'friendly))))
-      (man (if ind (format "%s(%s)" node ind) node))
-      (while (get-process "man") (sit-for 1))
-      (bookmark-default-handler
-       `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark))))))
-
+                     'Man-bookmark-make-record))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
