@@ -34,13 +34,14 @@
 ;; X-URL: http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
 
 ;; Keywords: bookmarks, placeholders, annotations, search, info, w3m, gnus,
-;;           man, woman.
+;;           man, woman, firefox, delicious.
 
-;; Compatibility: GNU Emacs: 23.x
+;; Compatibility: GNU Emacs: >=23.x
 
 ;; Features that might be required by this library:
 
-;;   `bookmark', `emacs-w3m', `gnus'.
+;;   `bookmark', `emacs-w3m', `gnus', `firefox', `bookmark-firefox-handler'
+;;   `firefox-handler', `anything-delicious'.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -50,24 +51,10 @@
 ;;
 ;;    This is a fork of bookmark+.el created by Drew Adams.
 ;;
-;;    Drew continues to develop bookmark+.el, and is not responsible for code in
-;;    bookmark-extensions.el that departs from that in bookmark+.el."
-;;
-;;    Support bookmarking in `Gnus', `W3m', `Woman', `Man' in addition
-;;    to Emacs23 vanilla bookmark features.
-;;
-;;    Support for `firefox' and `delicious' bookmarks.
-;;
-;;    Support bookmarking FROM `firefox' into Emacs bookmarks.
-;;
-;;    Support to Emacs versions < 23 is NOT provided.
-;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;  Things Defined Here
-;;  -------------------
-
-;;  Auto documentation created with traverselisp.el:
+;;  Auto Documentation
+;;  ==================
 
 ;;  [UPDATE ALL EVAL] (autodoc-update-documentation)
 
@@ -101,12 +88,28 @@
 ;; `bmkext-bmenu-refresh-delicious'
 ;; `bmkext-bmenu-delicious'
 
+;;  * Gnus functions redefined here (from Emacs24)
+;; [EVAL] (autodoc-document-lisp-buffer :type 'function :prefix "^gnus-")
+;; `gnus-summary-bookmark-make-record'
+;; `gnus-summary-bookmark-jump'
+
+;;  * Man functions included here (from Emacs24)
+;; [EVAL] (autodoc-document-lisp-buffer :type 'nested-function :prefix "^Man-")
+;; `Man-bookmark-make-record'
+;; `Man-bookmark-jump'
+
+;;  * Woman functions included here (from Emacs24)
+;; [EVAL] (autodoc-document-lisp-buffer :type 'nested-function :prefix "^woman")
+;; `woman-bookmark-make-record'
+;; `woman-bookmark-jump'
+
 ;;  * Commands redefined here:(from `bookmark.el')
 ;; [EVAL] (autodoc-document-lisp-buffer :type 'command :prefix "^bookmark-")
 ;; `bookmark-bmenu-mark'
 ;; `bookmark-bmenu-unmark'
 ;; `bookmark-bmenu-this-window'
 ;; `bookmark-rename'
+;; `bookmark-delete'
 ;; `bookmark-bmenu-list'
 ;; `bookmark-bmenu-other-window'
 ;; `bookmark-bmenu-execute-deletions'
@@ -217,6 +220,7 @@
 ;; `bookmark-prop-set'
 ;; `bookmark-get-bookmark'
 ;; `bookmark-location'
+;; `bookmark-make-record-default'
 ;; `bookmark-bmenu-surreptitiously-rebuild-list'
 ;; `bookmark-bmenu-hide-filenames'
 
@@ -245,35 +249,36 @@
 ;;  *** END auto-documentation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;;  Documentation
-;;  -------------
-;;
-;;  ** Bookmark-Extensions Features **
+;;  Bookmark-Extensions Features
+;;  ============================
 ;;
 ;;  In addition to the kinds of bookmarks provided by vanilla Emacs:
 ;;
-;;    - You can bookmark a W3m buffer, (Emacs24 now:Gnus buffer, a Woman or a Man buffer).
+;;    - You can bookmark from W3m.
+;;
+;;    - You can bookmark from Gnus, Woman or Man (part of Emacs24 now).
 ;;
 ;;    - You can have your firefox bookmarks.
 ;;
-;;    - You can bookmark from firefox (see bookmark-firefox-handler.el)
+;;    - Full integration of Delicious bookmarks using library `anything-delicious.el'.
+;;
+;;    - You can bookmark FROM firefox (See |bookmark-firefox-handler.el
+;;                                         |firefox-protocol.el
+;;                                         |bookmark-extensions-documentation.rst)
 ;;
 ;;    - In addition to the w3m bookmarks you record here you can import
-;;      your W3m bookmarks here (the ones from w3m).
+;;      your W3m bookmarks here (the ones from `w3m-bookmark-file').
 ;;
 ;;    - Support for marking, unmarking, all, by regexp etc...
 ;;
-;;    - Incremental searching of bookmarks (Part of Emacs now)
+;;    - Incremental searching of bookmarks (Part of Emacs23+ now)
 ;;
-;;  ** Get the last version of file **
+;;    - Sorting by Time, Visits, Alphabetically.
 ;;
-;;  Use command:
-;;  hg clone http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
-;;  To switch to development branch:
-;;  hg update -C development 
+;;    - Filters for each kind of bookmarks.
 ;;
-;;  ** How To Use Bookmark-Extensions **
-;;  
+;;  Usage:
+;;  =====
 ;;  Put this library in your `load-path'.
 ;;  Add this to your init file (~/.emacs) : (require 'bookmark-extensions)
 ;;
@@ -296,7 +301,7 @@
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
 
-(defconst bmkext-version-number "2.6.48")
+(defconst bmkext-version-number "2.6.49")
 
 (defun bmkext-version ()
   "Show version number of library `bookmark-extensions.el'."
