@@ -595,8 +595,6 @@ See (info \"(elisp)quittinq\")")
 ;; to show up using `C-h v'.
 (defvar bookmark-alist)
 
-;;; Core Replacements (`bookmark-*' except `bookmark-bmenu-*') -------
-
 (defun bookmark-bmenu-check-position ()
   "If point is not on a bookmark line, move it to one.
 If before the first bookmark line, move it to the first.
@@ -674,6 +672,64 @@ Optional BACKUP means move up."
   (let ((bookmark (bookmark-bmenu-bookmark)))
     (when (bookmark-bmenu-check-position)
       (bookmark--jump-via bookmark 'switch-to-buffer))))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; If handler provide a default value of `bookmark-current-bookmark'
+;; and `bookmark-yank-position' use them.
+;; Anyway always reset that to nil.
+;;
+(defun bookmark-set (&optional name no-overwrite)
+  "Set a bookmark named NAME at the current location.
+If name is nil, then prompt the user.
+
+With a prefix arg (non-nil NO-OVERWRITE), do not overwrite any
+existing bookmark that has the same name as NAME, but instead push the
+new bookmark onto the bookmark alist.  The most recently set bookmark
+with name NAME is thus the one in effect at any given time, but the
+others are still there, should the user decide to delete the most
+recent one.
+
+To yank words from the text of the buffer and use them as part of the
+bookmark name, type C-w while setting a bookmark.  Successive C-w's
+yank successive words.
+
+Typing C-u inserts (at the bookmark name prompt) the name of the last
+bookmark used in the document where the new bookmark is being set;
+this helps you use a single bookmark name to track progress through a
+large document.  If there is no prior bookmark for this document, then
+C-u inserts an appropriate name based on the buffer or file.
+
+Use \\[bookmark-delete] to remove bookmarks (you give it a name and
+it removes only the first instance of a bookmark with that name from
+the list of bookmarks.)"
+  (interactive (list nil current-prefix-arg))
+  (unwind-protect
+       (let* ((record (bookmark-make-record))
+              (default (car record)))
+
+         (bookmark-maybe-load-default-file)
+         (unless (and bookmark-yank-point
+                      bookmark-current-buffer)
+           (setq bookmark-yank-point (point))
+           (setq bookmark-current-buffer (current-buffer)))
+
+         (let ((str
+                (or name
+                    (read-from-minibuffer
+                     (format "Set bookmark (%s): " default)
+                     nil
+                     bookmark-minibuffer-read-name-map
+                     nil nil default))))
+           (and (string-equal str "") (setq str default))
+           (bookmark-store str (cdr record) no-overwrite)
+
+           ;; Ask for an annotation buffer for this bookmark
+           (when bookmark-use-annotations
+             (bookmark-edit-annotation str))))
+    (setq bookmark-yank-point nil)
+    (setq bookmark-current-buffer nil)))
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -2086,6 +2142,8 @@ ORIGIN mention where come from this bookmark."
       (save-restriction              ; FIXME is it necessary to widen?
         (widen) (setq pos (point))) ; Set position in gnus-article buffer.
       (setq buf "art") ; We are recording bookmark from article buffer.
+      (setq bookmark-yank-point (point))
+      (setq bookmark-current-buffer (current-buffer))
       (gnus-article-show-summary))      ; Go back in summary buffer.
     ;; We are now recording bookmark from summary buffer.
     (unless buf (setq buf "sum"))
