@@ -1081,7 +1081,7 @@ BOOKMARK-NAME is the current (old) name of the bookmark to be renamed."
          (new-loc        (read-from-minibuffer "FileName or Location: "
                                                (or bookmark-fname bookmark-loc))))
     (when (and (not (equal new-name "")) (not (equal new-loc ""))
-               (y-or-n-p "Save changes?"))
+               (y-or-n-p "Save changes? "))
       (if bookmark-fname
           (progn
             (bookmark-rename bookmark-name new-name 'batch)
