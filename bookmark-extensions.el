@@ -367,6 +367,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "B" 'bmkext-bmenu-list-only-non-file-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "O" 'bmkext-bmenu-list-only-last-org-bookmarks)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-V" 'bmkext-bmenu-sort-by-visit-frequency)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-T" 'bmkext-bmenu-sort-by-last-time-visited)
@@ -406,6 +408,7 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man  pages
 \\[bmkext-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks (`C-u' show also bookmarks from `w3m-bookmark-file')
 \\[bmkext-bmenu-list-only-firefox-bookmarks]\t- List only Firefox bookmarks
+\\[bmkext-bmenu-list-only-last-org-bookmarks]\t- List only last stored org bookmarks
 \\[bmkext-bmenu-delicious]\t- List only Delicious bookmarks (`C-u' refresh list from delicious server)
 \\[bookmark-bmenu-this-window]\t- If bookmark is an URL C-u jump to external browser
 \\[bmkext-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
@@ -981,7 +984,6 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
               (setq bookmark-bmenu-hidden-bookmarks  (cdr bookmark-bmenu-hidden-bookmarks))
               (forward-line 1))))))))
 
-
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Use `pop-to-buffer', not `switch-to-buffer-other-window'.
@@ -993,7 +995,6 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
     (when (bookmark-bmenu-check-position)
       (let ((bookmark-automatically-show-annotations  t)) ;FIXME: needed?
         (bookmark--jump-via bookmark 'pop-to-buffer)))))
-
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1115,7 +1116,6 @@ Unless batch arg is non--nil update display and increment save counter."
     (bookmark-bmenu-surreptitiously-rebuild-list))
   (bmkext-maybe-save-bookmark))
 
-
 ;;; Sorting bookmarks
 (defun bmkext-sort-p-1 (s1 s2)
   "General predicate for sorting bookmarks.
@@ -1136,7 +1136,6 @@ Also: S1 < S2 if S1 was visited but S2 was not.
           (v2 nil) ; Only s2 visited
           (t (string-lessp (car s1) (car s2))))))
 
-
 ;; Predicate for sorting bookmarks with visits entry.
 (defalias 'bmkext-visited-more-p 'bmkext-sort-p-1)
 
@@ -1146,9 +1145,7 @@ Also: S1 < S2 if S1 was visited but S2 was not.
 ;; Predicate for sorting bookmarks alphabetically.
 (defalias 'bmkext-alpha-more-p 'bmkext-sort-p-1)
 
-
 ;; Menu-List Functions (`bmkext-bmenu-*') -------------------------
-
 
 (defun bmkext-bmenu-maybe-sort (&optional alist)
   "Sort or reverse-sort using `bmkext-bmenu-sort-function'.
@@ -1165,7 +1162,6 @@ Also: S1 < S2 if S1 was visited but S2 was not.
                  (not (funcall bmkext-bmenu-sort-function a b)))
                bmkext-bmenu-sort-function))
           bmk-alist))))
-
 
 (defun bmkext-bmenu-sort-1 (method &optional batch)
   "Set `bmkext-bmenu-sort-function' to `method' and rebuild alist.
@@ -1247,7 +1243,6 @@ Try to follow position of last bookmark in menu-list."
                    (mapconcat 'identity (reverse tmp-list) ""))
              (throw 'continue nil))))))))
 
-
 (defun bmkext-filtered-alist-by-regexp-only (regexp alist)
   "Return a filtered ALIST with (only) bookmarks matching REGEXP."
   (bmkext-remove-if-not #'(lambda (x) (string-match regexp (car x))) alist))
@@ -1258,7 +1253,6 @@ Try to follow position of last bookmark in menu-list."
         (bmkext-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list title 'filteredp)))
-
 
 ;;;###autoload
 (defun bmkext-bmenu-search (&optional all)
@@ -1294,12 +1288,10 @@ If a prefix arg is given search in the whole `bookmark-alist'."
                        (length bmkext-latest-bookmark-alist) bmkext-search-pattern))
           (setq bmkext-quit-flag nil))))))
 
-
 (defun bmkext-bmenu-cancel-search ()
   "Cancel timer used for searching in bookmarks."
   (cancel-timer bmkext-search-timer)
   (setq bmkext-search-timer nil))
-
 
 ;;;###autoload
 (defun bmkext-bmenu-edit-bookmark ()
@@ -1317,7 +1309,6 @@ If a prefix arg is given search in the whole `bookmark-alist'."
             (forward-line 1))
           (forward-line 0)
           (bookmark-bmenu-check-position)))))
-
 
 ;;;###autoload
 (defun bmkext-bmenu-delete-bookmark ()
@@ -1340,7 +1331,6 @@ If a prefix arg is given search in the whole `bookmark-alist'."
                  (message "Operation not supported on this type of bookmark."))
                 (t (bookmark-delete bmk) (goto-char pos)))
           (message "Aborting bookmark deletion")))))
-
 
 (defsubst bmkext-bmenu-propertize-item (bookmark-name start end)
   "Add text properties to BOOKMARK-NAME, from START to END."
@@ -1389,7 +1379,6 @@ If a prefix arg is given search in the whole `bookmark-alist'."
             `(mouse-face highlight follow-link t face bmkext-non-file
                          help-echo (format "mouse-2 Goto buffer: %s",isbuf)))))))
 
-
 ;;;###autoload
 (defun bmkext-bmenu-quit ()
   "Reset the marked bookmark lists and quit."
@@ -1398,7 +1387,6 @@ If a prefix arg is given search in the whole `bookmark-alist'."
   (setq bmkext-bmenu-before-hide-marked-list nil)
   (setq bmkext-bmenu-before-hide-unmarked-list nil)
   (quit-window))
-
 
 ;;; Filters *-bmenu-* commands
 
@@ -1412,7 +1400,6 @@ With a prefix argument, do not include remote files or directories."
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Files&Directories" 'filteredp)))
 
-
 ;;;###autoload
 (defun bmkext-bmenu-list-only-non-file-bookmarks ()
   "Display (only) the non-file bookmarks."
@@ -1422,7 +1409,6 @@ With a prefix argument, do not include remote files or directories."
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Non--Files" 'filteredp)))
 
-
 ;;;###autoload
 (defun bmkext-bmenu-list-only-info-bookmarks ()
   "Display (only) the Info bookmarks."
@@ -1431,7 +1417,6 @@ With a prefix argument, do not include remote files or directories."
         (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Info" 'filteredp)))
-
 
 ;;;###autoload
 (defun bmkext-bmenu-list-only-w3m-bookmarks (&optional import)
@@ -1449,7 +1434,6 @@ IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-b
          (bmkext-bmenu-called-from-inside-flag t))
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark W3m" 'filteredp)))
-
 
 ;;;###autoload
 (defun bmkext-bmenu-list-only-gnus-bookmarks ()
@@ -1469,6 +1453,14 @@ IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-b
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Man&Woman pages" 'filteredp)))
 
+;;;###autoload
+(defun bmkext-bmenu-list-only-last-org-bookmarks ()
+  "Display (only) the bookmarks that record last org stored bookmarks."
+  (interactive)
+  (let ((bookmark-alist  (bmkext-org-last-stored-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
+    (bookmark-bmenu-list "% Bookmark Last Org Stored" 'filteredp)))
 
 ;;;###autoload
 (defun bmkext-bmenu-show-all-bookmarks ()
@@ -1476,7 +1468,6 @@ IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-b
   (interactive)
   (let ((bmkext-bmenu-called-from-inside-flag t))
     (bookmark-bmenu-list)))
-
 
 ;;; *-bmenu-* Commands and functions for marked bookmarks
 
@@ -1761,8 +1752,18 @@ BOOKMARK is a bookmark name or a bookmark record."
       (member (car bookmark) bmkext-bookmark-marked-list)
       (member bookmark bmkext-bookmark-marked-list)))
 
+(defun bmkext-bookmark-last-org-p (bookmark)
+  "Return non-nil if BOOKMARK is a org bookmark."
+  (let ((bmk (if (listp bookmark) (car bookmark) bookmark))) 
+    (or (string= "org-refile-last-stored" bmk)
+        (string= "org-remember-last-stored" bmk))))
 
 ;; Filter Functions --------------------------------------------------
+
+(defun bmkext-org-last-stored-alist-only ()
+  "`bookmark-alist', filtered to retain only last stored org  bookmarks.
+A new list is returned (no side effects)."
+  (bmkext-remove-if-not #'bmkext-bookmark-last-org-p bookmark-alist))
 
 (defun bmkext-gnus-alist-only ()
   "`bookmark-alist', filtered to retain only Gnus bookmarks.
