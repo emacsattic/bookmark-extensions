@@ -2228,6 +2228,20 @@ BOOKMARK is a bookmark name or a bookmark record."
 
 ;;; Man Support
   (defalias 'Man-bookmark-make-record 'bmkext-make-man-record)
+  (defcustom Man-name-local-regexp (concat "^" (regexp-opt '("NOM" "NAME")) "$")
+    "Regexp that matches the text that precedes the command's name.
+Used in `bookmark-set' to get the default bookmark name."
+    :type 'string :group 'bookmark)
+
+  (defun Man-default-bookmark-title ()
+  "Default bookmark name for Man or WoMan pages.
+Uses `Man-name-local-regexp'."
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward Man-name-local-regexp nil t)
+      (skip-chars-forward "\n\t ")
+      (buffer-substring-no-properties (point) (line-end-position)))))
+
   (defun Man-bookmark-make-record ()
     "Make a bookmark entry for a Man buffer."
     `(,(Man-default-bookmark-title)
