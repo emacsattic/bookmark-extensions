@@ -615,6 +615,23 @@ Return `bookmark-alist'"
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
+;; Use `switch-to-buffer-other-window' to go back to old-buffer.
+(defun bookmark-show-annotation (bookmark)
+  "Display the annotation for bookmark named BOOKMARK in a buffer,
+if an annotation exists."
+  (let ((annotation (bookmark-get-annotation bookmark)))
+    (when (and annotation (not (string-equal annotation "")))
+      (save-excursion
+        (let ((old-buf (current-buffer)))
+          (pop-to-buffer (get-buffer-create "*Bookmark Annotation*") t)
+          (delete-region (point-min) (point-max))
+          ;; (insert (concat "Annotation for bookmark '" bookmark "':\n\n"))
+          (insert annotation)
+          (goto-char (point-min))
+          (switch-to-buffer-other-window old-buf))))))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
 ;; Add marked bookmark to `bmkext-bookmark-marked-list',
 ;; Don't call a second time `bookmark-bmenu-check-position'.
 ;;
