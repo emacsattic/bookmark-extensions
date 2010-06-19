@@ -1,5 +1,42 @@
 ;;; adressbook-bookmark.el -- An adress book based on Standard Emacs bookmarks.
 
+;; Filename: adressbook-bookmark.el
+;; Author: Thierry Volpiatto
+;; Maintainer: Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Copyright (C) 2009 ~ 2010, Thierry Volpiatto, all rights reserved.
+
+;; Created: <2010-06-19 Sam.>
+
+;; X-URL: http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; This file is NOT part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
+;; Floor, Boston, MA 02110-1301, USA.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Commentary:
+;;
+;; This is a work in progress, you can use it but it's not finished,
+;; so you may find things incoherents or disfunctioning.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;; Code:
 (eval-when-compile (require 'cl))
 (require 'derived)
