@@ -46,7 +46,7 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'adressbook-quit)
     (define-key map (kbd "m") 'adressbook-set-mail-buffer)
-    ;(define-key map (kbd "e") 'adressbook-edit-line)
+    (define-key map (kbd "s") 'adressbook-write)
     map))
 
 (define-derived-mode adressbook-mode
@@ -81,7 +81,7 @@ Special commands:
         (mail-bufs (message-buffers)))
     (forward-line 0)
     (if (search-forward "Mail: " (point-at-eol) t)
-        (setq mail (split-string (buffer-substring (point) (point-at-eol))))
+        (setq mail-list (split-string (buffer-substring (point) (point-at-eol))))
         (error "Not on a mail entry"))
     (if (or append mail-bufs)
         (switch-to-buffer-other-window
@@ -94,9 +94,9 @@ Special commands:
       (or (search-forward "To: " nil t)
           (search-forward "Newsgroups: " nil t))
       (end-of-line)
-      (let ((email (if (> (length mail) 1)
-                       (anything-comp-read "Choose mail: " mail :must-match t)
-                       (car mail))))
+      (let ((email (if (> (length mail-list) 1)
+                       (anything-comp-read "Choose mail: " mail-list :must-match t)
+                       (car mail-list))))
         (if append (insert (concat ", " email)) (insert email))))
     (search-forward "Subject: ")))
 
@@ -110,7 +110,7 @@ Special commands:
 
 (defun adressbook-read-name (prompt)
   "Prompt as many time PROMPT is not empty."
-  (let (var)
+  (let ((var ()))
     (labels ((multiread ()
                (let ((str (read-string prompt)))
                  (if (string= str "")
@@ -128,8 +128,30 @@ Special commands:
         (new-entry (adressbook-bookmark-make-entry name email phone))) 
     (if (and old-entry (string= (assoc-default 'type old-entry) "adressbook"))
         (setf (cdr old-entry) (cdr (adressbook-bookmark-make-entry name email phone)))
-        (push new-entry adressbook-bookmark-alist))))
+        (push new-entry adressbook-bookmark-alist)))
+  (adressbook-set-save-flag))
 
+(defvar adressbook-modification-flag 0)
+(add-hook 'bookmark-exit-hook 'adressbook-bookmark-save)
+(defun adressbook-bookmark-save ()
+  (and adressbook-bookmark-alist
+       (> adressbook-modification-flag 0)
+       (adressbook-write)))
+
+(defun adressbook-set-save-flag ()
+  (setq adressbook-modification-flag (1+ adressbook-modification-flag)))
+  
+(defun adressbook-bookmark-edit (bookmark)
+  (let ((name (read-string "Name: " (car bookmark)))
+        (mail (read-string "Mail: " (assoc-default 'email bookmark)))
+        (phone (read-string "Phone: " (assoc-default 'phone bookmark))))
+    (setf (cdr bookmark) (cdr (adressbook-bookmark-make-entry name mail phone)))
+    (adressbook-set-save-flag)))
+
+(defun adressbook-bmenu-edit ()
+  (interactive)
+  (let ((bmk (assoc (bookmark-bmenu-bookmark) adressbook-bookmark-alist)))
+    (adressbook-bookmark-edit bmk)))
 
 (defun adressbook-pp-info (name &optional append)
   (let ((data (assoc name adressbook-bookmark-alist))
