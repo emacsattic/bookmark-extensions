@@ -77,17 +77,23 @@ Special commands:
 
 (defun adressbook-set-mail-buffer (&optional append)
   (interactive "P")
-  (let (mail)
+  (let ((mail-list ())
+        (mail-bufs (message-buffers)))
     (forward-line 0)
     (if (search-forward "Mail: " (point-at-eol) t)
         (setq mail (split-string (buffer-substring (point) (point-at-eol))))
         (error "Not on a mail entry"))
-    (if (or append (get-buffer "*mail*"))
-        (switch-to-buffer-other-window "*mail*")
+    (if (or append mail-bufs)
+        (switch-to-buffer-other-window
+         (if (and mail-bufs (> (length mail-bufs) 1))
+             (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
+             (car mail-bufs)))
         (compose-mail nil nil nil nil 'switch-to-buffer-other-window))
     (goto-char (point-min))
     (save-excursion
-      (search-forward "To: ") (end-of-line)
+      (or (search-forward "To: " nil t)
+          (search-forward "Newsgroups: " nil t))
+      (end-of-line)
       (let ((email (if (> (length mail) 1)
                        (anything-comp-read "Choose mail: " mail :must-match t)
                        (car mail))))
@@ -103,17 +109,14 @@ Special commands:
     (handler . adressbook-bookmark-jump)))
 
 (defun adressbook-read-name (prompt)
-  "Prompt as many time you add + to end of PROMPT."
+  "Prompt as many time PROMPT is not empty."
   (let (var)
     (labels ((multiread ()
-               (let* ((str   (read-string (format "%s(add `+' to repeat): " prompt)))
-                      (stock (replace-regexp-in-string "\+$" "" str)))
-                 (cond ((string-match "\+$" str)
-                        (push stock var)
-                        (multiread))
-                       (t
-                        (push stock var)
-                        (mapconcat 'identity (nreverse var) " "))))))
+               (let ((str (read-string prompt)))
+                 (if (string= str "")
+                     (mapconcat 'identity (nreverse var) " ")
+                     (push str var)
+                     (multiread)))))
       (multiread))))
 
 (defun adressbook-bookmark-set (name email phone)
