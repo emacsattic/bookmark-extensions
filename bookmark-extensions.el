@@ -1314,9 +1314,8 @@ If a prefix arg is given search in the whole `bookmark-alist'."
   (setq bmkext-search-timer nil))
 
 ;;;###autoload
-(defun bmkext-bmenu-edit-bookmark ()
-  "Edit the bookmark under the cursor."
-  (interactive)
+(defun bmkext-bmenu-edit-bookmark1 ()
+  "Edit the bookmark name and filename from bmenu list."
   (when (bookmark-bmenu-check-position)
     (let* ((bmk-name  (bookmark-bmenu-bookmark))
            (new-data  (bmkext-edit-bookmark bmk-name))
@@ -1330,6 +1329,15 @@ If a prefix arg is given search in the whole `bookmark-alist'."
           (forward-line 0)
           (bookmark-bmenu-check-position)))))
 
+(defun bmkext-bmenu-edit-bookmark ()
+  "Edit the bookmark under the cursor."
+  (interactive)
+  (let* ((bname  (bookmark-bmenu-bookmark))
+         (bentry (assoc bname bookmark-alist)))
+    (if (bmkext-bookmark-addressbook-p bentry)
+        (addressbook-bmenu-edit)
+        (bmkext-bmenu-edit-bookmark1))))
+        
 ;;;###autoload
 (defun bmkext-bmenu-delete-bookmark ()
   "Delete bookmark at point in Bookmark Menu list."
