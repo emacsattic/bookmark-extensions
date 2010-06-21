@@ -371,6 +371,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "C" 'bmkext-bmenu-list-only-addressbook-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "C-c C-c") 'bmkext-addressbook-set-mail-buffer)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-V" 'bmkext-bmenu-sort-by-visit-frequency)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-T" 'bmkext-bmenu-sort-by-last-time-visited)
@@ -1713,6 +1715,11 @@ If MARK is non--nil unmark only bookmarks with flag >."
           (bmkext-bmenu-mark-all-bookmarks)))
     (bmkext-count-marked)))
 
+(defun bmkext-addressbook-set-mail-buffer (arg)
+  (interactive "P")
+  (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
+    (when (bmkext-bookmark-addressbook-p bmk)
+      (addressbook-set-mail-buffer arg))))
 
 ;; Predicates --------------------------------------------------------
 
