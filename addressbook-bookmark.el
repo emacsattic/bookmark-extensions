@@ -76,10 +76,19 @@ Special commands:
   (interactive "P")
   (let ((mail-list ())
         (mail-bufs (message-buffers)))
-    (forward-line 0)
-    (if (search-forward "Mail: " (point-at-eol) t)
-        (setq mail-list (split-string (buffer-substring (point) (point-at-eol))))
-        (error "Not on a mail entry"))
+    (setq mail-list
+          (cond ((eq major-mode 'addressbook-mode)
+                 (progn
+                   (forward-line 0)
+                   (if (search-forward "Mail: " (point-at-eol) t)
+                       (split-string (buffer-substring (point) (point-at-eol)))
+                       (error "Not on a mail entry"))))
+                ((eq major-mode 'bookmark-bmenu-mode)
+                 (split-string
+                  (assoc-default
+                   'email
+                   (assoc (bookmark-bmenu-bookmark) bookmark-alist))))
+                (t (error "Command not available from here"))))
     (if (or append mail-bufs)
         (switch-to-buffer-other-window
          (if (and mail-bufs (> (length mail-bufs) 1))
