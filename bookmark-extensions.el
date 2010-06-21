@@ -369,6 +369,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "O" 'bmkext-bmenu-list-only-last-org-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map "C" 'bmkext-bmenu-list-only-addressbook-bookmarks)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-V" 'bmkext-bmenu-sort-by-visit-frequency)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-T" 'bmkext-bmenu-sort-by-last-time-visited)
@@ -409,6 +411,7 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks (`C-u' show also bookmarks from `w3m-bookmark-file')
 \\[bmkext-bmenu-list-only-firefox-bookmarks]\t- List only Firefox bookmarks
 \\[bmkext-bmenu-list-only-last-org-bookmarks]\t- List only last stored org bookmarks
+\\[bmkext-bmenu-list-only-addressbook-bookmarks]\t- List only addressbook entries
 \\[bmkext-bmenu-delicious]\t- List only Delicious bookmarks (`C-u' refresh list from delicious server)
 \\[bookmark-bmenu-this-window]\t- If bookmark is an URL C-u jump to external browser
 \\[bmkext-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
@@ -1479,6 +1482,14 @@ IMPORT mean display also the in--w3m browser bookmarks.(those that are in `w3m-b
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list "% Bookmark Last Org Stored" 'filteredp)))
 
+(defun bmkext-bmenu-list-only-addressbook-bookmarks ()
+  "Display (only) addressbook bookmarks."
+  (interactive)
+  (let ((bookmark-alist  (bmkext-addressbook-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
+    (bookmark-bmenu-list "% Bookmark Addressbook" 'filteredp)))
+
 ;;;###autoload
 (defun bmkext-bmenu-show-all-bookmarks ()
   "Show all bookmarks without removing marks if some."
@@ -1775,6 +1786,9 @@ BOOKMARK is a bookmark name or a bookmark record."
     (or (string= "org-refile-last-stored" bmk)
         (string= "org-remember-last-stored" bmk))))
 
+(defun bmkext-bookmark-addressbook-p (bookmark)
+  (string= (assoc-default 'type bookmark) "addressbook"))
+
 ;; Filter Functions --------------------------------------------------
 
 (defun bmkext-org-last-stored-alist-only ()
@@ -1861,6 +1875,10 @@ A new list is returned (no side effects)."
 A new list is returned (no side effects)."
   (bmkext-remove-if-not #'bmkext-non-file-bookmark-p bookmark-alist))
 
+(defun bmkext-addressbook-alist-only ()
+  "`bookmark-alist', filtered to retain only addressbook bookmarks.
+A new list is returned (no side effects)."
+  (bmkext-remove-if-not #'bmkext-bookmark-addressbook-p bookmark-alist))
 
 ;;; Marked bookmarks
 

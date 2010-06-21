@@ -1,6 +1,6 @@
-;;; adressbook-bookmark.el -- An adress book based on Standard Emacs bookmarks.
+;;; addressbook-bookmark.el -- An adress book based on Standard Emacs bookmarks.
 
-;; Filename: adressbook-bookmark.el
+;; Filename: addressbook-bookmark.el
 ;; Author: Thierry Volpiatto
 ;; Maintainer: Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Copyright (C) 2009 ~ 2010, Thierry Volpiatto, all rights reserved.
@@ -42,29 +42,28 @@
 (require 'derived)
 (require 'bookmark-extensions)
 
-(defvar adressbook-mode-map
+(defvar addressbook-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q") 'adressbook-quit)
-    (define-key map (kbd "m") 'adressbook-set-mail-buffer)
-    (define-key map (kbd "s") 'adressbook-write)
+    (define-key map (kbd "q") 'addressbook-quit)
+    (define-key map (kbd "m") 'addressbook-set-mail-buffer)
+    (define-key map (kbd "s") 'addressbook-write)
+    (define-key map (kbd "r") 'addressbook-bookmark-set)
     map))
 
-(define-derived-mode adressbook-mode
-    text-mode "adressbook"
-    "Interface for adressbook.
+(define-derived-mode addressbook-mode
+    text-mode "addressbook"
+    "Interface for addressbook.
 
 Special commands:
-\\{adressbook-mode-map}")
+\\{addressbook-mode-map}")
 
-(defvar adressbook-default-file "~/.adressbook.bmk")
-(defvar adressbook-bookmark-alist nil)
 
-(defun adressbook-quit ()
+(defun addressbook-quit ()
   (interactive)
-  (with-current-buffer "*adressbook*"
+  (with-current-buffer "*addressbook*"
     (quit-window)))
 
-;; (defun adressbook-message-buffer
+;; (defun addressbook-message-buffer
 ;; (let (buffers)
 ;;   (save-excursion
 ;;     (dolist (buffer (buffer-list t))
@@ -75,7 +74,7 @@ Special commands:
 
 ;; Use ==> (message-buffers) to get mail/news buffers.
 
-(defun adressbook-set-mail-buffer (&optional append)
+(defun addressbook-set-mail-buffer (&optional append)
   (interactive "P")
   (let ((mail-list ())
         (mail-bufs (message-buffers)))
@@ -100,15 +99,15 @@ Special commands:
         (if append (insert (concat ", " email)) (insert email))))
     (search-forward "Subject: ")))
 
-(defun adressbook-bookmark-make-entry (name email phone)
+(defun addressbook-bookmark-make-entry (name email phone)
   `(,name
     ,@(bookmark-make-record-default 'point-only 0 'read-only)
-    (type . "adressbook")
+    (type . "addressbook")
     (email . ,email)
     (phone . ,phone)
-    (handler . adressbook-bookmark-jump)))
+    (handler . addressbook-bookmark-jump)))
 
-(defun adressbook-read-name (prompt)
+(defun addressbook-read-name (prompt)
   "Prompt as many time PROMPT is not empty."
   (let ((var ()))
     (labels ((multiread ()
@@ -119,88 +118,61 @@ Special commands:
                      (multiread)))))
       (multiread))))
 
-(defun adressbook-bookmark-set (name email phone)
+(defun addressbook-bookmark-set (name email phone)
   (interactive (list (read-string "Name: ")
-                     (adressbook-read-name "Mail: ")
-                     (adressbook-read-name "Phone: ")))
-  (adressbook-maybe-load-file)
-  (let ((old-entry (assoc name adressbook-bookmark-alist))
-        (new-entry (adressbook-bookmark-make-entry name email phone))) 
-    (if (and old-entry (string= (assoc-default 'type old-entry) "adressbook"))
-        (setf (cdr old-entry) (cdr (adressbook-bookmark-make-entry name email phone)))
-        (push new-entry adressbook-bookmark-alist)))
-  (adressbook-set-save-flag))
+                     (addressbook-read-name "Mail: ")
+                     (addressbook-read-name "Phone: ")))
+  (bookmark-maybe-load-default-file)
+  (let ((old-entry (assoc name bookmark-alist))
+        (new-entry (addressbook-bookmark-make-entry name email phone))) 
+    (if (and old-entry (string= (assoc-default 'type old-entry) "addressbook"))
+        (setf (cdr old-entry) (cdr (addressbook-bookmark-make-entry name email phone)))
+        (push new-entry bookmark-alist)))
+  (bmkext-maybe-save-bookmark))
 
-(defvar adressbook-modification-flag 0)
-(add-hook 'bookmark-exit-hook 'adressbook-bookmark-save)
-(defun adressbook-bookmark-save ()
-  (and adressbook-bookmark-alist
-       (> adressbook-modification-flag 0)
-       (adressbook-write)))
-
-(defun adressbook-set-save-flag ()
-  (setq adressbook-modification-flag (1+ adressbook-modification-flag)))
   
-(defun adressbook-bookmark-edit (bookmark)
+(defun addressbook-bookmark-edit (bookmark)
   (let ((name (read-string "Name: " (car bookmark)))
         (mail (read-string "Mail: " (assoc-default 'email bookmark)))
         (phone (read-string "Phone: " (assoc-default 'phone bookmark))))
-    (setf (cdr bookmark) (cdr (adressbook-bookmark-make-entry name mail phone)))
-    (adressbook-set-save-flag)))
+    (setf (cdr bookmark) (cdr (addressbook-bookmark-make-entry name mail phone)))
+    (bmkext-maybe-save-bookmark)))
 
-(defun adressbook-bmenu-edit ()
+(defun addressbook-bmenu-edit ()
   (interactive)
-  (let ((bmk (assoc (bookmark-bmenu-bookmark) adressbook-bookmark-alist)))
-    (adressbook-bookmark-edit bmk)))
+  (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
+    (addressbook-bookmark-edit bmk)))
 
-(defun adressbook-pp-info (name &optional append)
-  (let ((data (assoc name adressbook-bookmark-alist))
-        (buf  (get-buffer-create "*adressbook*")))
+(defun addressbook-pp-info (name &optional append)
+  (let ((data (assoc name bookmark-alist))
+        (buf  (get-buffer-create "*addressbook*")))
     (set-buffer buf)
     (if append
         (goto-char (point-max))
         (erase-buffer) (goto-char (point-min)))
-    (adressbook-mode)
+    (addressbook-mode)
     (insert (concat "Name: " name "\n")
             (concat "Mail: " (assoc-default 'email data) "\n")
             (concat "Phone: " (assoc-default 'phone data) "\n-----\n"))))
 
-(defun adressbook-bookmark-jump (bookmark)
+(defun addressbook-bookmark-jump (bookmark)
   (let ((buf (save-window-excursion
                (if current-prefix-arg
-                   (adressbook-pp-info (car bookmark) 'append)
-                   (adressbook-pp-info (car bookmark)))
+                   (addressbook-pp-info (car bookmark) 'append)
+                   (addressbook-pp-info (car bookmark)))
                (current-buffer))))
     (bookmark-default-handler
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
-(defun adressbook-write ()
-  (interactive)
-  (adressbook-maybe-load-file)
-  (let ((bookmark-alist adressbook-bookmark-alist))
-    (bookmark-save nil adressbook-default-file)))
 
-(defun adressbook-maybe-load-file (&optional reload)
-  (with-current-buffer (find-file-noselect adressbook-default-file)
-    (unless (or reload adressbook-bookmark-alist)
-      (setq adressbook-bookmark-alist (bookmark-alist-from-buffer)))))
-    
-(defun adressbook-bmenu-list ()
-  (interactive)
-  (let (bookmark-alist)
-    (adressbook-maybe-load-file)
-    (setq bookmark-alist adressbook-bookmark-alist)
-    (bookmark-bmenu-list "% AdressBook")
-    (switch-to-buffer "*Bookmark List*")))
-
-(provide 'adressbook-bookmark)
+(provide 'addressbook-bookmark)
 
 ;; FIXME
 ;; use real bookmark-alist or not?
-;; in this case i need to create filter to show only adressbook entry (type).
+;; in this case i need to create filter to show only addressbook entry (type).
 
 ;; TODO
-;; methods to prepare mail buffer (from bmenu-list and adressbook buffer)
-;; handle multiples mails for same contact
-;; enable append to adressbook buffer
+;; methods to prepare mail buffer (from bmenu-list and addressbook buffer)==> Yes
+;; handle multiples mails for same contact                               ==> Yes
+;; enable append to addressbook buffer                                    ==> Yes
 ;; make use of marked bookmarks
