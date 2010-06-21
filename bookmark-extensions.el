@@ -479,6 +479,11 @@ bookmarks (`C-u' for local only)
   "*Face used for a bookmarked w3m url."
   :group 'bmkext)
 
+(defface bmkext-adressbook
+    '((t (:foreground "DarkOrchid")))
+  "*Face used for a bookmarked addressbook entry."
+  :group 'bmkext)
+
 
 ;;; User Options (Customizable) --------------------------------------
 
@@ -1371,6 +1376,8 @@ If a prefix arg is given search in the whole `bookmark-alist'."
          (isman         (bmkext-woman-man-bookmark-p bookmark-name))
          (issu          (and istramp (string-match bmkext-su-or-sudo-regexp
                                                    isfile)))
+         (isabook       (bmkext-bookmark-addressbook-p
+                         (assoc bookmark-name bookmark-alist)))
          (isannotation  (bookmark-get-annotation bookmark-name))
          (ishandler     (bookmark-get-handler bookmark-name))
          (isgnus        (bmkext-gnus-bookmark-p bookmark-name))
@@ -1384,6 +1391,9 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            (isgnus               ; Gnus
             '(mouse-face highlight follow-link t face bmkext-gnus
               help-echo "mouse-2: Go to this Gnus buffer"))
+           (isabook              ; Addressbook
+            '(mouse-face highlight follow-link t face bmkext-adressbook
+              help-echo "mouse-2: Go to addressbook buffer"))
            (isw3m                ; W3m
             `(mouse-face highlight follow-link t face bmkext-w3m
                          help-echo (format "mouse-2 Goto URL: %s",isfile)))

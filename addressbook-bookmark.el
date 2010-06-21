@@ -128,6 +128,7 @@ Special commands:
     (if (and old-entry (string= (assoc-default 'type old-entry) "addressbook"))
         (setf (cdr old-entry) (cdr (addressbook-bookmark-make-entry name email phone)))
         (push new-entry bookmark-alist)))
+  (bookmark-bmenu-surreptitiously-rebuild-list)
   (bmkext-maybe-save-bookmark))
 
   
