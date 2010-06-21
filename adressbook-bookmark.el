@@ -46,7 +46,6 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'addressbook-quit)
     (define-key map (kbd "m") 'addressbook-set-mail-buffer)
-    (define-key map (kbd "s") 'addressbook-write)
     (define-key map (kbd "r") 'addressbook-bookmark-set)
     map))
 
