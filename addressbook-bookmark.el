@@ -54,7 +54,10 @@
     "Interface for addressbook.
 
 Special commands:
-\\{addressbook-mode-map}")
+\\{addressbook-mode-map}"
+    (kill-all-local-variables)
+    (use-local-map addressbook-mode-map)    
+    (setq buffer-read-only t))
 
 
 (defun addressbook-quit ()
@@ -161,15 +164,16 @@ Special commands:
 
 (defun addressbook-pp-info (name &optional append)
   (let ((data (assoc name bookmark-alist))
-        (buf  (get-buffer-create "*addressbook*")))
+        (buf  (get-buffer-create "*addressbook*"))
+        (inhibit-read-only t))
     (set-buffer buf)
     (if append
         (goto-char (point-max))
         (erase-buffer) (goto-char (point-min)))
-    (addressbook-mode)
     (insert (concat "Name: " name "\n")
             (concat "Mail: " (assoc-default 'email data) "\n")
-            (concat "Phone: " (assoc-default 'phone data) "\n-----\n"))))
+            (concat "Phone: " (assoc-default 'phone data) "\n-----\n"))
+    (addressbook-mode)))
 
 (defun addressbook-bookmark-jump (bookmark)
   (let ((buf (save-window-excursion
