@@ -54,11 +54,7 @@
     "Interface for addressbook.
 
 Special commands:
-\\{addressbook-mode-map}"
-    (kill-all-local-variables)
-    (use-local-map addressbook-mode-map)    
-    (setq buffer-read-only t))
-
+\\{addressbook-mode-map}")
 
 (defun addressbook-quit ()
   (interactive)
@@ -173,7 +169,8 @@ Special commands:
     (insert (concat "Name: " name "\n")
             (concat "Mail: " (assoc-default 'email data) "\n")
             (concat "Phone: " (assoc-default 'phone data) "\n-----\n"))
-    (addressbook-mode)))
+    (addressbook-mode)
+    (setq buffer-read-only t)))
 
 (defun addressbook-bookmark-jump (bookmark)
   (let ((buf (save-window-excursion
