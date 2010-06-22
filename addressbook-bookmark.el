@@ -81,13 +81,13 @@ Special commands:
                  (progn
                    (forward-line 0)
                    (if (search-forward "Mail: " (point-at-eol) t)
-                       (split-string (buffer-substring (point) (point-at-eol)))
+                       (split-string (buffer-substring (point) (point-at-eol)) ", ")
                        (error "Not on a mail entry"))))
                 ((eq major-mode 'bookmark-bmenu-mode)
                  (split-string
                   (assoc-default
                    'email
-                   (assoc (bookmark-bmenu-bookmark) bookmark-alist))))
+                   (assoc (bookmark-bmenu-bookmark) bookmark-alist)) ", "))
                 (t (error "Command not available from here"))))
     (if (or append mail-bufs)
         (switch-to-buffer-other-window
@@ -119,9 +119,10 @@ Special commands:
   "Prompt as many time PROMPT is not empty."
   (let ((var ()))
     (labels ((multiread ()
-               (let ((str (read-string prompt)))
+               (let ((str (read-string prompt))
+                     (sep (if (> (length var) 1) ", " "")))
                  (if (string= str "")
-                     (mapconcat 'identity (nreverse var) " ")
+                     (mapconcat 'identity (nreverse var) sep)
                      (push str var)
                      (multiread)))))
       (multiread))))
@@ -160,12 +161,13 @@ Special commands:
   (let* ((name      (bookmark-bmenu-bookmark))
          (bmk       (assoc name bookmark-alist))
          (new-entry (addressbook-bookmark-edit bmk)))
-    (bookmark-bmenu-surreptitiously-rebuild-list)
-    (goto-char (point-min))
-    (while (not (string= (car new-entry) (bookmark-bmenu-bookmark)))
-      (forward-line 1))
-    (forward-line 0)
-    (bookmark-bmenu-check-position)))
+    (when new-entry
+      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (goto-char (point-min))
+      (while (not (string= (car new-entry) (bookmark-bmenu-bookmark)))
+        (forward-line 1))
+      (forward-line 0)
+      (bookmark-bmenu-check-position))))
 
 (defun addressbook-pp-info (name &optional append)
   (let ((data (assoc name bookmark-alist))
