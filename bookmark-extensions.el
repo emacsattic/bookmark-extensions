@@ -373,6 +373,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "C-c C-c") 'bmkext-addressbook-set-mail-buffer)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "C-c f c") 'bmkext-addressbook-set-mail-buffer-and-cc)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-V" 'bmkext-bmenu-sort-by-visit-frequency)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-T" 'bmkext-bmenu-sort-by-last-time-visited)
@@ -414,6 +416,8 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-list-only-firefox-bookmarks]\t- List only Firefox bookmarks
 \\[bmkext-bmenu-list-only-last-org-bookmarks]\t- List only last stored org bookmarks
 \\[bmkext-bmenu-list-only-addressbook-bookmarks]\t- List only addressbook entries
+\\[bmkext-addressbook-set-mail-buffer]\t- Set a mail buffer for this bookmark
+\\[bmkext-addressbook-set-mail-buffer-and-cc]\t- Set a mail buffer with a cc field for this bookmark
 \\[bmkext-bmenu-delicious]\t- List only Delicious bookmarks (`C-u' refresh list from delicious server)
 \\[bookmark-bmenu-this-window]\t- If bookmark is an URL C-u jump to external browser
 \\[bmkext-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
@@ -1719,7 +1723,13 @@ If MARK is non--nil unmark only bookmarks with flag >."
   (interactive "P")
   (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
     (when (bmkext-bookmark-addressbook-p bmk)
-      (addressbook-set-mail-buffer arg))))
+      (addressbook-set-mail-buffer1 arg))))
+
+(defun bmkext-addressbook-set-mail-buffer-and-cc (arg)
+  (interactive "P")
+  (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
+    (when (bmkext-bookmark-addressbook-p bmk)
+      (addressbook-set-mail-buffer1 arg 'cc))))
 
 ;; Predicates --------------------------------------------------------
 

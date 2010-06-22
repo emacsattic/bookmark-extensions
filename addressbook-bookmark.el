@@ -46,6 +46,8 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'addressbook-quit)
     (define-key map (kbd "m") 'addressbook-set-mail-buffer)
+    (define-key map (kbd "C-c C-c") 'addressbook-set-mail-buffer)
+    (define-key map (kbd "C-c f c") 'addressbook-set-mail-buffer-and-cc)
     (define-key map (kbd "r") 'addressbook-bookmark-set)
     map))
 
@@ -72,10 +74,7 @@ Special commands:
 
 ;; Use ==> (message-buffers) to get mail/news buffers.
 
-;; C-c C-f C-c runs the command message-goto-cc
-
 (defun addressbook-set-mail-buffer1 (&optional append cc)
-  ;(interactive "P")
   (let ((mail-list ())
         (mail-bufs (message-buffers)))
     (setq mail-list
@@ -92,16 +91,15 @@ Special commands:
                    'email
                    (assoc (bookmark-bmenu-bookmark) bookmark-alist)) ", "))
                 (t (error "Command not available from here"))))
-    (if (or cc append)
-        (if mail-bufs
-            ;; A mail buffer exists, use it.
-            (switch-to-buffer-other-window
-             (if (and mail-bufs (> (length mail-bufs) 1))
-                 (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
-                 (car mail-bufs)))
-            ;; Create a new mail buffer.
-            (compose-mail nil nil nil nil 'switch-to-buffer-other-window))
-        (compose-mail nil nil nil nil 'switch-to-buffer-other-window))
+    (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
+           (switch-to-buffer-other-window
+            (if (and mail-bufs (> (length mail-bufs) 1))
+                (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
+                (car mail-bufs))))
+          ((or cc append)                 ; No mail buffer found create one.
+           (compose-mail nil nil nil nil 'switch-to-buffer-other-window))
+          (t                              ; create a new mail buffer.
+           (compose-mail nil nil nil nil 'switch-to-buffer-other-window)))
     (goto-char (point-min))
     (save-excursion
       (if cc
