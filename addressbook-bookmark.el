@@ -81,7 +81,8 @@ Special commands:
                  (progn
                    (forward-line 0)
                    (if (search-forward "Mail: " (point-at-eol) t)
-                       (split-string (buffer-substring (point) (point-at-eol)) ", ")
+                       (split-string
+                        (buffer-substring (point) (point-at-eol)) ", ")
                        (error "Not on a mail entry"))))
                 ((eq major-mode 'bookmark-bmenu-mode)
                  (split-string
@@ -101,7 +102,8 @@ Special commands:
           (search-forward "Newsgroups: " nil t))
       (end-of-line)
       (let ((email (if (> (length mail-list) 1)
-                       (anything-comp-read "Choose mail: " mail-list :must-match t)
+                       (anything-comp-read "Choose mail: "
+                                           mail-list :must-match t)
                        (car mail-list))))
         (if append (insert (concat ", " email)) (insert email))))
     (search-forward "Subject: ")))
@@ -135,7 +137,8 @@ Special commands:
   (let ((old-entry (assoc name bookmark-alist))
         (new-entry (addressbook-bookmark-make-entry name email phone))) 
     (if (and old-entry (string= (assoc-default 'type old-entry) "addressbook"))
-        (setf (cdr old-entry) (cdr (addressbook-bookmark-make-entry name email phone)))
+        (setf (cdr old-entry)
+              (cdr (addressbook-bookmark-make-entry name email phone)))
         (push new-entry bookmark-alist)))
   (bookmark-bmenu-surreptitiously-rebuild-list)
   (bmkext-maybe-save-bookmark))
@@ -195,12 +198,4 @@ Special commands:
 
 (provide 'addressbook-bookmark)
 
-;; FIXME
-;; use real bookmark-alist or not?
-;; in this case i need to create filter to show only addressbook entry (type).
-
-;; TODO
-;; methods to prepare mail buffer (from bmenu-list and addressbook buffer)==> Yes
-;; handle multiples mails for same contact                               ==> Yes
-;; enable append to addressbook buffer                                    ==> Yes
-;; make use of marked bookmarks
+;;; addressbook-bookmark.el ends here
