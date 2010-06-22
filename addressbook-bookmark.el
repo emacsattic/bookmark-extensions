@@ -72,8 +72,10 @@ Special commands:
 
 ;; Use ==> (message-buffers) to get mail/news buffers.
 
-(defun addressbook-set-mail-buffer (&optional append)
-  (interactive "P")
+;; C-c C-f C-c runs the command message-goto-cc
+
+(defun addressbook-set-mail-buffer1 (&optional append cc)
+  ;(interactive "P")
   (let ((mail-list ())
         (mail-bufs (message-buffers)))
     (setq mail-list
@@ -90,18 +92,22 @@ Special commands:
                    'email
                    (assoc (bookmark-bmenu-bookmark) bookmark-alist)) ", "))
                 (t (error "Command not available from here"))))
-    (if append
-        ;; A mail buffer exists, use it.
-        (switch-to-buffer-other-window
-         (if (and mail-bufs (> (length mail-bufs) 1))
-             (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
-             (car mail-bufs)))
-        ;; Create a new mail buffer.
+    (if (or cc append)
+        (if mail-bufs
+            ;; A mail buffer exists, use it.
+            (switch-to-buffer-other-window
+             (if (and mail-bufs (> (length mail-bufs) 1))
+                 (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
+                 (car mail-bufs)))
+            ;; Create a new mail buffer.
+            (compose-mail nil nil nil nil 'switch-to-buffer-other-window))
         (compose-mail nil nil nil nil 'switch-to-buffer-other-window))
     (goto-char (point-min))
     (save-excursion
-      (or (search-forward "To: " nil t)
-          (search-forward "Newsgroups: " nil t))
+      (if cc
+          (message-goto-cc)
+          (or (search-forward "To: " nil t)
+              (search-forward "Newsgroups: " nil t)))
       (end-of-line)
       (let ((email (if (> (length mail-list) 1)
                        (anything-comp-read "Choose mail: "
@@ -109,6 +115,14 @@ Special commands:
                        (car mail-list))))
         (if append (insert (concat ", " email)) (insert email))))
     (search-forward "Subject: ")))
+
+(defun addressbook-set-mail-buffer (append)
+  (interactive "P")
+  (addressbook-set-mail-buffer1 append))
+
+(defun addressbook-set-mail-buffer-and-cc (append)
+  (interactive "P")
+  (addressbook-set-mail-buffer1 append 'cc))
 
 (defun addressbook-bookmark-make-entry (name email phone)
   `(,name
