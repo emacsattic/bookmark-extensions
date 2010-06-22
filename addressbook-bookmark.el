@@ -74,8 +74,9 @@ Special commands:
 
 (defun addressbook-set-mail-buffer (&optional append)
   (interactive "P")
-  (let ((mail-list ())
-        (mail-bufs (message-buffers)))
+  (let* ((mail-list ())
+         (mail-bufs (message-buffers))
+         (use-existing (or append mail-bufs)))
     (setq mail-list
           (cond ((eq major-mode 'addressbook-mode)
                  (progn
@@ -90,7 +91,7 @@ Special commands:
                    'email
                    (assoc (bookmark-bmenu-bookmark) bookmark-alist)) ", "))
                 (t (error "Command not available from here"))))
-    (if (or append mail-bufs)
+    (if use-existing
         (switch-to-buffer-other-window
          (if (and mail-bufs (> (length mail-bufs) 1))
              (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
@@ -105,7 +106,7 @@ Special commands:
                        (anything-comp-read "Choose mail: "
                                            mail-list :must-match t)
                        (car mail-list))))
-        (if append (insert (concat ", " email)) (insert email))))
+        (if use-existing (insert (concat ", " email)) (insert email))))
     (search-forward "Subject: ")))
 
 (defun addressbook-bookmark-make-entry (name email phone)
