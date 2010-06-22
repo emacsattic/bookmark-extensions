@@ -172,11 +172,13 @@ Special commands:
          (old-phone   (assoc-default 'phone bookmark))
          (old-street  (assoc-default 'street bookmark))
          (old-zipcode (assoc-default 'zipcode bookmark))
+         (old-city    (assoc-default 'city bookmark))
          (name        (read-string "Name: " old-name))
          (mail        (read-string "Mail: " old-mail))
          (phone       (read-string "Phone: " old-phone))
          (street      (read-string "Street: " old-street))
          (zipcode     (read-string "Zipcode: " old-zipcode))
+         (city        (read-string "City: " old-city))
          (new-entry   (addressbook-bookmark-make-entry
                      name mail phone street zipcode city)))
     (when (y-or-n-p "Save changes? ")
