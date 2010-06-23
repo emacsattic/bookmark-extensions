@@ -146,24 +146,35 @@ Special commands:
                      (multiread)))))
       (multiread))))
 
-(defun addressbook-bookmark-set (name email phone street zipcode city)
-  (interactive (list (read-string "Name: ")
-                     (addressbook-read-name "Mail: ")
-                     (addressbook-read-name "Phone: ")
-                     (read-string "Street: ")
-                     (read-string "Zipcode: ")
-                     (read-string "City: ")))
-  (bookmark-maybe-load-default-file)
-  (let ((old-entry (assoc name bookmark-alist))
-        (new-entry (addressbook-bookmark-make-entry
-                    name email phone street zipcode city))) 
-    (if (and old-entry (string= (assoc-default 'type old-entry) "addressbook"))
-        (setf (cdr old-entry)
-              (cdr (addressbook-bookmark-make-entry
-                    name email phone street zipcode city)))
-        (push new-entry bookmark-alist)))
-  (bookmark-bmenu-surreptitiously-rebuild-list)
-  (bmkext-maybe-save-bookmark))
+
+(defun addressbook-bookmark-set ()
+  (interactive)
+  (let ((count   0))
+    (labels
+        ((record ()
+           (let ((name    (read-string "Name: "))
+                 (email   (addressbook-read-name "Mail: "))
+                 (phone   (addressbook-read-name "Phone: "))
+                 (street  (read-string "Street: "))
+                 (zipcode (read-string "Zipcode: "))
+                 (city    (read-string "City: ")))
+               
+             (bookmark-maybe-load-default-file)
+             (let ((old-entry (assoc name bookmark-alist))
+                   (new-entry (addressbook-bookmark-make-entry
+                               name email phone street zipcode city))) 
+               (if (and old-entry (string= (assoc-default 'type old-entry) "addressbook"))
+                   (setf (cdr old-entry)
+                         (cdr (addressbook-bookmark-make-entry
+                               name email phone street zipcode city)))
+                   (push new-entry bookmark-alist)))
+             (bookmark-bmenu-surreptitiously-rebuild-list)
+             (bmkext-maybe-save-bookmark)
+             (incf count)
+             (if (y-or-n-p (format "`%s' Recorded. Add a new contact? " name))
+                 (record)
+                 (message "%d Contact(s) added." count)))))
+      (record))))
 
   
 (defun addressbook-bookmark-edit (bookmark)
