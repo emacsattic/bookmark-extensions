@@ -34,14 +34,14 @@
 ;; X-URL: http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
 
 ;; Keywords: bookmarks, placeholders, annotations, search, info, w3m, gnus,
-;;           man, woman, firefox, delicious.
+;;           man, woman, firefox, delicious, addressbook.
 
 ;; Compatibility: GNU Emacs: >=23.x
 
 ;; Features that might be required by this library:
 
 ;;   `bookmark', `emacs-w3m', `gnus', `firefox', `bookmark-firefox-handler'
-;;   `firefox-handler', `anything-delicious'.
+;;   `firefox-handler', `anything-delicious', `addressbook-bookmark'.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -56,7 +56,7 @@
 ;;  Auto Documentation
 ;;  ==================
 
-;;  [UPDATE ALL EVAL] (autodoc-update-documentation)
+;;  [UPDATE ALL EVAL] (autodoc-update-all)
 
 ;;  * Commands defined here:
 ;; [EVAL] (autodoc-document-lisp-buffer :type 'command :prefix "bmkext-")
@@ -75,6 +75,8 @@
 ;; `bmkext-bmenu-list-only-w3m-bookmarks'
 ;; `bmkext-bmenu-list-only-gnus-bookmarks'
 ;; `bmkext-bmenu-list-only-woman-man-bookmarks'
+;; `bmkext-bmenu-list-only-last-org-bookmarks'
+;; `bmkext-bmenu-list-only-addressbook-bookmarks'
 ;; `bmkext-bmenu-show-all-bookmarks'
 ;; `bmkext-bmenu-mark-all-bookmarks'
 ;; `bmkext-bmenu-unmark-all-deletion-flags'
@@ -84,6 +86,8 @@
 ;; `bmkext-bmenu-hide-marked'
 ;; `bmkext-bmenu-hide-unmarked'
 ;; `bmkext-bmenu-toggle-marks'
+;; `bmkext-addressbook-set-mail-buffer'
+;; `bmkext-addressbook-set-mail-buffer-and-cc'
 ;; `bmkext-bmenu-list-only-firefox-bookmarks'
 ;; `bmkext-bmenu-refresh-delicious'
 ;; `bmkext-bmenu-delicious'
@@ -95,6 +99,7 @@
 
 ;;  * Man functions included here (from Emacs24)
 ;; [EVAL] (autodoc-document-lisp-buffer :type 'nested-function :prefix "^Man-")
+;; `Man-default-bookmark-title'
 ;; `Man-bookmark-make-record'
 ;; `Man-bookmark-jump'
 
@@ -108,6 +113,7 @@
 ;; `bookmark-bmenu-mark'
 ;; `bookmark-bmenu-unmark'
 ;; `bookmark-bmenu-this-window'
+;; `bookmark-set'
 ;; `bookmark-rename'
 ;; `bookmark-delete'
 ;; `bookmark-bmenu-list'
@@ -130,6 +136,7 @@
 ;; `bmkext-always-save-w3m-imported'
 ;; `bmkext-external-browse-url-function'
 ;; `bmkext-firefox-default-directory'
+;; `Man-name-local-regexp'
 
 ;;  * Faces defined here:
 ;; [EVAL] (autodoc-document-lisp-buffer :type 'faces)
@@ -143,6 +150,7 @@
 ;; `bmkext-su-or-sudo'
 ;; `bmkext-w3m'
 ;; `bmkext-woman'
+;; `bmkext-adressbook'
 
 ;;  * Non-interactive functions defined here:
 ;; [EVAL] (autodoc-document-lisp-buffer :type 'function :prefix "bmkext-")
@@ -161,6 +169,7 @@
 ;; `bmkext-filtered-alist-by-regexp-only'
 ;; `bmkext-bmenu-filter-alist-by-regexp'
 ;; `bmkext-bmenu-cancel-search'
+;; `bmkext-bmenu-edit-bookmark1'
 ;; `bmkext-bmenu-propertize-item'
 ;; `bmkext-bmenu-unmark-all-1'
 ;; `bmkext-bmenu-unmark-all-2'
@@ -177,6 +186,9 @@
 ;; `bmkext-local-file-bookmark-p'
 ;; `bmkext-local-directory-bookmark-p'
 ;; `bmkext-bookmark-marked-p'
+;; `bmkext-bookmark-last-org-p'
+;; `bmkext-bookmark-addressbook-p'
+;; `bmkext-org-last-stored-alist-only'
 ;; `bmkext-gnus-alist-only'
 ;; `bmkext-w3m-alist-only'
 ;; `bmkext-w3m-alist-only-imported'
@@ -188,6 +200,7 @@
 ;; `bmkext-local-file-alist-only'
 ;; `bmkext-file-alist-only'
 ;; `bmkext-non-file-alist-only'
+;; `bmkext-addressbook-alist-only'
 ;; `bmkext-marked-bookmarks-only'
 ;; `bmkext-non-marked-bookmarks-only'
 ;; `bmkext-current-list-have-marked-p'
@@ -216,6 +229,7 @@
 ;; [EVAL] (autodoc-document-lisp-buffer :type 'function :prefix "^bookmark-")
 ;; `bookmark-bmenu-mode'
 ;; `bookmark-bmenu-check-position'
+;; `bookmark-show-annotation'
 ;; `bookmark-bmenu-bookmark'
 ;; `bookmark-prop-set'
 ;; `bookmark-get-bookmark'
@@ -266,8 +280,10 @@
 ;;                                         |firefox-protocol.el
 ;;                                         |bookmark-extensions-documentation.rst)
 ;;
+;;    - You can use bookmark as an addressbook (See addressbook-bookmark.el)
+;;
 ;;    - In addition to the w3m bookmarks you record here you can import
-;;      your W3m bookmarks here (the ones from `w3m-bookmark-file').
+;;      virtually (don't affect .emacs.bmk) your W3m bookmarks here (the ones from `w3m-bookmark-file').
 ;;
 ;;    - Support for marking, unmarking, all, by regexp etc...
 ;;
@@ -1719,17 +1735,21 @@ If MARK is non--nil unmark only bookmarks with flag >."
           (bmkext-bmenu-mark-all-bookmarks)))
     (bmkext-count-marked)))
 
+;;;###autoload
 (defun bmkext-addressbook-set-mail-buffer (arg)
   (interactive "P")
   (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
-    (when (bmkext-bookmark-addressbook-p bmk)
-      (addressbook-set-mail-buffer1 arg))))
+    (if (bmkext-bookmark-addressbook-p bmk)
+        (addressbook-set-mail-buffer1 arg)
+        (bookmark-bmenu-this-window))))
 
+;;;###autoload
 (defun bmkext-addressbook-set-mail-buffer-and-cc (arg)
   (interactive "P")
   (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
-    (when (bmkext-bookmark-addressbook-p bmk)
-      (addressbook-set-mail-buffer1 arg 'cc))))
+    (if (bmkext-bookmark-addressbook-p bmk)
+        (addressbook-set-mail-buffer1 arg 'cc)
+        (bookmark-bmenu-this-window))))
 
 ;; Predicates --------------------------------------------------------
 
