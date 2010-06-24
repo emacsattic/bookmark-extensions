@@ -826,6 +826,11 @@ BOOKMARK is a bookmark name or a bookmark record."
       (bookmark-prop-get bookmark 'buffer)
       (error "Bookmark has no file or buffer name: %S" bookmark)))
 
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Set timestamp and visit
+;; Use also extra args
+;;
 (defun bookmark-make-record-default (&optional point-only pos read-only)
   "Return the record describing the location of a new bookmark.
 Must be at the correct position in the buffer in which the bookmark is
@@ -834,22 +839,25 @@ If POINT-ONLY is non-nil, then only return the subset of the
 record that pertains to the location within the buffer.
 If READ-ONLY is non-nil that's mean buffer is read-only and
 there is no need to record front/rear-context-string, position is enough."
-  `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
-    ,@(unless read-only `((front-context-string
-                           . ,(if (>= (- (point-max) (point))
-                                      bookmark-search-size)
-                                  (buffer-substring-no-properties
-                                   (point)
-                                   (+ (point) bookmark-search-size))
-                                  nil))))
-    ,@(unless read-only `((rear-context-string
-                           . ,(if (>= (- (point) (point-min))
-                                      bookmark-search-size)
-                                  (buffer-substring-no-properties
-                                   (point)
-                                   (- (point) bookmark-search-size))
-                                  nil))))
-    (position . ,(or pos (point)))))
+  (let ((ctime (float-time)))
+    `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
+        ,@(unless read-only `((front-context-string
+                               . ,(if (>= (- (point-max) (point))
+                                          bookmark-search-size)
+                                      (buffer-substring-no-properties
+                                       (point)
+                                       (+ (point) bookmark-search-size))
+                                      nil))))
+        ,@(unless read-only `((rear-context-string
+                               . ,(if (>= (- (point) (point-min))
+                                          bookmark-search-size)
+                                      (buffer-substring-no-properties
+                                       (point)
+                                       (- (point) bookmark-search-size))
+                                      nil))))
+        (visits . 0)
+        (time . ,ctime)
+        (position . ,(or pos (point))))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
