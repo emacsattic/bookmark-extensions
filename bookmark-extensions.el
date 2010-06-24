@@ -854,6 +854,31 @@ there is no need to record front/rear-context-string, position is enough."
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
+;; Update time and visit when jump
+;;
+(defun bookmark--jump-via (bookmark display-function)
+  "Handle BOOKMARK, then call DISPLAY-FUNCTION with current buffer as argument.
+Bookmark may be a bookmark name (a string) or a bookmark record.
+
+After calling DISPLAY-FUNCTION, set window point to the point specified
+by BOOKMARK, if necessary, run `bookmark-after-jump-hook', and then show
+any annotations for this bookmark."
+  (bmkext-update-time-and-increment-visits bookmark 'batch)
+  (bookmark-handle-bookmark bookmark)
+  (save-current-buffer
+    (funcall display-function (current-buffer)))
+  (let ((win (get-buffer-window (current-buffer) 0)))
+    (when win (set-window-point win (point))))
+  ;; FIXME: we used to only run bookmark-after-jump-hook in
+  ;; `bookmark-jump' itself, but in none of the other commands.
+  (run-hooks 'bookmark-after-jump-hook)
+  (when bookmark-automatically-show-annotations
+      ;; if there is an annotation for this bookmark,
+      ;; show it in a buffer.
+      (bookmark-show-annotation bookmark)))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
 ;; Added BATCH arg.
 ;;
 ;;;###autoload
