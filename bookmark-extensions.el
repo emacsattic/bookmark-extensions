@@ -1875,7 +1875,9 @@ BOOKMARK is a bookmark name or a bookmark record."
         (string= "org-remember-last-stored" bmk))))
 
 (defun bmkext-bookmark-addressbook-p (bookmark)
-  (string= (assoc-default 'type bookmark) "addressbook"))
+  (if (listp bookmark)
+      (string= (assoc-default 'type bookmark) "addressbook")
+      (string= (assoc-default 'type (car bookmark)) "addressbook")))
 
 ;; Filter Functions --------------------------------------------------
 
@@ -1954,6 +1956,7 @@ A new list is returned (no side effects)."
            (bmkext-w3m-bookmark-p bookmark)
            (bmkext-woman-man-bookmark-p bookmark)
            (bmkext-info-bookmark-p bookmark)
+           (bmkext-bookmark-addressbook-p bookmark)
            (and hide-remote (bmkext-remote-file-bookmark-p bookmark))))
    bookmark-alist))
 
