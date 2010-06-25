@@ -68,6 +68,7 @@ Special commands:
 
 
 (defun addressbook-set-mail-buffer1 (bookmark-name &optional append cc)
+  (bookmark-maybe-load-default-file)
   (let ((mail-list ())
         (mail-bufs (message-buffers)))
     (setq mail-list
@@ -87,7 +88,9 @@ Special commands:
     (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
            (switch-to-buffer-other-window
             (if (and mail-bufs (> (length mail-bufs) 1))
-                (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
+                (if (fboundp 'anything-comp-read)
+                    (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
+                    (completing-read "MailBuffer: " mail-bufs nil t))
                 (car mail-bufs))))
           ((or cc append)                 ; No mail buffer found create one.
            (compose-mail nil nil nil nil 'switch-to-buffer-other-window))
@@ -101,8 +104,10 @@ Special commands:
               (search-forward "Newsgroups: " nil t)))
       (end-of-line)
       (let ((email (if (> (length mail-list) 1)
-                       (anything-comp-read "Choose mail: "
-                                           mail-list :must-match t)
+                       (if (fboundp 'anything-comp-read)
+                           (anything-comp-read
+                            "Choose mail: " mail-list :must-match t)
+                           (completing-read "Choose mail: " mail-list nil t))
                        (car mail-list))))
         (if append
             (progn
@@ -125,6 +130,7 @@ Special commands:
 
 
 (when addressbook-anything-complete
+  (bookmark-maybe-load-default-file)
   (setq message-tab-body-function 'addressbook-message-complete)
   (setq message-completion-alist
         '(("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
@@ -248,6 +254,7 @@ Special commands:
       (bookmark-bmenu-check-position))))
 
 (defun addressbook-pp-info (name &optional append)
+  (bookmark-maybe-load-default-file)
   (let* ((data              (assoc name bookmark-alist))
          (buf               (get-buffer-create "*addressbook*"))
          (mail              (assoc-default 'email data))
