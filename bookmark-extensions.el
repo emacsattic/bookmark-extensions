@@ -1091,8 +1091,8 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
         (pop-up-windows t))
     (delete-other-windows)
     (switch-to-buffer (other-buffer))
-    (bookmark--jump-via bmrk 'pop-to-buffer))
-  (bury-buffer menu))
+    (bookmark--jump-via bmrk 'pop-to-buffer)
+    (bury-buffer menu)))
 
 (defun bookmark-bmenu-switch-other-window ()
   "Make the other window select this line's bookmark.
