@@ -76,8 +76,10 @@ Special commands:
                  (progn
                    (forward-line 0)
                    (if (search-forward "Mail: " (point-at-eol) t)
-                       (split-string
-                        (buffer-substring (point) (point-at-eol)) ", ")
+                       (progn
+                         (skip-chars-forward " " (point-at-eol))
+                         (split-string
+                          (buffer-substring (point) (point-at-eol)) ", "))
                        (error "Not on a mail entry"))))
                 ((eq major-mode 'bookmark-bmenu-mode)
                  (split-string
@@ -128,7 +130,7 @@ Special commands:
   (let ((bmk (bookmark-bmenu-bookmark)))
     (addressbook-set-mail-buffer1 bmk append 'cc)))
 
-
+;;; Completion in message buffer with TAB. (dependency: anything)
 (when addressbook-anything-complete
   (require 'anything-config)
   (bookmark-maybe-load-default-file)
