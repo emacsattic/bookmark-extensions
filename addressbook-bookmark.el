@@ -101,7 +101,13 @@ Special commands:
                        (anything-comp-read "Choose mail: "
                                            mail-list :must-match t)
                        (car mail-list))))
-        (if append (insert (concat ", " email)) (insert email))))
+        (if append
+            (progn
+              (message-next-header)
+              (forward-line -1)
+              (end-of-line)
+              (insert (concat ",\n    " email)))
+            (insert email))))
     (search-forward "Subject: ")))
 
 (defun addressbook-set-mail-buffer (append)
