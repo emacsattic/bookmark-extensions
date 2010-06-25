@@ -130,6 +130,7 @@ Special commands:
 
 
 (when addressbook-anything-complete
+  (require 'anything-config)
   (bookmark-maybe-load-default-file)
   (setq message-tab-body-function 'addressbook-message-complete)
   (setq message-completion-alist
@@ -143,20 +144,20 @@ Special commands:
            . addressbook-message-complete)))
 
   (defun addressbook-message-complete ()
-    (let* ((ls               (bmkext-addressbook-alist-only))
-           (case-fold-search nil)
-           (comp-ls          (loop for l in ls
-                                collect
-                                  (cons (car l) (assoc-default 'email l))))
-           (cand             (anything-comp-read
-                              "Name: " comp-ls
-                              :must-match t
-                              :initial-input (thing-at-point 'symbol)))
-           (cand-list        (split-string cand ", ")))
-      (while (not (looking-back ": " (point-at-bol))) (delete-char -1))
+    (let* ((ls        (bmkext-addressbook-alist-only))
+           (comp-ls   (loop for l in ls
+                         collect (cons (car l) (assoc-default 'email l))))
+           (cand      (anything-comp-read
+                       "Name: " comp-ls
+                       :must-match t
+                       :initial-input (thing-at-point 'symbol)))
+           (cand-list (split-string cand ", ")))
+      (end-of-line)
+      (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
       (insert (if (> (length cand-list) 1)
                   (anything-comp-read "WhichMail: " cand-list :must-match t)
-                  (car cand-list))))))
+                  (car cand-list)))
+      (goto-char (point-min)) (search-forward "Subject: " nil t))))
 
 (defun addressbook-bookmark-make-entry (name email phone
                                         web street zipcode city)
