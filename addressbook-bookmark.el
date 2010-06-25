@@ -190,7 +190,7 @@ Special commands:
 
 (defun addressbook-bookmark-set ()
   (interactive)
-  (let ((count   0))
+  (let ((count 0))
     (labels
         ((record ()
            (let ((name    (read-string "Name: "))
@@ -205,7 +205,8 @@ Special commands:
              (let ((old-entry (assoc name bookmark-alist))
                    (new-entry (addressbook-bookmark-make-entry
                                name email phone web street zipcode city))) 
-               (if (and old-entry (string= (assoc-default 'type old-entry) "addressbook"))
+               (if (and old-entry
+                        (string= (assoc-default 'type old-entry) "addressbook"))
                    (setf (cdr old-entry)
                          (cdr (addressbook-bookmark-make-entry
                                name email phone web street zipcode city)))

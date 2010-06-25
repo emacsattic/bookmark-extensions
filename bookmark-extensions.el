@@ -88,6 +88,7 @@
 ;; `bmkext-bmenu-toggle-marks'
 ;; `bmkext-addressbook-set-mail-buffer'
 ;; `bmkext-addressbook-set-mail-buffer-and-cc'
+;; `bmkext-addressbook-send-to-marked'
 ;; `bmkext-bmenu-list-only-firefox-bookmarks'
 ;; `bmkext-bmenu-refresh-delicious'
 ;; `bmkext-bmenu-delicious'
@@ -118,6 +119,8 @@
 ;; `bookmark-delete'
 ;; `bookmark-bmenu-list'
 ;; `bookmark-bmenu-other-window'
+;; `bookmark-bmenu-2-window'
+;; `bookmark-bmenu-switch-other-window'
 ;; `bookmark-bmenu-execute-deletions'
 ;; `bookmark-bmenu-rename'
 
@@ -174,7 +177,6 @@
 ;; `bmkext-bmenu-unmark-all-1'
 ;; `bmkext-bmenu-unmark-all-2'
 ;; `bmkext-count-marked'
-;; `bmkext-addressbook-send-to-marked'
 ;; `bmkext-gnus-bookmark-p'
 ;; `bmkext-w3m-bookmark-p'
 ;; `bmkext-info-bookmark-p'
@@ -1072,14 +1074,35 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Use `pop-to-buffer', not `switch-to-buffer-other-window'.
-;;
+;; Don't let--bind `bookmark-automatically-show-annotations'
+;; in next 3 functions.
 (defun bookmark-bmenu-other-window ()
   "Select this line's bookmark in other window, leaving bookmark menu visible."
   (interactive)
   (let ((bookmark  (bookmark-bmenu-bookmark)))
     (when (bookmark-bmenu-check-position)
-      (let ((bookmark-automatically-show-annotations  t)) ;FIXME: needed?
-        (bookmark--jump-via bookmark 'pop-to-buffer)))))
+      (bookmark--jump-via bookmark 'pop-to-buffer))))
+
+(defun bookmark-bmenu-2-window ()
+  "Select this line's bookmark, with previous buffer in second window."
+  (interactive)
+  (let ((bmrk (bookmark-bmenu-bookmark))
+        (menu (current-buffer))
+        (pop-up-windows t))
+    (delete-other-windows)
+    (switch-to-buffer (other-buffer))
+    (bookmark--jump-via bmrk 'pop-to-buffer))
+  (bury-buffer menu))
+
+(defun bookmark-bmenu-switch-other-window ()
+  "Make the other window select this line's bookmark.
+The current window remains selected."
+  (interactive)
+  (let ((bookmark (bookmark-bmenu-bookmark))
+        (pop-up-windows t)
+        same-window-buffer-names
+        same-window-regexps)
+    (bookmark--jump-via bookmark 'display-buffer)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
