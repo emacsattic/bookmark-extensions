@@ -42,6 +42,9 @@
 (require 'derived)
 (require 'bookmark-extensions)
 
+(defvar addressbook-anything-complete t
+  "*Use anything completion in message buffer.")
+
 (defvar addressbook-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'addressbook-quit)
@@ -120,6 +123,34 @@ Special commands:
   (let ((bmk (bookmark-bmenu-bookmark)))
     (addressbook-set-mail-buffer1 bmk append 'cc)))
 
+
+(when addressbook-anything-complete
+  (setq message-tab-body-function 'addressbook-message-complete)
+  (setq message-completion-alist
+        '(("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
+           . addressbook-message-complete)
+          ("^\\(Resent-\\)?\\(To\\|B?Cc\\):"
+           . addressbook-message-complete)
+          ("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
+           . addressbook-message-complete)
+          ("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
+           . addressbook-message-complete)))
+
+  (defun addressbook-message-complete ()
+    (let* ((ls               (bmkext-addressbook-alist-only))
+           (case-fold-search nil)
+           (comp-ls          (loop for l in ls
+                                collect
+                                  (cons (car l) (assoc-default 'email l))))
+           (cand             (anything-comp-read
+                              "Name: " comp-ls
+                              :must-match t
+                              :initial-input (thing-at-point 'symbol)))
+           (cand-list        (split-string cand ", ")))
+      (while (not (looking-back ": " (point-at-bol))) (delete-char -1))
+      (insert (if (> (length cand-list) 1)
+                  (anything-comp-read "WhichMail: " cand-list :must-match t)
+                  (car cand-list))))))
 
 (defun addressbook-bookmark-make-entry (name email phone
                                         web street zipcode city)
