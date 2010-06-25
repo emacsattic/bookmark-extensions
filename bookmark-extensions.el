@@ -1781,7 +1781,8 @@ If MARK is non--nil unmark only bookmarks with flag >."
   (let ((bmk (bookmark-bmenu-bookmark))) 
     (if (bmkext-bookmark-addressbook-p bmk)
         (addressbook-set-mail-buffer1 bmk arg)
-        (bookmark-bmenu-this-window))))
+        (bookmark-bmenu-this-window))
+    (bmkext-update-time-and-increment-visits bmk 'batch)))
 
 ;;;###autoload
 (defun bmkext-addressbook-set-mail-buffer-and-cc (arg)
@@ -1789,7 +1790,8 @@ If MARK is non--nil unmark only bookmarks with flag >."
   (let ((bmk (bookmark-bmenu-bookmark)))
     (if (bmkext-bookmark-addressbook-p bmk)
         (addressbook-set-mail-buffer1 bmk arg 'cc)
-        (bookmark-bmenu-this-window))))
+        (bookmark-bmenu-this-window))
+    (bmkext-update-time-and-increment-visits bmk 'batch)))
 
 ;;;###autoload
 (defun bmkext-addressbook-send-to-marked ()
@@ -1800,11 +1802,13 @@ If MARK is non--nil unmark only bookmarks with flag >."
       (when (bmkext-bookmark-addressbook-p (car ls))
         (save-window-excursion
           (addressbook-set-mail-buffer1 (car ls))
+          (bmkext-update-time-and-increment-visits (car ls) 'batch)
           (setq buf (current-buffer))))
       (loop for bmk in (cdr ls)
          when (bmkext-bookmark-addressbook-p bmk)
          do (save-window-excursion
-              (addressbook-set-mail-buffer1 bmk 'append)))
+              (addressbook-set-mail-buffer1 bmk 'append)
+              (bmkext-update-time-and-increment-visits bmk 'batch)))
       (switch-to-buffer-other-window buf))))
 
 ;; Predicates --------------------------------------------------------
