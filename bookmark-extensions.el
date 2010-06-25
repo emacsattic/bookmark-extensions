@@ -174,6 +174,7 @@
 ;; `bmkext-bmenu-unmark-all-1'
 ;; `bmkext-bmenu-unmark-all-2'
 ;; `bmkext-count-marked'
+;; `bmkext-addressbook-send-to-marked'
 ;; `bmkext-gnus-bookmark-p'
 ;; `bmkext-w3m-bookmark-p'
 ;; `bmkext-info-bookmark-p'
@@ -235,6 +236,7 @@
 ;; `bookmark-get-bookmark'
 ;; `bookmark-location'
 ;; `bookmark-make-record-default'
+;; `bookmark--jump-via'
 ;; `bookmark-bmenu-surreptitiously-rebuild-list'
 ;; `bookmark-bmenu-hide-filenames'
 
@@ -391,6 +393,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "C-c f c") 'bmkext-addressbook-set-mail-buffer-and-cc)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "C-c f a") 'bmkext-addressbook-send-to-marked)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-V" 'bmkext-bmenu-sort-by-visit-frequency)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\S-T" 'bmkext-bmenu-sort-by-last-time-visited)
@@ -434,6 +438,7 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-list-only-addressbook-bookmarks]\t- List only addressbook entries
 \\[bmkext-addressbook-set-mail-buffer]\t- Set a mail buffer for this bookmark
 \\[bmkext-addressbook-set-mail-buffer-and-cc]\t- Set a mail buffer with a cc field for this bookmark
+\\[bmkext-addressbook-send-to-marked]\t- Send mail to all marked addressbook bookmarks
 \\[bmkext-bmenu-delicious]\t- List only Delicious bookmarks (`C-u' refresh list from delicious server)
 \\[bookmark-bmenu-this-window]\t- If bookmark is an URL C-u jump to external browser
 \\[bmkext-bmenu-regexp-mark]\t- Mark bookmarks that match a regexp
@@ -1768,21 +1773,39 @@ If MARK is non--nil unmark only bookmarks with flag >."
           (bmkext-bmenu-mark-all-bookmarks)))
     (bmkext-count-marked)))
 
+;;; Addressbook
+
 ;;;###autoload
 (defun bmkext-addressbook-set-mail-buffer (arg)
   (interactive "P")
-  (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
+  (let ((bmk (bookmark-bmenu-bookmark))) 
     (if (bmkext-bookmark-addressbook-p bmk)
-        (addressbook-set-mail-buffer1 arg)
+        (addressbook-set-mail-buffer1 bmk arg)
         (bookmark-bmenu-this-window))))
 
 ;;;###autoload
 (defun bmkext-addressbook-set-mail-buffer-and-cc (arg)
   (interactive "P")
-  (let ((bmk (assoc (bookmark-bmenu-bookmark) bookmark-alist)))
+  (let ((bmk (bookmark-bmenu-bookmark)))
     (if (bmkext-bookmark-addressbook-p bmk)
-        (addressbook-set-mail-buffer1 arg 'cc)
+        (addressbook-set-mail-buffer1 bmk arg 'cc)
         (bookmark-bmenu-this-window))))
+
+;;;###autoload
+(defun bmkext-addressbook-send-to-marked ()
+  (interactive)
+  (when bmkext-bookmark-marked-list
+    (let ((ls (reverse bmkext-bookmark-marked-list))
+          buf)
+      (when (bmkext-bookmark-addressbook-p (car ls))
+        (save-window-excursion
+          (addressbook-set-mail-buffer1 (car ls))
+          (setq buf (current-buffer))))
+      (loop for bmk in (cdr ls)
+         when (bmkext-bookmark-addressbook-p bmk)
+         do (save-window-excursion
+              (addressbook-set-mail-buffer1 bmk 'append)))
+      (switch-to-buffer-other-window buf))))
 
 ;; Predicates --------------------------------------------------------
 
@@ -1877,7 +1900,8 @@ BOOKMARK is a bookmark name or a bookmark record."
 (defun bmkext-bookmark-addressbook-p (bookmark)
   (if (listp bookmark)
       (string= (assoc-default 'type bookmark) "addressbook")
-      (string= (assoc-default 'type (car bookmark)) "addressbook")))
+      (string= (assoc-default
+                'type (assoc bookmark bookmark-alist)) "addressbook")))
 
 ;; Filter Functions --------------------------------------------------
 

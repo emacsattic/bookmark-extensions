@@ -63,18 +63,8 @@ Special commands:
   (with-current-buffer "*addressbook*"
     (quit-window)))
 
-;; (defun addressbook-message-buffer
-;; (let (buffers)
-;;   (save-excursion
-;;     (dolist (buffer (buffer-list t))
-;;       (set-buffer buffer)
-;;       (when (eq major-mode 'mail-mode)
-;;         (push (buffer-name buffer) buffers))))
-;;   (nreverse buffers)))
 
-;; Use ==> (message-buffers) to get mail/news buffers.
-
-(defun addressbook-set-mail-buffer1 (&optional append cc)
+(defun addressbook-set-mail-buffer1 (bookmark-name &optional append cc)
   (let ((mail-list ())
         (mail-bufs (message-buffers)))
     (setq mail-list
@@ -89,7 +79,7 @@ Special commands:
                  (split-string
                   (assoc-default
                    'email
-                   (assoc (bookmark-bmenu-bookmark) bookmark-alist)) ", "))
+                   (assoc bookmark-name bookmark-alist)) ", "))
                 (t (error "Command not available from here"))))
     (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
            (switch-to-buffer-other-window
@@ -116,11 +106,14 @@ Special commands:
 
 (defun addressbook-set-mail-buffer (append)
   (interactive "P")
-  (addressbook-set-mail-buffer1 append))
+  (let ((bmk (bookmark-bmenu-bookmark)))
+    (addressbook-set-mail-buffer1 bmk append)))
 
 (defun addressbook-set-mail-buffer-and-cc (append)
   (interactive "P")
-  (addressbook-set-mail-buffer1 append 'cc))
+  (let ((bmk (bookmark-bmenu-bookmark)))
+    (addressbook-set-mail-buffer1 bmk append 'cc)))
+
 
 (defun addressbook-bookmark-make-entry (name email phone
                                         web street zipcode city)
@@ -255,7 +248,7 @@ Special commands:
                         " " zipcode "\n"))
             (if (string= city "") ""
                 (concat (propertize "City:" 'face '((:underline t)))
-                             "    " city "\n"))
+                        "    " city "\n"))
             "-----\n")
     (addressbook-mode)
     (setq buffer-read-only t)))
