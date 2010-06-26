@@ -1507,6 +1507,8 @@ If a prefix arg is given search in the whole `bookmark-alist'."
   (setq bmkext-bookmark-marked-list nil)
   (setq bmkext-bmenu-before-hide-marked-list nil)
   (setq bmkext-bmenu-before-hide-unmarked-list nil)
+  (when (get-buffer "*Bookmark Annotation*")
+    (kill-buffer "*Bookmark Annotation*"))
   (quit-window))
 
 ;;; Filters *-bmenu-* commands
