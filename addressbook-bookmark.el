@@ -41,6 +41,7 @@
 (eval-when-compile (require 'cl))
 (require 'derived)
 (require 'bookmark-extensions)
+(require 'message)
 
 (defvar addressbook-anything-complete t
   "*Use anything completion in message buffer.")
@@ -72,21 +73,21 @@ Special commands:
   (let ((mail-list ())
         (mail-bufs (message-buffers)))
     (setq mail-list
-          (cond ((eq major-mode 'addressbook-mode)
-                 (progn
-                   (forward-line 0)
-                   (if (search-forward "Mail: " (point-at-eol) t)
-                       (progn
-                         (skip-chars-forward " " (point-at-eol))
-                         (split-string
-                          (buffer-substring (point) (point-at-eol)) ", "))
-                       (error "Not on a mail entry"))))
-                ((eq major-mode 'bookmark-bmenu-mode)
-                 (split-string
-                  (assoc-default
-                   'email
-                   (assoc bookmark-name bookmark-alist)) ", "))
-                (t (error "Command not available from here"))))
+          (if (eq major-mode 'addressbook-mode)
+              (progn
+                (forward-line 0)
+                (if (search-forward "Mail: " (point-at-eol) t)
+                    (progn
+                      (skip-chars-forward " " (point-at-eol))
+                      (split-string
+                       (buffer-substring (point) (point-at-eol)) ", "))
+                    (error "Not on a mail entry")))
+                ;((eq major-mode 'bookmark-bmenu-mode)
+              (split-string
+               (assoc-default
+                'email
+                (assoc bookmark-name bookmark-alist)) ", ")))
+                ;(t (error "Command not available from here"))))
     (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
            (switch-to-buffer-other-window
             (if (and mail-bufs (> (length mail-bufs) 1))
