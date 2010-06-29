@@ -165,10 +165,10 @@ Special commands:
       (goto-char (point-min)) (search-forward "Subject: " nil t))))
 
 (defun addressbook-bookmark-make-entry (name email phone
-                                        web street zipcode city)
+                                        web street zipcode city &optional nvisit)
   "Build an addressbook bookmark entry."
   `(,name
-    ,@(bookmark-make-record-default 'point-only 0 'read-only)
+    ,@(bookmark-make-record-default 'point-only 0 'read-only nvisit)
     (type . "addressbook")
     (location . "Addressbook entry")
     (email . ,email)
@@ -234,6 +234,7 @@ Special commands:
          (old-street  (assoc-default 'street bookmark))
          (old-zipcode (assoc-default 'zipcode bookmark))
          (old-city    (assoc-default 'city bookmark))
+         (old-visit   (assoc-default 'visits bookmark))
          (name        (read-string "Name: " old-name))
          (mail        (read-string "Mail: " old-mail))
          (phone       (read-string "Phone: " old-phone))
@@ -242,7 +243,8 @@ Special commands:
          (zipcode     (read-string "Zipcode: " old-zipcode))
          (city        (read-string "City: " old-city))
          (new-entry   (addressbook-bookmark-make-entry
-                     name mail phone web street zipcode city)))
+                       name mail phone web street
+                       zipcode city old-visit)))
     (when (y-or-n-p "Save changes? ")
       (setcar bookmark name)
       (setcdr bookmark (cdr new-entry))

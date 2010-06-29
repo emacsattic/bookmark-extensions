@@ -838,7 +838,8 @@ BOOKMARK is a bookmark name or a bookmark record."
 ;; Set timestamp and visit
 ;; Use also extra args
 ;;
-(defun bookmark-make-record-default (&optional point-only pos read-only)
+(defun bookmark-make-record-default (&optional point-only pos
+                                     read-only visit-number)
   "Return the record describing the location of a new bookmark.
 Must be at the correct position in the buffer in which the bookmark is
 being set.
@@ -846,7 +847,8 @@ If POINT-ONLY is non-nil, then only return the subset of the
 record that pertains to the location within the buffer.
 If READ-ONLY is non-nil that's mean buffer is read-only and
 there is no need to record front/rear-context-string, position is enough."
-  (let ((ctime (float-time)))
+  (let ((ctime (float-time))
+        (nvisits (or visit-number 0)))
     `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
         ,@(unless read-only `((front-context-string
                                . ,(if (>= (- (point-max) (point))
@@ -862,7 +864,7 @@ there is no need to record front/rear-context-string, position is enough."
                                        (point)
                                        (- (point) bookmark-search-size))
                                       nil))))
-        (visits . 0)
+        (visits . ,nvisits)
         (time . ,ctime)
         (position . ,(or pos (point))))))
 
