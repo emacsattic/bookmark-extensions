@@ -63,12 +63,14 @@ Special commands:
 \\{addressbook-mode-map}")
 
 (defun addressbook-quit ()
+  "Quit addressbook buffer."
   (interactive)
   (with-current-buffer "*addressbook*"
     (quit-window)))
 
 
-(defun addressbook-set-mail-buffer1 (bookmark-name &optional append cc)
+(defun addressbook-set-mail-buffer1 (&optional bookmark-name append cc)
+  "Setup a mail buffer with BOOKMARK-NAME email using `message-mode'."
   (bookmark-maybe-load-default-file)
   (let ((mail-list ())
         (mail-bufs (message-buffers)))
@@ -82,12 +84,10 @@ Special commands:
                       (split-string
                        (buffer-substring (point) (point-at-eol)) ", "))
                     (error "Not on a mail entry")))
-                ;((eq major-mode 'bookmark-bmenu-mode)
               (split-string
                (assoc-default
                 'email
                 (assoc bookmark-name bookmark-alist)) ", ")))
-                ;(t (error "Command not available from here"))))
     (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
            (switch-to-buffer-other-window
             (if (and mail-bufs (> (length mail-bufs) 1))
@@ -122,14 +122,14 @@ Special commands:
     (search-forward "Subject: ")))
 
 (defun addressbook-set-mail-buffer (append)
+  "Prepare email buffer with `message-mode' from addressbook buffer."
   (interactive "P")
-  (let ((bmk (bookmark-bmenu-bookmark)))
-    (addressbook-set-mail-buffer1 bmk append)))
+  (addressbook-set-mail-buffer1 nil append))
 
 (defun addressbook-set-mail-buffer-and-cc (append)
+  "Add a cc field to a mail buffer for this bookmark."
   (interactive "P")
-  (let ((bmk (bookmark-bmenu-bookmark)))
-    (addressbook-set-mail-buffer1 bmk append 'cc)))
+  (addressbook-set-mail-buffer1 nil append 'cc))
 
 ;;; Completion in message buffer with TAB. (dependency: anything)
 (when addressbook-anything-complete
@@ -147,6 +147,7 @@ Special commands:
            . addressbook-message-complete)))
 
   (defun addressbook-message-complete ()
+    "Provide addressbook completion for `message-mode'."
     (let* ((ls        (bmkext-addressbook-alist-only))
            (comp-ls   (loop for l in ls
                          collect (cons (car l) (assoc-default 'email l))))
@@ -164,6 +165,7 @@ Special commands:
 
 (defun addressbook-bookmark-make-entry (name email phone
                                         web street zipcode city)
+  "Build an addressbook bookmark entry."
   `(,name
     ,@(bookmark-make-record-default 'point-only 0 'read-only)
     (type . "addressbook")
@@ -190,6 +192,7 @@ Special commands:
 
 
 (defun addressbook-bookmark-set ()
+  "Record addressbook bookmark entries interactively."
   (interactive)
   (let ((count 0))
     (labels
@@ -222,6 +225,7 @@ Special commands:
 
   
 (defun addressbook-bookmark-edit (bookmark)
+  "Edit an addressbook bookmark entry."
   (let* ((old-name    (car bookmark))
          (old-mail    (assoc-default 'email bookmark))
          (old-phone   (assoc-default 'phone bookmark))
@@ -246,6 +250,7 @@ Special commands:
 
 
 (defun addressbook-bmenu-edit ()
+  "Edit an addresbook bookmark entry from bmenu list."
   (interactive)
   (let* ((name      (bookmark-bmenu-bookmark))
          (bmk       (assoc name bookmark-alist))
@@ -259,6 +264,7 @@ Special commands:
       (bookmark-bmenu-check-position))))
 
 (defun addressbook-pp-info (name &optional append)
+  "Print addressbook entries to an addressbook buffer."
   (bookmark-maybe-load-default-file)
   (let* ((data              (assoc name bookmark-alist))
          (buf               (get-buffer-create "*addressbook*"))
@@ -303,6 +309,7 @@ Special commands:
     (setq buffer-read-only t)))
 
 (defun addressbook-bookmark-jump (bookmark)
+  "Default handler to jump to an addressbook bookmark."
   (let ((buf (save-window-excursion
                (if current-prefix-arg
                    (addressbook-pp-info (car bookmark) 'append)
