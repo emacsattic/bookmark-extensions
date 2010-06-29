@@ -53,6 +53,7 @@
     (define-key map (kbd "C-c C-c") 'addressbook-set-mail-buffer)
     (define-key map (kbd "C-c f c") 'addressbook-set-mail-buffer-and-cc)
     (define-key map (kbd "r") 'addressbook-bookmark-set)
+    (define-key map (kbd "C-c g m") 'addressbook-google-map)
     map))
 
 (define-derived-mode addressbook-mode
@@ -307,6 +308,27 @@ Special commands:
             "-----\n")
     (addressbook-mode)
     (setq buffer-read-only t)))
+
+(defun addressbook-get-contact-data ()
+  "Get bookmark entry of contact at point in addressbook buffer."
+  (with-current-buffer "*addressbook*"
+    (search-backward "-----" nil t)
+    (search-forward "Name: " nil t)
+    (skip-chars-forward " " (point-at-eol))
+    (assoc (buffer-substring (point) (point-at-eol)) bookmark-alist)))
+
+(defun addressbook-google-map ()
+  (interactive)
+  (if (fboundp 'google-maps)
+      (let* ((bmk (addressbook-get-contact-data))
+             (street (assoc-default 'street bmk))
+             (zipcode (assoc-default 'zipcode bmk))
+             (city (assoc-default 'city bmk))
+             (loc (concat street " " zipcode " " city)))
+        (if loc
+            (google-maps loc)
+            (message "No address known for this contact")))
+      (message "Google maps not available.")))
 
 (defun addressbook-bookmark-jump (bookmark)
   "Default handler to jump to an addressbook bookmark."
