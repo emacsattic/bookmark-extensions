@@ -245,10 +245,7 @@ Special commands:
          (street         (read-string "Street: " old-street))
          (zipcode        (read-string "Zipcode: " old-zipcode))
          (city           (read-string "City: " old-city))
-         (image-path     (if (fboundp 'anything-c-read-file-name)
-                             (anything-c-read-file-name
-                              "Image path: " :initial-input old-image-path)
-                             (read-file-name "Image path: " nil old-image-path)))
+         (image-path     (read-string "Image path: " old-image-path))
          (new-entry      (addressbook-bookmark-make-entry
                        name mail phone web street
                        zipcode city image-path old-visit)))
