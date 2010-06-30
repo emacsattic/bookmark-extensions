@@ -165,12 +165,13 @@ Special commands:
       (goto-char (point-min)) (search-forward "Subject: " nil t))))
 
 (defun addressbook-bookmark-make-entry (name email phone
-                                        web street zipcode city &optional nvisit)
+                                        web street zipcode city image-path &optional nvisit)
   "Build an addressbook bookmark entry."
   `(,name
     ,@(bookmark-make-record-default 'point-only 0 'read-only nvisit)
     (type . "addressbook")
     (location . "Addressbook entry")
+    (image . ,image-path)
     (email . ,email)
     (phone . ,phone)
     (web . ,web)
@@ -204,17 +205,18 @@ Special commands:
                  (web     (addressbook-read-name "Web: "))
                  (street  (read-string "Street: "))
                  (zipcode (read-string "Zipcode: "))
-                 (city    (read-string "City: ")))
+                 (city    (read-string "City: "))
+                 (image-path (read-string "Image path: ")))
                
              (bookmark-maybe-load-default-file)
              (let ((old-entry (assoc name bookmark-alist))
                    (new-entry (addressbook-bookmark-make-entry
-                               name email phone web street zipcode city))) 
+                               name email phone web street zipcode city image-path))) 
                (if (and old-entry
                         (string= (assoc-default 'type old-entry) "addressbook"))
                    (setf (cdr old-entry)
                          (cdr (addressbook-bookmark-make-entry
-                               name email phone web street zipcode city)))
+                               name email phone web street zipcode city image-path)))
                    (push new-entry bookmark-alist)))
              (bookmark-bmenu-surreptitiously-rebuild-list)
              (bmkext-maybe-save-bookmark)
@@ -235,6 +237,7 @@ Special commands:
          (old-zipcode (assoc-default 'zipcode bookmark))
          (old-city    (assoc-default 'city bookmark))
          (old-visit   (assoc-default 'visits bookmark))
+         (old-image-path (assoc-default 'image bookmark))
          (name        (read-string "Name: " old-name))
          (mail        (read-string "Mail: " old-mail))
          (phone       (read-string "Phone: " old-phone))
@@ -242,9 +245,10 @@ Special commands:
          (street      (read-string "Street: " old-street))
          (zipcode     (read-string "Zipcode: " old-zipcode))
          (city        (read-string "City: " old-city))
+         (image-path  (read-string "Image path: "))
          (new-entry   (addressbook-bookmark-make-entry
                        name mail phone web street
-                       zipcode city old-visit)))
+                       zipcode city image-path old-visit)))
     (when (y-or-n-p "Save changes? ")
       (setcar bookmark name)
       (setcdr bookmark (cdr new-entry))
@@ -277,6 +281,10 @@ Special commands:
          (street            (assoc-default 'street data))
          (zipcode           (assoc-default 'zipcode data))
          (city              (assoc-default 'city data))
+         (image-path        (assoc-default 'image data))
+         (image             (unless (or (not image-path)
+                                        (string= image-path ""))
+                              (create-image image-path)))
          (inhibit-read-only t))
     (set-buffer buf)
     (if append
@@ -290,7 +298,9 @@ Special commands:
     ;; Dont append entry if already there.
     (unless (save-excursion (goto-char (point-min)) (search-forward name nil t))
       (insert (concat (propertize "Name:" 'face '((:underline t)))
-                      "    " name "\n")
+                      "    " name))
+      (when image (insert-image image))
+      (insert "\n"
               (if (string= mail "") ""
                   (concat (propertize "Mail:" 'face '((:underline t)))
                           "    " mail "\n"))
@@ -319,7 +329,10 @@ Special commands:
     (search-backward "-----" nil t)
     (search-forward "Name: " nil t)
     (skip-chars-forward " " (point-at-eol))
-    (assoc (buffer-substring (point) (point-at-eol)) bookmark-alist)))
+    (assoc
+     (replace-regexp-in-string ; For entry with image.
+      " $" "" (buffer-substring (point) (point-at-eol)))
+     bookmark-alist)))
 
 (defun addressbook-google-map ()
   "Show a google map for this address.
