@@ -287,29 +287,31 @@ Special commands:
           (insert (propertize (format "Addressbook %s" user)
                               'face '((:foreground "green" :underline t)))
                   "\n\n-----\n")))
-    (insert (concat (propertize "Name:" 'face '((:underline t)))
-                    "    " name "\n")
-            (if (string= mail "") ""
-                (concat (propertize "Mail:" 'face '((:underline t)))
-                        "    " mail "\n"))
-            (if (string= phone "") ""
-                (concat (propertize "Phone:" 'face '((:underline t)))
-                        "   " phone "\n"))
-            (if (string= web "") ""
-                (concat (propertize "Web:" 'face '((:underline t)))
-                        "     " web "\n"))
-            (if (string= street "") ""
-                (concat (propertize "Street:" 'face '((:underline t)))
-                        "  " street "\n"))
-            (if (string= zipcode "") ""
-                (concat (propertize "Zipcode:" 'face '((:underline t)))
-                        " " zipcode "\n"))
-            (if (string= city "") ""
-                (concat (propertize "City:" 'face '((:underline t)))
-                        "    " city "\n"))
-            "-----\n")
-    (addressbook-mode)
-    (setq buffer-read-only t)))
+    ;; Dont append entry if already there.
+    (unless (save-excursion (goto-char (point-min)) (search-forward name nil t))
+      (insert (concat (propertize "Name:" 'face '((:underline t)))
+                      "    " name "\n")
+              (if (string= mail "") ""
+                  (concat (propertize "Mail:" 'face '((:underline t)))
+                          "    " mail "\n"))
+              (if (string= phone "") ""
+                  (concat (propertize "Phone:" 'face '((:underline t)))
+                          "   " phone "\n"))
+              (if (string= web "") ""
+                  (concat (propertize "Web:" 'face '((:underline t)))
+                          "     " web "\n"))
+              (if (string= street "") ""
+                  (concat (propertize "Street:" 'face '((:underline t)))
+                          "  " street "\n"))
+              (if (string= zipcode "") ""
+                  (concat (propertize "Zipcode:" 'face '((:underline t)))
+                          " " zipcode "\n"))
+              (if (string= city "") ""
+                  (concat (propertize "City:" 'face '((:underline t)))
+                          "    " city "\n"))
+              "-----\n")
+      (addressbook-mode)
+      (setq buffer-read-only t))))
 
 (defun addressbook-get-contact-data ()
   "Get bookmark entry of contact at point in addressbook buffer."
