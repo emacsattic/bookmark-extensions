@@ -335,13 +335,13 @@ Special commands:
       " $" "" (buffer-substring (point) (point-at-eol)))
      bookmark-alist)))
 
-(defun addressbook-google-map ()
+(defun addressbook-google-map (&optional bookmark)
   "Show a google map for this address.
 This use `google-maps' you can find here:
 http://julien.danjou.info/google-maps-el.html."
   (interactive)
   (if (fboundp 'google-maps)
-      (let* ((bmk (addressbook-get-contact-data))
+      (let* ((bmk (or bookmark (addressbook-get-contact-data)))
              (street (assoc-default 'street bmk))
              (zipcode (assoc-default 'zipcode bmk))
              (city (assoc-default 'city bmk)))
