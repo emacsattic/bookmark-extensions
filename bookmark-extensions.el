@@ -129,7 +129,6 @@
 ;; `bmkext-save-new-location-flag'
 ;; `bmkext-su-or-sudo-regexp'
 ;; `bmkext-w3m-allow-multi-tabs'
-;; `bmkext-show-end-of-region'
 ;; `bmkext-bookmark-name-length-max'
 ;; `bmkext-bmenu-sort-function'
 ;; `bmkext-search-prompt'
@@ -146,8 +145,7 @@
 ;; `bmkext-gnus'
 ;; `bmkext-info'
 ;; `bmkext-local-directory'
-;; `bmkext-local-file-with-region'
-;; `bmkext-local-file-without-region'
+;; `bmkext-local-file'
 ;; `bmkext-non-file'
 ;; `bmkext-remote-file'
 ;; `bmkext-su-or-sudo'
@@ -473,12 +471,7 @@ bookmarks (`C-u' for local only)
   "*Face used for a bookmarked local directory."
   :group 'bmkext)
 
-(defface bmkext-local-file-with-region
-    '((t (:foreground "Indianred2")))
-  "*Face used for a region bookmark in a local file."
-  :group 'bmkext)
-
-(defface bmkext-local-file-without-region
+(defface bmkext-local-file
     '((t (:foreground "Deepskyblue2")))
   "*Face used for a bookmarked local file (without a region)."
   :group 'bmkext)
@@ -532,11 +525,6 @@ as part of the bookmark definition."
 
 (defcustom bmkext-w3m-allow-multi-tabs t
   "*Non-nil means jump to W3m bookmarks in a new session."
-  :type 'boolean :group 'bmkext)
-
-(defcustom bmkext-show-end-of-region t
-  "*Show end of region with `exchange-point-and-mark' when activating a region.
-If nil show only beginning of region."
   :type 'boolean :group 'bmkext)
 
 (defcustom bmkext-bookmark-name-length-max 70
@@ -1494,9 +1482,9 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            ((and isfile (file-directory-p isfile)) ; Local directory
             `(mouse-face highlight follow-link t face bmkext-local-directory
                          help-echo (format "mouse-2 Goto dired: %s",isfile)))
-           ((and isfile (file-exists-p isfile)) ; Local file without region
+           ((and isfile (file-exists-p isfile)) ; Local file
             `(mouse-face highlight follow-link t face
-                         bmkext-local-file-without-region
+                         bmkext-local-file
                          help-echo (format "mouse-2 Goto file: %s",isfile)))
            ((and isbuf (if isfile (not (file-exists-p isfile)) (not isfile))) ; No filename
             `(mouse-face highlight follow-link t face bmkext-non-file

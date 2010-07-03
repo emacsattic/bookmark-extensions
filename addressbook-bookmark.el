@@ -341,10 +341,10 @@ This use `google-maps' you can find here:
 http://julien.danjou.info/google-maps-el.html."
   (interactive)
   (if (fboundp 'google-maps)
-      (let* ((bmk (or bookmark (addressbook-get-contact-data)))
-             (street (assoc-default 'street bmk))
+      (let* ((bmk     (or bookmark (addressbook-get-contact-data)))
+             (street  (assoc-default 'street bmk))
              (zipcode (assoc-default 'zipcode bmk))
-             (city (assoc-default 'city bmk)))
+             (city    (assoc-default 'city bmk)))
         (if (not (string= city "")) ; We need at least a city name.
             (google-maps (concat street " " zipcode " " city))
             (message "No address known for this contact")))
