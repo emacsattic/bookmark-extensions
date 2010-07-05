@@ -236,29 +236,33 @@ Special commands:
   (interactive)
   (let* ((data (aref (gnus-summary-article-header
                       (cdr gnus-article-current)) 2))
-         (name (when (string-match "^.* \<" data)
-                 (replace-regexp-in-string
-                  " \<\\|\>" "" (match-string 0 data))))
-         (mail (when (string-match "\<.*\>$" data)
-                 (replace-regexp-in-string
-                  "\<\\|\>" "" (match-string 0 data))))
+         (name (read-string "Name: "
+                            (when (and data (string-match "^.* \<" data))
+                              (replace-regexp-in-string
+                               " \<\\|\>" "" (match-string 0 data)))))
+         (mail (if (and data (string-match "\<.*\>$" data))
+                   (replace-regexp-in-string
+                    "\<\\|\>" "" (match-string 0 data))
+                   data))
          (old-entry (assoc name bookmark-alist))
          (new-entry (addressbook-bookmark-make-entry
                      name mail "" "" "" "" "" "")))
-    (if (and old-entry
-             (string= (assoc-default 'type old-entry) "addressbook"))
-        (let* ((old-mail-ls (split-string (assoc-default 'email old-entry) ", "))
-               (new-mail-ls (if (member mail old-mail-ls)
-                                (append (list mail old-mail-ls))
-                                (list mail)))
-               (mail-str (mapconcat 'identity new-mail-ls ", ")))
-          (setq new-entry (addressbook-bookmark-make-entry
-                           name mail-str "" "" "" "" "" ""))
+    (when data
+      (if (and old-entry
+               (string= (assoc-default 'type old-entry) "addressbook"))
+          (let* ((old-mail-ls (split-string (assoc-default 'email old-entry) ", "))
+                 (new-mail-ls (if (member mail old-mail-ls)
+                                  (append (list mail old-mail-ls))
+                                  (list mail)))
+                 (mail-str (mapconcat 'identity new-mail-ls ", ")))
+            (setq new-entry (addressbook-bookmark-make-entry
+                             name mail-str "" "" "" "" "" ""))
             (setf (cdr old-entry)
                   (cdr new-entry)))
-        (push new-entry bookmark-alist))
-    (bookmark-bmenu-surreptitiously-rebuild-list)
-    (bmkext-maybe-save-bookmark)))
+          (push new-entry bookmark-alist))
+      (message "`%s' bookmarked" name)
+      (bookmark-bmenu-surreptitiously-rebuild-list)
+      (bmkext-maybe-save-bookmark))))
       
 (defun addressbook-bookmark-edit (bookmark)
   "Edit an addressbook bookmark entry."
