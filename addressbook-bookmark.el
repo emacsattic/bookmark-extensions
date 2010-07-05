@@ -136,16 +136,17 @@ Special commands:
 (when addressbook-anything-complete
   (require 'anything-config)
   (bookmark-maybe-load-default-file)
-  (setq message-tab-body-function 'addressbook-message-complete)
+  (setq message-tab-body-function nil)
   (setq message-completion-alist
-        '(("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
-           . addressbook-message-complete)
-          ("^\\(Resent-\\)?\\(To\\|B?Cc\\):"
-           . addressbook-message-complete)
-          ("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
-           . addressbook-message-complete)
-          ("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
-           . addressbook-message-complete)))
+        (list (cons message-newgroups-header-regexp 'message-expand-group)
+              '("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
+               . addressbook-message-complete)
+              '("^\\(Resent-\\)?\\(To\\|B?Cc\\):"
+               . addressbook-message-complete)
+              '("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
+               . addressbook-message-complete)
+              '("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
+               . addressbook-message-complete)))
 
   (defun addressbook-message-complete ()
     "Provide addressbook completion for `message-mode'."
