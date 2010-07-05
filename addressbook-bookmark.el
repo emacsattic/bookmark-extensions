@@ -43,8 +43,8 @@
 (require 'bookmark-extensions)
 (require 'message)
 
-(defvar addressbook-anything-complete t
-  "*Use anything completion in message buffer.")
+(defvar addressbook-enable-mail-completion t
+  "*Use addressbook completion in Mail/News buffers.")
 
 (defvar addressbook-mode-map
   (let ((map (make-sparse-keymap)))
@@ -133,7 +133,7 @@ Special commands:
   (addressbook-set-mail-buffer1 nil append 'cc))
 
 ;;; Completion in message buffer with TAB. (dependency: anything)
-(when addressbook-anything-complete
+(when addressbook-enable-mail-completion
   (require 'anything-config)
   (bookmark-maybe-load-default-file)
   (setq message-tab-body-function nil)
@@ -153,15 +153,19 @@ Special commands:
     (let* ((ls        (bmkext-addressbook-alist-only))
            (comp-ls   (loop for l in ls
                          collect (cons (car l) (assoc-default 'email l))))
-           (cand      (anything-comp-read
-                       "Name: " comp-ls
-                       :must-match t
-                       :initial-input (thing-at-point 'symbol)))
+           (cand      (if (fboundp 'anything-comp-read)
+                          (anything-comp-read
+                           "Name: " comp-ls
+                           :must-match t
+                           :initial-input (thing-at-point 'symbol))
+                          (completing-read "Name: " comp-ls nil t (thing-at-point 'symbol))))
            (cand-list (split-string cand ", ")))
       (end-of-line)
       (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
       (insert (if (> (length cand-list) 1)
-                  (anything-comp-read "WhichMail: " cand-list :must-match t)
+                  (if (fboundp 'anything-comp-read)
+                      (anything-comp-read "WhichMail: " cand-list :must-match t)
+                      (completing-read "Name: " cand-list nil t))
                   (car cand-list)))
       (goto-char (point-min)) (search-forward "Subject: " nil t))))
 
