@@ -231,7 +231,35 @@ Special commands:
                  (message "%d Contact(s) added." count)))))
       (record))))
 
-  
+(defun addressbook-gnus-sum-bookmark ()
+  "Record an addressbook bookmark from a gnus summary buffer."
+  (interactive)
+  (let* ((data (aref (gnus-summary-article-header
+                      (cdr gnus-article-current)) 2))
+         (name (when (string-match "^.* \<" data)
+                 (replace-regexp-in-string
+                  " \<\\|\>" "" (match-string 0 data))))
+         (mail (when (string-match "\<.*\>$" data)
+                 (replace-regexp-in-string
+                  "\<\\|\>" "" (match-string 0 data))))
+         (old-entry (assoc name bookmark-alist))
+         (new-entry (addressbook-bookmark-make-entry
+                     name mail "" "" "" "" "" "")))
+    (if (and old-entry
+             (string= (assoc-default 'type old-entry) "addressbook"))
+        (let* ((old-mail-ls (split-string (assoc-default 'email old-entry) ", "))
+               (new-mail-ls (if (member mail old-mail-ls)
+                                (append (list mail old-mail-ls))
+                                (list mail)))
+               (mail-str (mapconcat 'identity new-mail-ls ", ")))
+          (setq new-entry (addressbook-bookmark-make-entry
+                           name mail-str "" "" "" "" "" ""))
+            (setf (cdr old-entry)
+                  (cdr new-entry)))
+        (push new-entry bookmark-alist))
+    (bookmark-bmenu-surreptitiously-rebuild-list)
+    (bmkext-maybe-save-bookmark)))
+      
 (defun addressbook-bookmark-edit (bookmark)
   "Edit an addressbook bookmark entry."
   (let* ((old-name       (car bookmark))
