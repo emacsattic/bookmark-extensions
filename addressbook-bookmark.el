@@ -240,10 +240,11 @@ Special commands:
                             (when (and data (string-match "^.* \<" data))
                               (replace-regexp-in-string
                                " \<\\|\>" "" (match-string 0 data)))))
-         (mail (if (and data (string-match "\<.*\>$" data))
-                   (replace-regexp-in-string
-                    "\<\\|\>" "" (match-string 0 data))
-                   data))
+         (mail (read-string "Email: "
+                            (if (and data (string-match "\<.*\>$" data))
+                                (replace-regexp-in-string
+                                 "\<\\|\>" "" (match-string 0 data))
+                                data)))
          (old-entry (assoc name bookmark-alist))
          (new-entry (addressbook-bookmark-make-entry
                      name mail "" "" "" "" "" "")))
