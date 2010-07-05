@@ -77,18 +77,12 @@ Special commands:
         (mail-bufs (message-buffers)))
     (setq mail-list
           (if (eq major-mode 'addressbook-mode)
-              (progn
-                (forward-line 0)
-                (if (search-forward "Mail: " (point-at-eol) t)
-                    (progn
-                      (skip-chars-forward " " (point-at-eol))
-                      (split-string
-                       (buffer-substring (point) (point-at-eol)) ", "))
-                    (error "Not on a mail entry")))
+                (split-string
+                 (assoc-default
+                  'email (addressbook-get-contact-data)) ", ")
               (split-string
                (assoc-default
-                'email
-                (assoc bookmark-name bookmark-alist)) ", ")))
+                'email (assoc bookmark-name bookmark-alist)) ", ")))
     (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
            (switch-to-buffer-other-window
             (if (and mail-bufs (> (length mail-bufs) 1))
