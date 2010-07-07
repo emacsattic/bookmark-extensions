@@ -45,6 +45,8 @@
 
 (defvar addressbook-enable-mail-completion t
   "*Use addressbook completion in Mail/News buffers.")
+(defvar addressbook-separator (propertize (make-string 45 ?-) 'face '((:foreground "red")))
+  "*String used to separate contacts in addressbook buffer.")
 
 (defvar addressbook-mode-map
   (let ((map (make-sparse-keymap)))
@@ -327,7 +329,7 @@ Special commands:
         (let ((user (or (getenv "USER") "Unknown user")))
           (insert (propertize (format "Addressbook %s" user)
                               'face '((:foreground "green" :underline t)))
-                  "\n\n-----\n")))
+                  "\n\n" addressbook-separator "\n")))
     ;; Dont append entry if already there.
     (unless (save-excursion (goto-char (point-min)) (search-forward name nil t))
       (insert (concat (propertize "Name:" 'face '((:underline t)))
@@ -352,14 +354,14 @@ Special commands:
               (if (string= city "") ""
                   (concat (propertize "City:" 'face '((:underline t)))
                           "    " city "\n"))
-              "-----\n")
+              addressbook-separator "\n")
       (addressbook-mode)
       (setq buffer-read-only t))))
 
 (defun addressbook-get-contact-data ()
   "Get bookmark entry of contact at point in addressbook buffer."
   (with-current-buffer "*addressbook*"
-    (search-backward "-----" nil t)
+    (search-backward addressbook-separator nil t)
     (search-forward "Name: " nil t)
     (skip-chars-forward " " (point-at-eol))
     (assoc
