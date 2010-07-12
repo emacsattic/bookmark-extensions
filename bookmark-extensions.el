@@ -1826,6 +1826,16 @@ If MARK is non--nil unmark only bookmarks with flag >."
               (bmkext-update-time-and-increment-visits bmk 'batch)))
       (switch-to-buffer-other-window buf))))
 
+;;;###autoload
+(defun bmkext-export-addressbook ()
+  "Export all addressbook entries to a file of your choice.
+Use `bookmark-load' to import the contents
+of the file to an existent `bookmark-alist'."
+  (interactive)
+  (let ((bookmark-alist  (bmkext-addressbook-alist-only)))
+    (bookmark-save 1)))
+
+  
 ;; Predicates --------------------------------------------------------
 
 (defun bmkext-gnus-bookmark-p (bookmark)
