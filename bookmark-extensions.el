@@ -826,35 +826,40 @@ BOOKMARK is a bookmark name or a bookmark record."
 ;; Set timestamp and visit
 ;; Use also extra args
 ;;
-(defun bookmark-make-record-default (&optional point-only pos
-                                     read-only visit-number)
+(defun bookmark-make-record-default (&optional no-file no-context posn visit-number)
   "Return the record describing the location of a new bookmark.
-Must be at the correct position in the buffer in which the bookmark is
-being set.
-If POINT-ONLY is non-nil, then only return the subset of the
-record that pertains to the location within the buffer.
-If READ-ONLY is non-nil that's mean buffer is read-only and
-there is no need to record front/rear-context-string, position is enough."
-  (let ((ctime (float-time))
+Point should be at the buffer in which the bookmark is being set,
+and normally should be at the position where the bookmark is desired,
+but see the optional arguments for other possibilities.
+
+If NO-FILE is non-nil, then only return the subset of the
+record that pertains to the location within the buffer, leaving off
+the part that records the filename.
+
+If NO-CONTEXT is non-nil, do not include the front- and rear-context
+strings in the record -- the position is enough.
+
+If POSN is non-nil, record POSN as the point instead of `(point)'."
+  (let ((ctime   (float-time))
         (nvisits (or visit-number 0)))
-    `(,@(unless point-only `((filename . ,(bookmark-buffer-file-name))))
-        ,@(unless read-only `((front-context-string
-                               . ,(if (>= (- (point-max) (point))
-                                          bookmark-search-size)
-                                      (buffer-substring-no-properties
-                                       (point)
-                                       (+ (point) bookmark-search-size))
-                                      nil))))
-        ,@(unless read-only `((rear-context-string
-                               . ,(if (>= (- (point) (point-min))
-                                          bookmark-search-size)
-                                      (buffer-substring-no-properties
-                                       (point)
-                                       (- (point) bookmark-search-size))
-                                      nil))))
+    `(,@(unless no-file `((filename . ,(bookmark-buffer-file-name))))
+        ,@(unless no-context `((front-context-string
+                                . ,(if (>= (- (point-max) (point))
+                                           bookmark-search-size)
+                                       (buffer-substring-no-properties
+                                        (point)
+                                        (+ (point) bookmark-search-size))
+                                       nil))))
+        ,@(unless no-context `((rear-context-string
+                                . ,(if (>= (- (point) (point-min))
+                                           bookmark-search-size)
+                                       (buffer-substring-no-properties
+                                        (point)
+                                        (- (point) bookmark-search-size))
+                                       nil))))
         (visits . ,nvisits)
         (time . ,ctime)
-        (position . ,(or pos (point))))))
+        (position . ,(or posn (point))))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -2065,7 +2070,7 @@ Otherwise, return nil."
   "Make a special entry for w3m buffers."
   (require 'w3m)                        ; For `w3m-current-url'.
   `(,w3m-current-title
-    ,@(bookmark-make-record-default 'point-only)
+    ,@(bookmark-make-record-default 'no-file)
       (filename . ,w3m-current-url)
       (handler . bmkext-jump-w3m)))
 
@@ -2333,7 +2338,7 @@ ORIGIN mention where come from this bookmark."
            (head    (gnus-summary-article-header art))
            (id      (mail-header-id head)))
       `(,subject
-        ,@(bookmark-make-record-default 'point-only pos 'read-only)
+        ,@(bookmark-make-record-default 'no-file 'no-context pos)
         (location . ,(format "Gnus-%s %s:%d:%s" buf grp art id))
         (group . ,grp) (article . ,art)
         (message-id . ,id) (handler . gnus-summary-bookmark-jump)))))
@@ -2382,7 +2387,7 @@ BOOKMARK is a bookmark name or a bookmark record."
   (defun woman-bookmark-make-record ()
     "Make a bookmark entry for a Woman buffer."
     `(,(Man-default-bookmark-title)
-       ,@(bookmark-make-record-default 'point-only)
+       ,@(bookmark-make-record-default 'no-file)
        (location . ,(concat "woman " woman-last-file-name))
        ;; Use the same form as man's bookmarks, as much as possible.
        (man-args . ,woman-last-file-name)
@@ -2424,7 +2429,7 @@ Uses `Man-name-local-regexp'."
   (defun Man-bookmark-make-record ()
     "Make a bookmark entry for a Man buffer."
     `(,(Man-default-bookmark-title)
-       ,@(bookmark-make-record-default 'point-only)
+       ,@(bookmark-make-record-default 'no-file)
        (location . ,(concat "man " Man-arguments))
        (man-args . ,Man-arguments)
        (handler . Man-bookmark-jump)))
@@ -2455,7 +2460,7 @@ Uses `Man-name-local-regexp'."
 ;; Take advantage of new args in `bookmark-make-record-default'.
 ;; Do not set context in an image avoid garbage in .emacs.bmk.
 (defun image-bookmark-make-record ()
-  `(,@(bookmark-make-record-default nil 0 t)
+  `(,@(bookmark-make-record-default nil 'no-context 0)
       (image-type . ,image-type)
       (handler    . image-bookmark-jump)))
 
