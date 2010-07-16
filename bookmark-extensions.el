@@ -413,6 +413,8 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "P" 'bmkext-bmenu-list-only-firefox-bookmarks)
 ;;;###autoload
+(define-key bookmark-bmenu-mode-map (kbd "C-c I") 'bmkext-bmenu-list-only-image-file-bookmarks)
+;;;###autoload
 (define-key bookmark-bmenu-mode-map "%" nil)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "%m" 'bmkext-bmenu-regexp-mark)
@@ -431,9 +433,10 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-list-only-non-file-bookmarks]\t- List only non-file bookmarks
 \\[bmkext-bmenu-list-only-gnus-bookmarks]\t- List only Gnus bookmarks
 \\[bmkext-bmenu-list-only-info-bookmarks]\t- List only Info bookmarks
-\\[bmkext-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man  pages
+\\[bmkext-bmenu-list-only-woman-man-bookmarks]\t- List only Woman and Man pages
 \\[bmkext-bmenu-list-only-w3m-bookmarks]\t- List only W3M bookmarks (`C-u' show also bookmarks from `w3m-bookmark-file')
 \\[bmkext-bmenu-list-only-firefox-bookmarks]\t- List only Firefox bookmarks
+\\[bmkext-bmenu-list-only-image-file-bookmarks]\t- List only Image bookmarks
 \\[bmkext-bmenu-list-only-last-org-bookmarks]\t- List only last stored org bookmarks
 \\[bmkext-bmenu-list-only-addressbook-bookmarks]\t- List only addressbook entries
 \\[bmkext-addressbook-set-mail-buffer]\t- Set a mail buffer for this bookmark
@@ -1519,6 +1522,15 @@ With a prefix argument, do not include remote files or directories."
     (bookmark-bmenu-list "% Bookmark Files&Directories" 'filteredp)))
 
 ;;;###autoload
+(defun bmkext-bmenu-list-only-image-file-bookmarks ()
+  "Display a list of image files bookmarks (only)."
+  (interactive)
+  (let ((bookmark-alist  (bmkext-image-file-alist-only))
+        (bmkext-bmenu-called-from-inside-flag t))
+    (setq bmkext-latest-bookmark-alist bookmark-alist)
+    (bookmark-bmenu-list "% Bookmark Images" 'filteredp)))
+
+;;;###autoload
 (defun bmkext-bmenu-list-only-non-file-bookmarks ()
   "Display (only) the non-file bookmarks."
   (interactive)
@@ -1889,6 +1901,12 @@ This excludes bookmarks of a more specific kind (Info, Gnus, and W3m)."
          (isnonfile  (equal filename bmkext-non-file-filename))) 
     (and filename (not isnonfile) (not (bookmark-get-handler bookmark)))))
 
+(defun bmkext-image-bookmark-p (bookmark)
+  "Return non-nil if BOOKMARK bookmarks an image file."
+  (if (stringp bookmark)
+      (assoc 'image-type (assoc bookmark bookmark-alist))
+      (assoc 'image-type bookmark)))
+
 (defun bmkext-non-file-bookmark-p (bookmark)
   "Return non-nil if BOOKMARK is a non-file bookmark (e.g *scratch*).
 This excludes bookmarks of a more specific kind (Info, Gnus, and W3m)."
@@ -1996,6 +2014,11 @@ A new list is returned (no side effects)."
   "`bookmark-alist', filtered to retain only local-file bookmarks.
 A new list is returned (no side effects)."
   (bmkext-remove-if-not #'bmkext-local-file-bookmark-p bookmark-alist))
+
+(defun bmkext-image-file-alist-only ()
+  "`bookmark-alist', filtered to retain only image-file bookmarks.
+A new list is returned (no side effects)."
+  (bmkext-remove-if-not #'bmkext-image-bookmark-p bookmark-alist))
 
 
 (defun bmkext-file-alist-only (&optional hide-remote)
