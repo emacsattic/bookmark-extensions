@@ -2450,6 +2450,23 @@ Uses `Man-name-local-regexp'."
                 (set (make-local-variable 'bookmark-make-record-function)
                      'Man-bookmark-make-record))))
 
+;; Redefine in image-mode.el
+;;
+;; Take advantage of new args in `bookmark-make-record-default'.
+;; Do not set context in an image avoid garbage in .emacs.bmk.
+(defun image-bookmark-make-record ()
+  `(,@(bookmark-make-record-default nil 0 t)
+      (image-type . ,image-type)
+      (handler    . image-bookmark-jump)))
+
+;;;###autoload
+(defun image-bookmark-jump (bmk)
+  ;; This implements the `handler' function interface for record type
+  ;; returned by `bookmark-make-record-function', which see.
+  (prog1 (bookmark-default-handler bmk)
+    (when (not (string= image-type (bookmark-prop-get bmk 'image-type)))
+      (image-toggle-display))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide 'bookmark-extensions)
