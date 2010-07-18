@@ -43,11 +43,30 @@
 (require 'bookmark-extensions)
 (require 'message)
 
-(defvar addressbook-enable-mail-completion t
-  "*Use addressbook completion in Mail/News buffers.")
-(defvar addressbook-separator (propertize (make-string 45 ?-) 'face '((:foreground "red")))
-  "*String used to separate contacts in addressbook buffer.")
+(defgroup addressbook-bookmark nil
+  "An addressbook linked to bookmarks."
+  :prefix "addressbook-"
+  :group 'bmkext)
 
+;;; User variables.
+(defcustom addressbook-enable-mail-completion t
+  "*Use addressbook completion in Mail/News buffers."
+  :group 'addressbook-bookmark
+  :type 'boolean)
+
+(defcustom addressbook-separator
+  (propertize (make-string 45 ?-) 'face 'abook-separator)
+  "*String used to separate contacts in addressbook buffer."
+  :group 'addressbook-bookmark
+  :type 'string)
+
+;;; Faces
+(defface abook-separator
+    '((t (:foreground "red")))
+  "*Face used for lines separating addressbook entries."
+  :group 'addressbook)
+
+;;; Mode Map.
 (defvar addressbook-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'addressbook-quit)
