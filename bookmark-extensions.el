@@ -1852,6 +1852,19 @@ of the file to an existent `bookmark-alist'."
   (let ((bookmark-alist  (bmkext-addressbook-alist-only)))
     (bookmark-save 1)))
 
+(defun bmkext-sync-abook-from-file (file)
+  (interactive "fFile: ")
+  (with-current-buffer (let ((enable-local-variables nil))
+                         (find-file-noselect file))
+    (goto-char (point-min))
+    (bookmark-maybe-upgrade-file-format)
+    (let* ((ori-alist      (bmkext-addressbook-alist-only))
+           (imported-abook (bookmark-alist-from-buffer))
+           (filtered-abook (bmkext-remove-if
+                            #'(lambda (x) (member x ori-alist))
+                            imported-abook)))
+      (bookmark-import-new-list filtered-abook))))
+
   
 ;; Predicates --------------------------------------------------------
 
@@ -1947,7 +1960,9 @@ BOOKMARK is a bookmark name or a bookmark record."
   "Return non-nil if BOOKMARK is a org bookmark."
   (let ((bmk (if (listp bookmark) (car bookmark) bookmark))) 
     (or (string= "org-refile-last-stored" bmk)
-        (string= "org-remember-last-stored" bmk))))
+        (string= "org-remember-last-stored" bmk)
+        (string= "org-capture-last-stored" bmk)
+        (string= "org-capture-last-stored-marker" bmk))))
 
 (defun bmkext-bookmark-addressbook-p (bookmark)
   (if (listp bookmark)
