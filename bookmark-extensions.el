@@ -574,6 +574,10 @@ your externals w3m bookmarks at any moment with C-u W without saving to file."
 The default value is for GNU/Linux systems."
   :type 'string :group 'bmkext)
 
+(defcustom bmkext-annotation-use-org-mode t
+  "*Whether we use `org-mode' to show/edit annotations."
+  :type 'boolean :group 'bmkext)
+
 ;;; Internal Variables --------------------------------------------------
 
 (defvar bmkext-jump-display-function nil
@@ -644,6 +648,7 @@ Return `bookmark-alist'"
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Use `switch-to-buffer-other-window' to go back to old-buffer.
+;; Use `org-mode' when `bmkext-annotation-use-org-mode'
 (defun bookmark-show-annotation (bookmark)
   "Display the annotation for bookmark named BOOKMARK in a buffer,
 if an annotation exists."
@@ -653,10 +658,55 @@ if an annotation exists."
         (let ((old-buf (current-buffer)))
           (pop-to-buffer (get-buffer-create "*Bookmark Annotation*") t)
           (delete-region (point-min) (point-max))
-          ;; (insert (concat "Annotation for bookmark '" bookmark "':\n\n"))
+          ;(insert (concat "Annotation for bookmark '" bookmark "':\n\n"))
           (insert annotation)
           (goto-char (point-min))
+          (when bmkext-annotation-use-org-mode (org-mode))
           (switch-to-buffer-other-window old-buf))))))
+
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Use `org-mode' when `bmkext-annotation-use-org-mode'
+;;
+(defun bookmark-edit-annotation-mode (bookmark)
+  "Mode for editing the annotation of bookmark BOOKMARK.
+When you have finished composing, type \\[bookmark-send-annotation].
+
+BOOKMARK is a bookmark name (a string) or a bookmark record.
+
+\\{bookmark-edit-annotation-mode-map}"
+  (interactive)
+  (kill-all-local-variables)
+  (when bmkext-annotation-use-org-mode (org-mode))
+  (make-local-variable 'bookmark-annotation-name)
+  (setq bookmark-annotation-name bookmark)
+  (use-local-map bookmark-edit-annotation-mode-map)
+  (setq major-mode 'bookmark-edit-annotation-mode
+        mode-name "Edit Bookmark Annotation")
+  (insert (funcall bookmark-edit-annotation-text-func bookmark))
+  (let ((annotation (bookmark-get-annotation bookmark)))
+    (when (and annotation (not (string-equal annotation "")))
+      (insert annotation)))
+  (run-mode-hooks (if bmkext-annotation-use-org-mode
+                      'org-mode-hook 'text-mode-hook)))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Signal we can use `org-mode' style to edit.
+;;
+(defun bookmark-default-annotation-text (bookmark)
+  "Return default annotation text for BOOKMARK (a string, not a record).
+The default annotation text is simply some text explaining how to use
+annotations."
+  (concat "#  Type the annotation for bookmark '" bookmark "' here.\n"
+	  "#  All lines which start with a '#' will be deleted.\n"
+          (when bmkext-annotation-use-org-mode
+            "#  You can edit this buffer in `org-mode' style with heading.\n")
+	  "#  Type C-c C-c when done.\n#\n"
+	  "#  Author: " (user-full-name) " <" (user-login-name) "@"
+	  (system-name) ">\n"
+	  "#  Date:    " (current-time-string) "\n"))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
