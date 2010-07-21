@@ -188,7 +188,7 @@ Special commands:
                                         web street zipcode city image-path &optional nvisit)
   "Build an addressbook bookmark entry."
   `(,name
-    ,@(bookmark-make-record-default 'point-only 0 'read-only nvisit)
+    ,@(bookmark-make-record-default 'no-file 'no-context 0 nvisit)
     (type . "addressbook")
     (location . "Addressbook entry")
     (image . ,image-path)
