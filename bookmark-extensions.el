@@ -578,6 +578,10 @@ The default value is for GNU/Linux systems."
   "*Whether we use `org-mode' to show/edit annotations."
   :type 'boolean :group 'bmkext)
 
+(defcustom bmkext-org-annotation-directory "~/org/bmk-annotations/"
+  "*Directory where bookmark annotations are saved as org files."
+  :type 'string :group 'bmkext)
+
 ;;; Internal Variables --------------------------------------------------
 
 (defvar bmkext-jump-display-function nil
@@ -654,15 +658,17 @@ Return `bookmark-alist'"
 if an annotation exists."
   (let ((annotation (bookmark-get-annotation bookmark)))
     (when (and annotation (not (string-equal annotation "")))
-      (save-excursion
-        (let ((old-buf (current-buffer)))
-          (pop-to-buffer (get-buffer-create "*Bookmark Annotation*") t)
-          (delete-region (point-min) (point-max))
-          ;(insert (concat "Annotation for bookmark '" bookmark "':\n\n"))
-          (insert annotation)
-          (goto-char (point-min))
-          (when bmkext-annotation-use-org-mode (org-mode))
-          (switch-to-buffer-other-window old-buf))))))
+      (if (file-exists-p annotation)
+          (find-file-other-window annotation)
+          (save-excursion
+            (let ((old-buf (current-buffer)))
+              (pop-to-buffer (get-buffer-create "*Bookmark Annotation*") t)
+              (delete-region (point-min) (point-max))
+              ;(insert (concat "Annotation for bookmark '" bookmark "':\n\n"))
+              (insert annotation)
+              (goto-char (point-min))
+              (when bmkext-annotation-use-org-mode (org-mode))
+              (switch-to-buffer-other-window old-buf)))))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -686,8 +692,13 @@ BOOKMARK is a bookmark name (a string) or a bookmark record.
         mode-name "Edit Bookmark Annotation")
   (insert (funcall bookmark-edit-annotation-text-func bookmark))
   (let ((annotation (bookmark-get-annotation bookmark)))
+    (unless (and bmkext-annotation-use-org-mode
+                 (file-directory-p bmkext-org-annotation-directory))
+      (make-directory bmkext-org-annotation-directory 'parents))
     (when (and annotation (not (string-equal annotation "")))
-      (insert annotation)))
+      (if (file-exists-p annotation)
+          (insert-file-contents annotation)
+          (insert annotation))))
   (run-mode-hooks (if bmkext-annotation-use-org-mode
                       'org-mode-hook 'text-mode-hook)))
 
@@ -702,11 +713,43 @@ annotations."
   (concat "#  Type the annotation for bookmark '" bookmark "' here.\n"
 	  "#  All lines which start with a '#' will be deleted.\n"
           (when bmkext-annotation-use-org-mode
-            "#  You can edit this buffer in `org-mode' style with heading.\n")
-	  "#  Type C-c C-c when done.\n#\n"
+              "#  You can edit this buffer in `org-mode' style with heading.\n#  \
+Type C-u C-c C-c to force save to org file when done.\n")
+          "#  C-c C-c maybe save to org file otherwise as text to `bookmark-alist'.\n#\n"
 	  "#  Author: " (user-full-name) " <" (user-login-name) "@"
 	  (system-name) ">\n"
 	  "#  Date:    " (current-time-string) "\n"))
+
+(defun bookmark-send-edited-annotation (arg)
+  "Use buffer contents as annotation for a bookmark.
+Lines beginning with `#' are ignored."
+  (interactive "P")
+  (if (not (eq major-mode 'bookmark-edit-annotation-mode))
+      (error "Not in bookmark-edit-annotation-mode"))
+  (goto-char (point-min))
+  (while (< (point) (point-max))
+    (if (looking-at "^#")
+        (bookmark-kill-line t)
+      (forward-line 1)))
+  ;; Take no chances with text properties.
+  (let* ((annotation (buffer-substring-no-properties (point-min) (point-max)))
+         (bookmark bookmark-annotation-name)
+         (org-fn (expand-file-name (format
+                                    "%s.org"
+                                    (replace-regexp-in-string " " "_" bookmark))
+                                   bmkext-org-annotation-directory)))
+    (if (and bmkext-annotation-use-org-mode
+             (or arg (file-exists-p org-fn)))
+        (with-current-buffer (find-file-noselect org-fn)
+          (erase-buffer)
+          (insert annotation)
+          (save-buffer)
+          (bookmark-set-annotation bookmark org-fn))
+        (bookmark-set-annotation bookmark annotation))
+    (setq bookmark-alist-modification-count
+          (1+ bookmark-alist-modification-count))
+    (bookmark-bmenu-surreptitiously-rebuild-list))
+  (kill-buffer (current-buffer)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
