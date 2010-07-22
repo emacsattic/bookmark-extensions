@@ -70,6 +70,7 @@
 ;; `bmkext-bmenu-delete-bookmark'
 ;; `bmkext-bmenu-quit'
 ;; `bmkext-bmenu-list-only-file-bookmarks'
+;; `bmkext-bmenu-list-only-image-file-bookmarks'
 ;; `bmkext-bmenu-list-only-non-file-bookmarks'
 ;; `bmkext-bmenu-list-only-info-bookmarks'
 ;; `bmkext-bmenu-list-only-w3m-bookmarks'
@@ -89,6 +90,8 @@
 ;; `bmkext-addressbook-set-mail-buffer'
 ;; `bmkext-addressbook-set-mail-buffer-and-cc'
 ;; `bmkext-addressbook-send-to-marked'
+;; `bmkext-export-addressbook'
+;; `bmkext-sync-abook-from-file'
 ;; `bmkext-bmenu-list-only-firefox-bookmarks'
 ;; `bmkext-bmenu-refresh-delicious'
 ;; `bmkext-bmenu-delicious'
@@ -111,6 +114,8 @@
 
 ;;  * Commands redefined here:(from `bookmark.el')
 ;; [EVAL] (autodoc-document-lisp-buffer :type 'command :prefix "^bookmark-")
+;; `bookmark-edit-annotation-mode'
+;; `bookmark-send-edited-annotation'
 ;; `bookmark-bmenu-mark'
 ;; `bookmark-bmenu-unmark'
 ;; `bookmark-bmenu-this-window'
@@ -138,6 +143,8 @@
 ;; `bmkext-always-save-w3m-imported'
 ;; `bmkext-external-browse-url-function'
 ;; `bmkext-firefox-default-directory'
+;; `bmkext-annotation-use-org-mode'
+;; `bmkext-org-annotation-directory'
 ;; `Man-name-local-regexp'
 
 ;;  * Faces defined here:
@@ -182,6 +189,7 @@
 ;; `bmkext-man-bookmark-p'
 ;; `bmkext-woman-man-bookmark-p'
 ;; `bmkext-file-bookmark-p'
+;; `bmkext-image-bookmark-p'
 ;; `bmkext-non-file-bookmark-p'
 ;; `bmkext-remote-file-bookmark-p'
 ;; `bmkext-local-file-bookmark-p'
@@ -199,6 +207,7 @@
 ;; `bmkext-woman-man-alist-only'
 ;; `bmkext-remote-file-alist-only'
 ;; `bmkext-local-file-alist-only'
+;; `bmkext-image-file-alist-only'
 ;; `bmkext-file-alist-only'
 ;; `bmkext-non-file-alist-only'
 ;; `bmkext-addressbook-alist-only'
@@ -231,6 +240,7 @@
 ;; `bookmark-bmenu-mode'
 ;; `bookmark-bmenu-check-position'
 ;; `bookmark-show-annotation'
+;; `bookmark-default-annotation-text'
 ;; `bookmark-bmenu-bookmark'
 ;; `bookmark-prop-set'
 ;; `bookmark-get-bookmark'
@@ -713,13 +723,17 @@ annotations."
   (concat "#  Type the annotation for bookmark '" bookmark "' here.\n"
 	  "#  All lines which start with a '#' will be deleted.\n"
           (when bmkext-annotation-use-org-mode
-              "#  You can edit this buffer in `org-mode' style with heading.\n#  \
+            "#  You can edit this buffer in `org-mode' style with heading.\n#  \
 Type C-u C-c C-c to force save to org file when done.\n")
           "#  C-c C-c maybe save to org file otherwise as text to `bookmark-alist'.\n#\n"
 	  "#  Author: " (user-full-name) " <" (user-login-name) "@"
 	  (system-name) ">\n"
 	  "#  Date:    " (current-time-string) "\n"))
 
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Support saving to org file.
+;;
 (defun bookmark-send-edited-annotation (arg)
   "Use buffer contents as annotation for a bookmark.
 Lines beginning with `#' are ignored."
