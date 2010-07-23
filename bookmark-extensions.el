@@ -589,7 +589,8 @@ The default value is for GNU/Linux systems."
   :type 'boolean :group 'bmkext)
 
 (defcustom bmkext-org-annotation-directory "~/org/bmk-annotations/"
-  "*Directory where bookmark annotations are saved as org files."
+  "*Directory where bookmark annotations are saved as org files.
+You should add this directory to `org-agenda-files' list."
   :type 'string :group 'bmkext)
 
 ;;; Internal Variables --------------------------------------------------
@@ -729,6 +730,18 @@ Type C-u C-c C-c to force save to org file when done.\n")
 	  "#  Author: " (user-full-name) " <" (user-login-name) "@"
 	  (system-name) ">\n"
 	  "#  Date:    " (current-time-string) "\n"))
+
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Use `org-mode-map' as parent map.
+;;
+(defvar bookmark-edit-annotation-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map (if bmkext-annotation-use-org-mode
+                               org-mode-map text-mode-map))
+    (define-key map "\C-c\C-c" 'bookmark-send-edited-annotation)
+    map)
+  "Keymap for editing an annotation of a bookmark.")
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
