@@ -727,6 +727,7 @@ annotations."
             "#  You can edit this buffer in `org-mode' style with heading.\n#  \
 Type C-u C-c C-c to force save to org file when done.\n")
           "#  C-c C-c maybe save to org file otherwise as text to `bookmark-alist'.\n#\n"
+          "#  C-c C-k to abort.\n"
 	  "#  Author: " (user-full-name) " <" (user-login-name) "@"
 	  (system-name) ">\n"
 	  "#  Date:    " (current-time-string) "\n"))
@@ -740,8 +741,15 @@ Type C-u C-c C-c to force save to org file when done.\n")
     (set-keymap-parent map (if bmkext-annotation-use-org-mode
                                org-mode-map text-mode-map))
     (define-key map "\C-c\C-c" 'bookmark-send-edited-annotation)
+    (define-key map "\C-c\C-k" 'bmkext-quit-annotation)
     map)
   "Keymap for editing an annotation of a bookmark.")
+
+(defun bmkext-quit-annotation ()
+  "Abort current bookmark annotation and quit."
+  (interactive)
+  (when (eq major-mode 'bookmark-edit-annotation-mode)
+    (kill-buffer)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
