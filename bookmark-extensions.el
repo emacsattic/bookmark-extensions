@@ -769,15 +769,18 @@ Lines beginning with `#' are ignored."
   (let* ((annotation  (buffer-substring-no-properties (point-min) (point-max)))
          (bookmark    bookmark-annotation-name)
          (old-entry   (bookmark-get-annotation bookmark))
-         (old-entry-p (and old-entry (not (string= old-entry ""))
-                           (file-exists-p old-entry)))
          (org-fn      (expand-file-name (format
                                          "%s.org"
                                          (replace-regexp-in-string " " "_" bookmark))
-                                        bmkext-org-annotation-directory)))
+                                        bmkext-org-annotation-directory))
+         (old-entry-p (and old-entry (not (string= old-entry ""))
+                           (file-exists-p old-entry)
+                           (not (string= (file-name-nondirectory old-entry)
+                                         (file-name-nondirectory org-fn))))))
     (if (and bmkext-annotation-use-org-mode
              ;; Maybe file have been renamed since last editing.
              ;; Check if old bmk entry is a filename and exists.
+             ;; and is different of new one.
              (or arg (file-exists-p org-fn) old-entry-p))
         (with-current-buffer (find-file-noselect org-fn)
           (erase-buffer)
