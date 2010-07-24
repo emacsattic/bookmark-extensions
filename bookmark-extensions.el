@@ -682,6 +682,17 @@ if an annotation exists."
               (switch-to-buffer-other-window old-buf)))))))
 
 
+;; Use `org-mode-map' as parent map.
+;;
+(defvar bmkext-edit-annotation-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map (if bmkext-annotation-use-org-mode
+                               org-mode-map text-mode-map))
+    (define-key map "\C-c\C-c" 'bookmark-send-edited-annotation)
+    (define-key map "\C-c\C-k" 'bmkext-quit-annotation)
+    map)
+  "Keymap for editing an annotation of a bookmark.")
+
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
 ;; Use `org-mode' when `bmkext-annotation-use-org-mode'
@@ -698,7 +709,7 @@ BOOKMARK is a bookmark name (a string) or a bookmark record.
   (when bmkext-annotation-use-org-mode (org-mode))
   (make-local-variable 'bookmark-annotation-name)
   (setq bookmark-annotation-name bookmark)
-  (use-local-map bookmark-edit-annotation-mode-map)
+  (use-local-map bmkext-edit-annotation-mode-map)
   (setq major-mode 'bookmark-edit-annotation-mode
         mode-name "Edit Bookmark Annotation")
   (insert (funcall bookmark-edit-annotation-text-func bookmark))
@@ -726,24 +737,12 @@ annotations."
           (when bmkext-annotation-use-org-mode
             "#  You can edit this buffer in `org-mode' style with heading.\n#  \
 Type C-u C-c C-c to force save to org file when done.\n")
-          "#  C-c C-c maybe save to org file otherwise as text to `bookmark-alist'.\n#\n"
-          "#  C-c C-k to abort.\n"
+          "#  C-c C-c maybe save to org file otherwise as text to `bookmark-alist'.\n"
+          "#  C-c C-k to abort.\n#\n"
 	  "#  Author: " (user-full-name) " <" (user-login-name) "@"
 	  (system-name) ">\n"
 	  "#  Date:    " (current-time-string) "\n"))
 
-;; REPLACES ORIGINAL in `bookmark.el'.
-;;
-;; Use `org-mode-map' as parent map.
-;;
-(defvar bookmark-edit-annotation-mode-map
-  (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map (if bmkext-annotation-use-org-mode
-                               org-mode-map text-mode-map))
-    (define-key map "\C-c\C-c" 'bookmark-send-edited-annotation)
-    (define-key map "\C-c\C-k" 'bmkext-quit-annotation)
-    map)
-  "Keymap for editing an annotation of a bookmark.")
 
 (defun bmkext-quit-annotation ()
   "Abort current bookmark annotation and quit."
@@ -767,24 +766,25 @@ Lines beginning with `#' are ignored."
         (bookmark-kill-line t)
       (forward-line 1)))
   ;; Take no chances with text properties.
-  (let* ((annotation (buffer-substring-no-properties (point-min) (point-max)))
-         (bookmark   bookmark-annotation-name)
-         (old-entry  (bookmark-get-annotation bookmark))
-         (org-fn     (expand-file-name (format
-                                        "%s.org"
-                                        (replace-regexp-in-string " " "_" bookmark))
-                                       bmkext-org-annotation-directory)))
+  (let* ((annotation  (buffer-substring-no-properties (point-min) (point-max)))
+         (bookmark    bookmark-annotation-name)
+         (old-entry   (bookmark-get-annotation bookmark))
+         (old-entry-p (and old-entry (not (string= old-entry ""))
+                           (file-exists-p old-entry)))
+         (org-fn      (expand-file-name (format
+                                         "%s.org"
+                                         (replace-regexp-in-string " " "_" bookmark))
+                                        bmkext-org-annotation-directory)))
     (if (and bmkext-annotation-use-org-mode
-             (or arg (file-exists-p org-fn)
-                 ;; Maybe file have been renamed since last editing.
-                 ;; Check if old bmk entry is a filename and exists.
-                 (and old-entry (file-exists-p old-entry))))
+             ;; Maybe file have been renamed since last editing.
+             ;; Check if old bmk entry is a filename and exists.
+             (or arg (file-exists-p org-fn) old-entry-p))
         (with-current-buffer (find-file-noselect org-fn)
           (erase-buffer)
           (insert annotation)
           (save-buffer)
           ;; If old file found delete it.
-          (when (and old-entry (file-exists-p old-entry))
+          (when old-entry-p
             (delete-file old-entry))
           (bookmark-set-annotation bookmark org-fn))
         (bookmark-set-annotation bookmark annotation))
