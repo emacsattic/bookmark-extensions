@@ -684,6 +684,7 @@ if an annotation exists."
 
 ;; Use `org-mode-map' as parent map.
 ;;
+;;;###autoload
 (defvar bmkext-edit-annotation-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map (if bmkext-annotation-use-org-mode
@@ -697,6 +698,7 @@ if an annotation exists."
 ;;
 ;; Use `org-mode' when `bmkext-annotation-use-org-mode'
 ;;
+;;;###autoload
 (defun bookmark-edit-annotation-mode (bookmark)
   "Mode for editing the annotation of bookmark BOOKMARK.
 When you have finished composing, type \\[bookmark-send-annotation].
@@ -743,7 +745,7 @@ Type C-u C-c C-c to force save to org file when done.\n")
 	  (system-name) ">\n"
 	  "#  Date:    " (current-time-string) "\n"))
 
-
+;;;###autoload
 (defun bmkext-quit-annotation ()
   "Abort current bookmark annotation and quit."
   (interactive)
@@ -754,6 +756,7 @@ Type C-u C-c C-c to force save to org file when done.\n")
 ;;
 ;; Support saving to org file.
 ;;
+;;;###autoload
 (defun bookmark-send-edited-annotation (arg)
   "Use buffer contents as annotation for a bookmark.
 Lines beginning with `#' are ignored."
@@ -782,6 +785,7 @@ Lines beginning with `#' are ignored."
              ;; Check if old bmk entry is a filename and exists.
              ;; and is different of new one.
              (or arg (file-exists-p org-fn) old-entry-p))
+        ;; Store annotation to org file.
         (with-current-buffer (find-file-noselect org-fn)
           (erase-buffer)
           (insert annotation)
@@ -789,12 +793,15 @@ Lines beginning with `#' are ignored."
           ;; If old file found delete it.
           (when old-entry-p
             (delete-file old-entry))
+          ;; The org filename is stored in bookmark annotation entry.
+          ;; If no annotation org file is deleted.
           (if (not (eq (point-min) (point-max)))
               (bookmark-set-annotation bookmark org-fn)
               (delete-file org-fn)
               (message "Your annotation file `%s' have been deleted" org-fn)
               (bookmark-set-annotation bookmark ""))
           (kill-buffer))
+        ;; Else store annotation to bookmark-alist as text.
         (bookmark-set-annotation bookmark annotation))
     (setq bookmark-alist-modification-count
           (1+ bookmark-alist-modification-count))
