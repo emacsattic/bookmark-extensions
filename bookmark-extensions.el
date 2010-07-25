@@ -789,7 +789,12 @@ Lines beginning with `#' are ignored."
           ;; If old file found delete it.
           (when old-entry-p
             (delete-file old-entry))
-          (bookmark-set-annotation bookmark org-fn))
+          (if (not (eq (point-min) (point-max)))
+              (bookmark-set-annotation bookmark org-fn)
+              (delete-file org-fn)
+              (message "Your annotation file `%s' have been deleted" org-fn)
+              (bookmark-set-annotation bookmark ""))
+          (kill-buffer))
         (bookmark-set-annotation bookmark annotation))
     (setq bookmark-alist-modification-count
           (1+ bookmark-alist-modification-count))
