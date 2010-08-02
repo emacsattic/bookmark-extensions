@@ -1091,12 +1091,17 @@ from there)."
 				   bookmark-current-bookmark)))
   (bookmark-maybe-historicize-string bookmark-name)
   (bookmark-maybe-load-default-file)
-  (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
+  (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror))
+        (annot   (bookmark-get-annotation bookmark)))
     (if (or (string= (cdr (assoc 'origin will-go)) "firefox-imported")
             (string= (cdr (assoc 'origin will-go)) "delicious-imported")
             (string= (cdr (assoc 'origin will-go)) "w3m-imported"))
         (error "Operation not supported on this type of bookmark.")
         (setq bookmark-alist (delete will-go bookmark-alist))
+        (when (and annot (not (string= annot ""))
+                   (file-exists-p annot)
+                   (y-or-n-p "Delete also Org Annotations file? "))
+          (delete-file annot) (message "`%s' have been deleted." annot))
         ;; Added by db, nil bookmark-current-bookmark if the last
         ;; occurrence has been deleted
         (setq bmkext-latest-bookmark-alist (delete will-go bmkext-latest-bookmark-alist))
