@@ -1092,7 +1092,7 @@ from there)."
   (bookmark-maybe-historicize-string bookmark-name)
   (bookmark-maybe-load-default-file)
   (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror))
-        (annot   (bookmark-get-annotation bookmark)))
+        (annot   (bookmark-get-annotation bookmark-name)))
     (if (or (string= (cdr (assoc 'origin will-go)) "firefox-imported")
             (string= (cdr (assoc 'origin will-go)) "delicious-imported")
             (string= (cdr (assoc 'origin will-go)) "w3m-imported"))
