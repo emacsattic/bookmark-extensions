@@ -249,24 +249,35 @@ Special commands:
 (defun addressbook-gnus-sum-bookmark ()
   "Record an addressbook bookmark from a gnus summary buffer."
   (interactive)
-  (let* ((data (aref (gnus-summary-article-header
-                      (cdr gnus-article-current)) 2))
-         (name (read-string "Name: "
-                            (when (and data (string-match "^.* \<" data))
-                              (replace-regexp-in-string
-                               " \<\\|\>" "" (match-string 0 data)))))
-         (mail (read-string "Email: "
-                            (if (and data (string-match "\<.*\>$" data))
-                                (replace-regexp-in-string
-                                 "\<\\|\>" "" (match-string 0 data))
-                                data)))
+  (let* ((data      (aref (gnus-summary-article-header
+                           (cdr gnus-article-current)) 2))
+         (name      (read-string
+                     "Name: "
+                     (cond ((and
+                             data
+                             (string-match
+                              "^\\(.+\\)\\(\<\\)\\(.+\\)\\(@\\)\\(.+\\)\\(\>\\)"
+                              data))
+                            (match-string 1 data))
+                           ((and data
+                                 (string-match "^\\(.+\\)\\(@\\)\\(.+\\)" data))
+                            (match-string 1 data))
+                           (t ""))))
+         (mail      (read-string
+                     "Email: "
+                     (if (and data
+                              (string-match "^\\(.+\\)\\(<\\)\\(.+@.+\\)\\(>\\)"
+                                            data))
+                         (match-string 3 data)
+                         data)))
          (old-entry (assoc name bookmark-alist))
          (new-entry (addressbook-bookmark-make-entry
                      name mail "" "" "" "" "" "")))
     (when data
       (if (and old-entry
                (string= (assoc-default 'type old-entry) "addressbook"))
-          (let* ((old-mail-ls (split-string (assoc-default 'email old-entry) ", "))
+          (let* ((old-mail-ls (split-string
+                               (assoc-default 'email old-entry) ", "))
                  (new-mail-ls (if (not (member mail old-mail-ls))
                                   (append (list mail) old-mail-ls)
                                   (list mail)))
