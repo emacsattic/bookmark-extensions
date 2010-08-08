@@ -254,12 +254,12 @@ Special commands:
          (name      (read-string
                      "Name: "
                      (cond ((and
-                             data
+                             data ; 'name <name@somewhere.fr>'
                              (string-match
-                              "^\\(.+\\)\\(\<\\)\\(.+\\)\\(@\\)\\(.+\\)\\(\>\\)"
+                              "^\\(.+\\)\\(\\s-<\\)\\(.+\\)\\(@\\)\\(.+\\)\\(>\\)"
                               data))
                             (match-string 1 data))
-                           ((and data
+                           ((and data ; 'name@somewhere.fr'
                                  (string-match "^\\(.+\\)\\(@\\)\\(.+\\)" data))
                             (match-string 1 data))
                            (t ""))))
