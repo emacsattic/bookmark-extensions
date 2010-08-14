@@ -325,6 +325,7 @@
 ;;; Code:
 
 (require 'bookmark)
+(require 'org)
 (eval-when-compile (require 'cl))
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
