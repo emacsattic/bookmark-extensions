@@ -1474,6 +1474,12 @@ Try to follow position of last bookmark in menu-list."
   (let ((bmkext-bmenu-reverse-sort-p reversep))
     (bmkext-bmenu-sort-1 'bmkext-alpha-more-p)))
 
+(defun bmkext-read-char-or-event (prompt)
+  "Use `read-char' when possible otherwise `read-event' using PROMPT."
+  (let* ((chr (condition-case nil (read-char prompt) (error nil)))
+         (evt (unless chr (read-event prompt))))
+    (or chr evt))))
+
 ;;; Searching in bookmarks
 ;;
 ;;  Narrow down `bookmark-alist' with only bookmarks matching regexp.
@@ -1483,27 +1489,19 @@ Try to follow position of last bookmark in menu-list."
   "Read each keyboard input and add it to `bmkext-search-pattern'."
   (setq bmkext-search-pattern "")    ; Always reset pattern to empty string
   (let ((tmp-list     ())
-        (prompt       (propertize bmkext-search-prompt 'face '((:foreground "cyan"))))
-        (inhibit-quit t)
-        char)
-    (catch 'break
-      (while 1
-        (catch 'continue
-          (condition-case nil
-              (setq char (read-char (concat prompt bmkext-search-pattern)))
-            (error (throw 'break nil))) ; Break if char is an event.
-          (case char
-            ((or ?\e ?\r) (throw 'break nil)) ; RET or ESC break search loop and lead to [1].
-            (?\d (pop tmp-list) ; Delete last char of `bmkext-search-pattern' with DEL
-                 (setq bmkext-search-pattern
-                       (mapconcat 'identity (reverse tmp-list) ""))
-                 (throw 'continue nil))
-            (?\C-g (setq bmkext-quit-flag t) (throw 'break (message "Quit")))
-            (t
-             (push (text-char-description char) tmp-list)
-             (setq bmkext-search-pattern
-                   (mapconcat 'identity (reverse tmp-list) ""))
-             (throw 'continue nil))))))))
+        (prompt       (propertize bmkext-search-prompt 'face 'minibuffer-prompt))
+        (inhibit-quit t))
+    (while (let ((char (bmkext-read-char-or-event (concat prompt bmkext-search-pattern))))
+             (case char
+               ((or ?\e ?\r) nil) ; RET or ESC break search loop and lead to [1].
+               (?\d (pop tmp-list) ; Delete last char of `bmkext-search-pattern' with DEL
+                    (setq bmkext-search-pattern
+                          (mapconcat 'identity (reverse tmp-list) "")) t)
+               (?\C-g (setq bmkext-quit-flag t) nil)
+               (t
+                (push (text-char-description char) tmp-list)
+                (setq bmkext-search-pattern
+                      (mapconcat 'identity (reverse tmp-list) "")) t))))))
 
 (defun bmkext-filtered-alist-by-regexp-only (regexp alist)
   "Return a filtered ALIST with (only) bookmarks matching REGEXP."
