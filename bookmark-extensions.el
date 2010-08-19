@@ -1478,7 +1478,7 @@ Try to follow position of last bookmark in menu-list."
   "Use `read-char' when possible otherwise `read-event' using PROMPT."
   (let* ((chr (condition-case nil (read-char prompt) (error nil)))
          (evt (unless chr (read-event prompt))))
-    (or chr evt))))
+    (or chr evt)))
 
 ;;; Searching in bookmarks
 ;;
