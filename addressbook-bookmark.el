@@ -149,7 +149,7 @@ Special commands:
 
 ;;; Completion in message buffer with TAB. (dependency: anything)
 (when addressbook-enable-mail-completion
-  (require 'anything-config)
+  (require 'anything-config nil t)
   (bookmark-maybe-load-default-file)
   (setq message-tab-body-function nil)
   (setq message-completion-alist

@@ -2033,6 +2033,7 @@ BOOKMARK is a bookmark name or a bookmark record."
   "Return non-nil if BOOKMARK is a W3m bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
   (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-w3m)
+      (eq (bookmark-get-handler bookmark) 'bookmark-w3m-bookmark-jump)
       (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-w3m)))
 
 (defun bmkext-info-bookmark-p (bookmark)
