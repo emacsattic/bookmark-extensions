@@ -2259,6 +2259,9 @@ Otherwise, return nil."
         (when (string-match (format "*tramp/%s ." su-or-sudo-regex) i) (throw 'break t))))))
 
 ;;; W3M support
+;; Add compatibility with emacs-w3m handlers
+(defalias 'bookmark-w3m-bookmark-jump 'bmkext-jump-w3m)
+
 (defun bmkext-make-w3m-record ()
   "Make a special entry for w3m buffers."
   (require 'w3m)                        ; For `w3m-current-url'.
