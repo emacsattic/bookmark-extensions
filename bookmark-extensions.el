@@ -1134,6 +1134,10 @@ Don't affect the buffer ring order."
                                                    (line-end-position)))))
           (bookmark-bmenu-list title 'filteredp))))))
 
+;; Compatibility Emacs24
+(unless (fboundp 'bookmark-name-from-full-record)
+  (defun bookmark-name-from-full-record (full-record)
+    (bookmark-name-from-record full-record)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
