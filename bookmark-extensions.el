@@ -1201,10 +1201,6 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
     (bookmark-bmenu-mode)
     (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))))
 
-;; Compatibility Emacs24
-(unless (fboundp 'bookmark-name-from-full-record)
-  (defun bookmark-name-from-full-record (full-record)
-    (bookmark-name-from-record full-record)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
