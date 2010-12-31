@@ -1637,7 +1637,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            ((and isremote (not issu)) ; Remote file (ssh, ftp)
             `(mouse-face highlight follow-link t face bmkext-remote-file
                          help-echo (format "mouse-2 Goto remote file: %s",isfile)))
-           ((and isfile (file-directory-p isfile)) ; Local directory
+           ((and isfile (not issu) (file-directory-p isfile)) ; Local directory
             `(mouse-face highlight follow-link t face bmkext-local-directory
                          help-echo (format "mouse-2 Goto dired: %s",isfile)))
            ((and isfile (file-exists-p isfile)) ; Local file
