@@ -325,6 +325,7 @@
 ;;; Code:
 
 (require 'bookmark)
+(require 'org)
 (eval-when-compile (require 'cl))
 (eval-when-compile (require 'w3m nil t))
 (eval-when-compile (require 'w3m-bookmark nil t))
@@ -1091,12 +1092,17 @@ from there)."
 				   bookmark-current-bookmark)))
   (bookmark-maybe-historicize-string bookmark-name)
   (bookmark-maybe-load-default-file)
-  (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror)))
+  (let ((will-go (bookmark-get-bookmark bookmark-name 'noerror))
+        (annot   (bookmark-get-annotation bookmark-name)))
     (if (or (string= (cdr (assoc 'origin will-go)) "firefox-imported")
             (string= (cdr (assoc 'origin will-go)) "delicious-imported")
             (string= (cdr (assoc 'origin will-go)) "w3m-imported"))
         (error "Operation not supported on this type of bookmark.")
         (setq bookmark-alist (delete will-go bookmark-alist))
+        (when (and annot (not (string= annot ""))
+                   (file-exists-p annot)
+                   (y-or-n-p "Delete also Org Annotations file? "))
+          (delete-file annot) (message "`%s' have been deleted." annot))
         ;; Added by db, nil bookmark-current-bookmark if the last
         ;; occurrence has been deleted
         (setq bmkext-latest-bookmark-alist (delete will-go bmkext-latest-bookmark-alist))
@@ -1128,6 +1134,10 @@ Don't affect the buffer ring order."
                                                    (line-end-position)))))
           (bookmark-bmenu-list title 'filteredp))))))
 
+;; Compatibility Emacs24
+(unless (fboundp 'bookmark-name-from-full-record)
+  (defun bookmark-name-from-full-record (full-record)
+    (bookmark-name-from-record full-record)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1468,6 +1478,12 @@ Try to follow position of last bookmark in menu-list."
   (let ((bmkext-bmenu-reverse-sort-p reversep))
     (bmkext-bmenu-sort-1 'bmkext-alpha-more-p)))
 
+(defun bmkext-read-char-or-event (prompt)
+  "Use `read-char' when possible otherwise `read-event' using PROMPT."
+  (let* ((chr (condition-case nil (read-char prompt) (error nil)))
+         (evt (unless chr (read-event prompt))))
+    (or chr evt)))
+
 ;;; Searching in bookmarks
 ;;
 ;;  Narrow down `bookmark-alist' with only bookmarks matching regexp.
@@ -1477,27 +1493,19 @@ Try to follow position of last bookmark in menu-list."
   "Read each keyboard input and add it to `bmkext-search-pattern'."
   (setq bmkext-search-pattern "")    ; Always reset pattern to empty string
   (let ((tmp-list     ())
-        (prompt       (propertize bmkext-search-prompt 'face '((:foreground "cyan"))))
-        (inhibit-quit t)
-        char)
-    (catch 'break
-      (while 1
-        (catch 'continue
-          (condition-case nil
-              (setq char (read-char (concat prompt bmkext-search-pattern)))
-            (error (throw 'break nil))) ; Break if char is an event.
-          (case char
-            ((or ?\e ?\r) (throw 'break nil)) ; RET or ESC break search loop and lead to [1].
-            (?\d (pop tmp-list) ; Delete last char of `bmkext-search-pattern' with DEL
-                 (setq bmkext-search-pattern
-                       (mapconcat 'identity (reverse tmp-list) ""))
-                 (throw 'continue nil))
-            (?\C-g (setq bmkext-quit-flag t) (throw 'break (message "Quit")))
-            (t
-             (push (text-char-description char) tmp-list)
-             (setq bmkext-search-pattern
-                   (mapconcat 'identity (reverse tmp-list) ""))
-             (throw 'continue nil))))))))
+        (prompt       (propertize bmkext-search-prompt 'face 'minibuffer-prompt))
+        (inhibit-quit t))
+    (while (let ((char (bmkext-read-char-or-event (concat prompt bmkext-search-pattern))))
+             (case char
+               ((or ?\e ?\r) nil) ; RET or ESC break search loop and lead to [1].
+               (?\d (pop tmp-list) ; Delete last char of `bmkext-search-pattern' with DEL
+                    (setq bmkext-search-pattern
+                          (mapconcat 'identity (reverse tmp-list) "")) t)
+               (?\C-g (setq bmkext-quit-flag t) nil)
+               (t
+                (push (text-char-description char) tmp-list)
+                (setq bmkext-search-pattern
+                      (mapconcat 'identity (reverse tmp-list) "")) t))))))
 
 (defun bmkext-filtered-alist-by-regexp-only (regexp alist)
   "Return a filtered ALIST with (only) bookmarks matching REGEXP."
@@ -2029,6 +2037,7 @@ BOOKMARK is a bookmark name or a bookmark record."
   "Return non-nil if BOOKMARK is a W3m bookmark.
 BOOKMARK is a bookmark name or a bookmark record."
   (or (eq (bookmark-get-handler bookmark) 'bmkext-jump-w3m)
+      (eq (bookmark-get-handler bookmark) 'bookmark-w3m-bookmark-jump)
       (eq (bookmark-get-handler bookmark) 'bookmarkp-jump-w3m)))
 
 (defun bmkext-info-bookmark-p (bookmark)
@@ -2254,6 +2263,9 @@ Otherwise, return nil."
         (when (string-match (format "*tramp/%s ." su-or-sudo-regex) i) (throw 'break t))))))
 
 ;;; W3M support
+;; Add compatibility with emacs-w3m handlers
+(defalias 'bookmark-w3m-bookmark-jump 'bmkext-jump-w3m)
+
 (defun bmkext-make-w3m-record ()
   "Make a special entry for w3m buffers."
   (require 'w3m)                        ; For `w3m-current-url'.

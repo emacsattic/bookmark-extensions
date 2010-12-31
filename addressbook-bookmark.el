@@ -49,11 +49,6 @@
   :group 'bmkext)
 
 ;;; User variables.
-(defcustom addressbook-enable-mail-completion t
-  "*Use addressbook completion in Mail/News buffers."
-  :group 'addressbook-bookmark
-  :type 'boolean)
-
 (defcustom addressbook-separator
   (propertize (make-string 45 ?-) 'face 'abook-separator)
   "*String used to separate contacts in addressbook buffer."
@@ -147,42 +142,41 @@ Special commands:
   (interactive "P")
   (addressbook-set-mail-buffer1 nil append 'cc))
 
-;;; Completion in message buffer with TAB. (dependency: anything)
-(when addressbook-enable-mail-completion
-  (require 'anything-config)
-  (bookmark-maybe-load-default-file)
-  (setq message-tab-body-function nil)
-  (setq message-completion-alist
-        (list (cons message-newgroups-header-regexp 'message-expand-group)
-              '("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
-               . addressbook-message-complete)
-              '("^\\(Resent-\\)?\\(To\\|B?Cc\\):"
-               . addressbook-message-complete)
-              '("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
-               . addressbook-message-complete)
-              '("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
-               . addressbook-message-complete)))
+;;; Completion in message buffer with TAB.
+(require 'anything-config nil t) ; If anything is present use anything-comp-read.
+(setq message-tab-body-function nil)
+(setq message-completion-alist
+      (list (cons message-newgroups-header-regexp 'message-expand-group)
+            '("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
+              . addressbook-message-complete)
+            '("^\\(Resent-\\)?\\(To\\|B?Cc\\):"
+              . addressbook-message-complete)
+            '("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
+              . addressbook-message-complete)
+            '("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
+              . addressbook-message-complete)))
 
-  (defun addressbook-message-complete ()
-    "Provide addressbook completion for `message-mode'."
-    (let* ((ls        (bmkext-addressbook-alist-only))
-           (comp-ls   (loop for l in ls
-                         collect (cons (car l) (assoc-default 'email l))))
-           (cand      (if (fboundp 'anything-comp-read)
-                          (anything-comp-read
-                           "Name: " comp-ls
-                           :must-match t
-                           :initial-input (thing-at-point 'symbol))
-                          (completing-read "Name: " comp-ls nil t (thing-at-point 'symbol))))
-           (cand-list (split-string cand ", ")))
-      (end-of-line)
-      (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
-      (insert (if (> (length cand-list) 1)
-                  (if (fboundp 'anything-comp-read)
-                      (anything-comp-read "WhichMail: " cand-list :must-match t)
-                      (completing-read "Name: " cand-list nil t))
-                  (car cand-list)))
-      (goto-char (point-min)) (search-forward "Subject: " nil t))))
+(defun addressbook-message-complete ()
+  "Provide addressbook completion for `message-mode'."
+  (bookmark-maybe-load-default-file)
+  (let* ((ls        (bmkext-addressbook-alist-only))
+         (comp-ls   (loop for l in ls
+                       collect (cons (car l) (assoc-default 'email l))))
+         (cand      (if (fboundp 'anything-comp-read)
+                        (anything-comp-read
+                         "Name: " comp-ls
+                         :must-match t
+                         :initial-input (thing-at-point 'symbol))
+                        (completing-read "Name: " comp-ls nil t (thing-at-point 'symbol))))
+         (cand-list (split-string cand ", ")))
+    (end-of-line)
+    (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
+    (insert (if (> (length cand-list) 1)
+                (if (fboundp 'anything-comp-read)
+                    (anything-comp-read "WhichMail: " cand-list :must-match t)
+                    (completing-read "Name: " cand-list nil t))
+                (car cand-list)))
+    (goto-char (point-min)) (search-forward "Subject: " nil t)))
 
 (defun addressbook-bookmark-make-entry (name email phone
                                         web street zipcode city image-path &optional nvisit)
@@ -249,30 +243,49 @@ Special commands:
 (defun addressbook-gnus-sum-bookmark ()
   "Record an addressbook bookmark from a gnus summary buffer."
   (interactive)
-  (let* ((data (aref (gnus-summary-article-header
-                      (cdr gnus-article-current)) 2))
-         (name (read-string "Name: "
-                            (when (and data (string-match "^.* \<" data))
-                              (replace-regexp-in-string
-                               " \<\\|\>" "" (match-string 0 data)))))
-         (mail (read-string "Email: "
-                            (if (and data (string-match "\<.*\>$" data))
-                                (replace-regexp-in-string
-                                 "\<\\|\>" "" (match-string 0 data))
-                                data)))
+  (let* ((data      (aref (gnus-summary-article-header
+                           (cdr gnus-article-current)) 2))
+         (name      (read-string
+                     "Name: "
+                     (cond ((and
+                             data ; 'name <name@somewhere.fr>'
+                             (string-match
+                              "^\\(.+\\)\\(\\s-<\\)\\(.+\\)\\(@\\)\\(.+\\)\\(>\\)"
+                              data))
+                            (match-string 1 data))
+                           ((and data ; 'name@somewhere.fr'
+                                 (string-match "^\\(.+\\)\\(@\\)\\(.+\\)" data))
+                            (match-string 1 data))
+                           (t ""))))
+         (mail      (read-string
+                     "Email: "
+                     (if (and data
+                              (string-match "^\\(.+\\)\\(<\\)\\(.+@.+\\)\\(>\\)"
+                                            data))
+                         (match-string 3 data)
+                         data)))
          (old-entry (assoc name bookmark-alist))
          (new-entry (addressbook-bookmark-make-entry
                      name mail "" "" "" "" "" "")))
     (when data
       (if (and old-entry
                (string= (assoc-default 'type old-entry) "addressbook"))
-          (let* ((old-mail-ls (split-string (assoc-default 'email old-entry) ", "))
-                 (new-mail-ls (if (member mail old-mail-ls)
-                                  (append (list mail old-mail-ls))
+          (let* ((old-mail-ls (split-string
+                               (assoc-default 'email old-entry) ", "))
+                 (new-mail-ls (if (not (member mail old-mail-ls))
+                                  (append (list mail) old-mail-ls)
                                   (list mail)))
-                 (mail-str (mapconcat 'identity new-mail-ls ", ")))
+                 (mail-str    (mapconcat 'identity new-mail-ls ", "))
+                 (phone       (or (assoc-default 'phone old-entry) ""))
+                 (web         (or (assoc-default 'web old-entry) ""))
+                 (street      (or (assoc-default 'street old-entry) ""))
+                 (zipcode     (or (assoc-default 'zipcode old-entry) ""))
+                 (city        (or (assoc-default 'city old-entry) ""))
+                 (visit       (or (assoc-default 'visits old-entry) ""))
+                 (image-path  (or (assoc-default 'image old-entry) "")))
             (setq new-entry (addressbook-bookmark-make-entry
-                             name mail-str "" "" "" "" "" ""))
+                             name mail-str phone web
+                             street zipcode city image-path))
             (setf (cdr old-entry)
                   (cdr new-entry)))
           (push new-entry bookmark-alist))
