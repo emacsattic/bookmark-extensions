@@ -1604,7 +1604,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
                 (t (bookmark-delete bmk) (goto-char pos)))
           (message "Aborting bookmark deletion")))))
 
-(defsubst bmkext-bmenu-propertize-item (bookmark-name start end)
+(defun bmkext-bmenu-propertize-item (bookmark-name start end)
   "Add text properties to BOOKMARK-NAME, from START to END."
   (let* ((isfile        (bookmark-get-filename bookmark-name))
          (isremote      (and isfile (file-remote-p isfile)))
@@ -1648,7 +1648,7 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            ((and isfile (not issu) (file-directory-p isfile)) ; Local directory
             `(mouse-face highlight follow-link t face bmkext-local-directory
                          help-echo (format "mouse-2 Goto dired: %s",isfile)))
-           ((and isfile (file-exists-p isfile)) ; Local file
+           ((and isfile (not issu) (file-exists-p isfile)) ; Local file
             `(mouse-face highlight follow-link t face
                          bmkext-local-file
                          help-echo (format "mouse-2 Goto file: %s",isfile)))
