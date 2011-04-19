@@ -106,7 +106,7 @@ Special commands:
                (assoc-default
                 'email (assoc bookmark-name bookmark-alist)) ", ")))
     (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
-           (switch-to-buffer-other-window
+           (pop-to-buffer
             (if (and mail-bufs (> (length mail-bufs) 1))
                 (if (fboundp 'anything-comp-read)
                     (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
@@ -347,14 +347,17 @@ Special commands:
                               (create-image image-path)))
          (inhibit-read-only t))
     (set-buffer buf)
+    (unless (search-forward addressbook-separator nil t)
+      ;; Fixme what is (getenv "USER") on windows system?
+      (let ((user (or (getenv "USER") "Unknown user")))
+        (insert (propertize (format "Addressbook %s" user)
+                            'face '((:foreground "green" :underline t)))
+                "\n\n" addressbook-separator "\n")))
     (if append
         (goto-char (point-max))
-        (erase-buffer) (goto-char (point-min))
-        ;; Fixme what is (getenv "USER") on windows system?
-        (let ((user (or (getenv "USER") "Unknown user")))
-          (insert (propertize (format "Addressbook %s" user)
-                              'face '((:foreground "green" :underline t)))
-                  "\n\n" addressbook-separator "\n")))
+        (goto-char (point-min))
+        (search-forward addressbook-separator)
+        (forward-line 1) (delete-region (point) (point-max)))
     ;; Dont append entry if already there.
     (unless (save-excursion (goto-char (point-min)) (search-forward name nil t))
       (insert (concat (propertize "Name:" 'face '((:underline t)))

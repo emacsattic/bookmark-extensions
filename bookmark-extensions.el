@@ -1134,10 +1134,6 @@ Don't affect the buffer ring order."
                                                    (line-end-position)))))
           (bookmark-bmenu-list title 'filteredp))))))
 
-;; Compatibility Emacs24
-(unless (fboundp 'bookmark-name-from-full-record)
-  (defun bookmark-name-from-full-record (full-record)
-    (bookmark-name-from-record full-record)))
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
@@ -1645,10 +1641,10 @@ If a prefix arg is given search in the whole `bookmark-alist'."
            ((and isremote (not issu)) ; Remote file (ssh, ftp)
             `(mouse-face highlight follow-link t face bmkext-remote-file
                          help-echo (format "mouse-2 Goto remote file: %s",isfile)))
-           ((and isfile (not issu) (file-directory-p isfile)) ; Local directory
+           ((and isfile (file-directory-p isfile)) ; Local directory
             `(mouse-face highlight follow-link t face bmkext-local-directory
                          help-echo (format "mouse-2 Goto dired: %s",isfile)))
-           ((and isfile (not issu) (file-exists-p isfile)) ; Local file
+           ((and isfile (file-exists-p isfile)) ; Local file
             `(mouse-face highlight follow-link t face
                          bmkext-local-file
                          help-echo (format "mouse-2 Goto file: %s",isfile)))
@@ -2287,22 +2283,18 @@ Otherwise, return nil."
 (defun bmkext-jump-w3m-new-session (bookmark)
   "Jump to W3m bookmark BOOKMARK, setting a new tab."
   (let ((file  (bookmark-prop-get bookmark 'filename))
-        (buf   (bmkext-w3m-set-new-buffer-name)))
+        (buf   (bmkext-w3m-set-new-buffer-name))
+        (w3m-async-exec nil))
     (w3m-browse-url file 'newsession)
-    (while (not (get-buffer buf)) (sit-for 1)) ; Be sure we have the W3m buffer.
-    (with-current-buffer buf
-      (goto-char (point-min))
-      ;; Wait until data arrives in buffer, before setting region.
-      (while (eq (line-beginning-position) (line-end-position)) (sit-for 1)))
     (bookmark-default-handler
      `("" (buffer . ,buf) . ,(bookmark-get-bookmark-record bookmark)))))
 
 (defun bmkext-jump-w3m-only-one-tab (bookmark)
   "Close all W3m sessions and jump to BOOKMARK in a new W3m buffer."
-  (let ((file  (bookmark-prop-get bookmark 'filename)))
-    (w3m-quit 'force)                   ; Be sure we start with an empty W3m buffer.
+  (let ((file  (bookmark-prop-get bookmark 'filename))
+        (w3m-async-exec nil)) ; Be synchronous, wait data arrive in buffer.
+    (w3m-quit 'force) ; Be sure we start with an empty W3m buffer.
     (w3m-browse-url file)
-    (with-current-buffer "*w3m*" (while (eq (point-min) (point-max)) (sit-for 1)))
     (bookmark-default-handler
      `("" (buffer . ,(buffer-name (current-buffer))) .
           ,(bookmark-get-bookmark-record bookmark)))))
@@ -2325,7 +2317,6 @@ External navigator is defined by `bmkext-external-browse-url-function'."
   (let ((file  (bookmark-prop-get bookmark 'filename)))
     (bmkext-update-time-and-increment-visits bookmark 'batch)
     (funcall bmkext-external-browse-url-function file)))
-
 
 ;;;; External bookmarks importation
 ;;
