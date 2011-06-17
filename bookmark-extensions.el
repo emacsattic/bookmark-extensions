@@ -1141,7 +1141,7 @@ Don't affect the buffer ring order."
 ;; 2. Handles also region bookmarks and buffer (non-file) bookmarks.
 ;;
 ;;;###autoload
-(defsubst bookmark-bmenu-list (&optional title filteredp)
+(defun bookmark-bmenu-list (&optional title filteredp)
   "Display a list of existing bookmarks, in buffer `*Bookmark List*'.
 The following faces are used for the list entries.
 Use `customize-face' if you want to change the appearance.
@@ -1450,11 +1450,14 @@ Try to follow position of last bookmark in menu-list."
 
 (defun bmkext-bmenu-goto-bookmark (name)
   "Move point to bookmark whith name NAME."
+  (set-buffer (get-buffer "*Bookmark List*"))
   (goto-char (point-min))
   (bookmark-bmenu-check-position)
-  (while (not (equal name (bookmark-bmenu-bookmark)))
-    (forward-line 1))
-  (forward-line 0))
+  (catch 'break
+    (while (not (eobp))
+      (if (string= name (bookmark-bmenu-bookmark))
+          (throw 'break nil)
+          (forward-line 1)))))
 
 ;;;###autoload
 (defun bmkext-bmenu-sort-by-visit-frequency (&optional reversep)
