@@ -1,0 +1,16 @@
+#!/bin/bash
+## Title:
+## Description: 
+## Author:Thierry Volpiatto<thierry dot volpiatto FROM gmail DOT com>
+## Commentary:
+
+wmctrl -xa emacs
+
+bookmark=$(emacsclient -e "(anything-w3m-bookmarks-from-uzbl)")
+bookmark=${bookmark%\"*}
+bookmark=${bookmark#\"*}
+
+[ -n "$bookmark" ] && echo "uri $bookmark" | socat - UNIX-CONNECT:$5
+
+wmctrl -xa uzbl
+
