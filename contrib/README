@@ -97,18 +97,26 @@
 (defun anything-c-uzbl-history (file)
   (let ((buf (get-buffer (anything-c-basename file))))
     (when buf (kill-buffer buf)))
-  (let* ((regexp "^\\([0-9]+-[0-9]+-[0-9]+\\s-[0-9]+:[0-9]+:[0-9]+\\)\\s-\\(http[s]?://[^\\ ]*\\)\\s-\\(.*\\)")
-         (cands (with-current-buffer (find-file-noselect file)
-                 (goto-char (point-min))
-                 (loop while (not (eobp))
-                      for line = (buffer-substring-no-properties (point-at-bol) (point-at-eol))
-                      for split = (when (string-match regexp line)
-                                    (cons (concat (match-string 1 line) " " (match-string 3 line))
-                                          (match-string 2 line)))
-                      collect split into hist
-                      do (forward-line 1)
-                      finally return (delq nil (reverse hist))))))
-    (anything-comp-read "UzblHistory: " cands :must-match t)))
+  (let (str)
+    (unwind-protect
+         (let* ((regexp "^\\([0-9]+-[0-9]+-[0-9]+\\s-[0-9]+:[0-9]+:[0-9]+\\)\\s-\\(http[s]?://[^\\ ]*\\)\\s-\\(.*\\)")
+                (cands (with-current-buffer (find-file-noselect file)
+                         (goto-char (point-min))
+                         (loop while (not (eobp))
+                            for line = (buffer-substring-no-properties (point-at-bol) (point-at-eol))
+                            for split = (when (string-match regexp line)
+                                          (cons (concat (match-string 1 line) " " (match-string 3 line))
+                                                (match-string 2 line)))
+                            collect split into hist
+                            do (forward-line 1)
+                            finally return (delq nil (reverse hist))))))
+           (setq str (anything-comp-read "UzblHistory: " cands :must-match t)))
+      (if (and (not str) server-clients)
+          ;; Kill emacsclient if comp-read is aborted with C-g.
+          (loop for i in server-clients
+             do (kill-process i)
+             finally return "")
+          str))))
 
 #+END_SRC
 *** Edit UZBL config file
