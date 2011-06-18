@@ -1,8 +1,8 @@
 # -*- mode: org -*-
 
-== Howto bookmark from UZBL browser to emacs regular bookmarks ==
+* Howto bookmark/jump from UZBL browser to emacs regular bookmarks
 
-* Prerequisite
+** Prerequisite
   Install:
   bookmark-extensions.el:
   http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
@@ -12,19 +12,21 @@
 
   socat, wmctrl, zenity: From your distro
   
-* Install for UZBL
-** Install bookmark-uzbl-handler.el
+  Of course you need always a running Emacs session...
+
+** Install for UZBL
+*** Install bookmark-uzbl-handler.el
    Put bookmark-uzbl-handler.el in your load-path and:
    
    #+BEGIN_SRC lisp 
 (require 'bookmark-uzbl-handler)
    #+END_SRC
 
-** Install scripts in PATH
+*** Install scripts in PATH
    Copy emacsuzblbookmarks and uzbl_emacsbookmark.sh somewhere in your
    path.
 
-** Edit your UZBL config file
+*** Edit your UZBL config file
    Add this in your $HOME/.config/uzbl/config
 
 #+BEGIN_SRC conf
@@ -36,7 +38,7 @@
 
 #+END_SRC
 
-** Add this code to your .emacs.el file
+*** Add this code to your .emacs.el file
    Add this to .emacs.el, save it and load it (C-M x) or reload Emacs. 
 #+BEGIN_SRC lisp
 (defun anything-c-highlight-uzbl-bookmarks (bookmarks source)
@@ -55,9 +57,55 @@
 
 #+END_SRC
 
-** Start uzbl-browser and enjoy
+*** Start uzbl-browser and enjoy
    Start uzbl and hit EB in command mode to bookmark current page to
    emacs bookmarks.You will have a zenity popup and a y-or-n-p that
    popup.
 
    Hit ES to switch to your emacs-bookmarks with anything interface.
+
+* Howto have an anything UZBL history interface in Emacs
+
+** Prerequisite
+  Install:
+  bookmark-extensions.el:
+  http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
+  
+  anything-config.el+anything.el+anything-match-plugin.el:
+  http://repo.or.cz/w/anything-config.git
+
+  socat, wmctrl, zenity: From your distro
+
+  Of course you need always a running Emacs session...
+
+** Install UZBL anything history interface
+*** Install contrib/uzbl_emacsbookmark.sh
+    In your PATH.
+*** Put this elisp code in .emacs.el
+#+BEGIN_SRC lisp
+;; Uzbl history
+(defun anything-c-uzbl-history (file)
+  (let ((buf (get-buffer (anything-c-basename file))))
+    (when buf (kill-buffer buf)))
+  (let* ((regexp "^\\([0-9]+-[0-9]+-[0-9]+\\s-[0-9]+:[0-9]+:[0-9]+\\)\\s-\\(http[s]?://[^\\ ]*\\)\\s-\\(.*\\)")
+         (cands (with-current-buffer (find-file-noselect file)
+                 (goto-char (point-min))
+                 (loop while (not (eobp))
+                      for line = (buffer-substring-no-properties (point-at-bol) (point-at-eol))
+                      for split = (when (string-match regexp line)
+                                    (cons (concat (match-string 1 line) " " (match-string 3 line))
+                                          (match-string 2 line)))
+                      collect split into hist
+                      do (forward-line 1)
+                      finally return (delq nil (reverse hist))))))
+    (anything-comp-read "UzblHistory: " cands :must-match t)))
+
+#+END_SRC
+*** Edit UZBL config file
+   Add this line
+   #+BEGIN_SRC conf
+@bind <Ctrl>h = spawn $HOME/bin/uzbl_history.sh
+   #+END_SRC
+
+*** Go in uzbl
+   Hit C-h to have history.
