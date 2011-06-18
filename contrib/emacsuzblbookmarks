@@ -1,8 +1,8 @@
 #!/bin/bash
 ## Title:
-## Description: 
+## Description: Switch to emacs-bookmarks list. 
 ## Author:Thierry Volpiatto<thierry dot volpiatto FROM gmail DOT com>
-## Commentary:
+## Commentary: 
 
 wmctrl -xa emacs
 

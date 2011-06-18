@@ -89,7 +89,7 @@
   Of course you need always a running Emacs session...
 
 ** Install UZBL anything history interface
-*** Install contrib/uzbl_emacsbookmark.sh
+*** Install contrib/uzbl_history.sh
     In your PATH.
 *** Put this elisp code in .emacs.el
 #+BEGIN_SRC lisp
