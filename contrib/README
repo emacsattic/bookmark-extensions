@@ -41,11 +41,21 @@
 *** Add this code to your .emacs.el file
    Add this to .emacs.el, save it and load it (C-M x) or reload Emacs. 
 #+BEGIN_SRC lisp
-(defun anything-c-highlight-uzbl-bookmarks (bookmarks source)
-  (loop for i in bookmarks collect
-       (cons
-        (propertize (car i) 'face '((:foreground "cyan" :underline t)))
-        (cdr i))))
+(defun anything-w3m-bookmarks-from-uzbl ()
+  (let (str)
+    (unwind-protect
+         (setq str (anything-comp-read "Bookmark: "
+                                       (loop for i in bookmark-alist
+                                          when (bmkext-w3m-bookmark-p i)
+                                          collect (cons (car i) (bookmark-prop-get i 'filename)))
+                                       :fc-transformer 'anything-c-highlight-uzbl-bookmarks
+                                       :volatile nil))
+      (if (and (not str) server-clients)
+          ;; Kill emacsclient if comp-read is aborted with C-g.
+          (loop for i in server-clients
+             do (kill-process i)
+             finally return "")
+          str))))
 
 (defun anything-w3m-bookmarks-from-uzbl ()
   (anything-comp-read "Bookmark: "
