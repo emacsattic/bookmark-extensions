@@ -1,0 +1,63 @@
+# -*- mode: org -*-
+
+== Howto bookmark from UZBL browser to emacs regular bookmarks ==
+
+* Prerequisite
+  Install:
+  bookmark-extensions.el:
+  http://mercurial.intuxication.org/hg/emacs-bookmark-extension/
+  
+  anything-config.el+anything.el+anything-match-plugin.el:
+  http://repo.or.cz/w/anything-config.git
+
+  socat, wmctrl, zenity: From your distro
+  
+* Install for UZBL
+** Install bookmark-uzbl-handler.el
+   Put bookmark-uzbl-handler.el in your load-path and:
+   
+   #+BEGIN_SRC lisp 
+(require 'bookmark-uzbl-handler)
+   #+END_SRC
+
+** Install scripts in PATH
+   Copy emacsuzblbookmarks and uzbl_emacsbookmark.sh somewhere in your
+   path.
+
+** Edit your UZBL config file
+   Add this in your $HOME/.config/uzbl/config
+
+#+BEGIN_SRC conf
+   # --- Emacs bookmarks ---
+   # Save
+   @cbind  EB = spawn /home/thierry/bin/uzbl_emacsbookmark.sh
+   # Jump
+   @bind   ES = spawn /home/thierry/bin/emacsuzblbookmarks
+
+#+END_SRC
+
+** Add this code to your .emacs.el file
+   Add this to .emacs.el, save it and load it (C-M x) or reload Emacs. 
+#+BEGIN_SRC lisp
+(defun anything-c-highlight-uzbl-bookmarks (bookmarks source)
+  (loop for i in bookmarks collect
+       (cons
+        (propertize (car i) 'face '((:foreground "cyan" :underline t)))
+        (cdr i))))
+
+(defun anything-w3m-bookmarks-from-uzbl ()
+  (anything-comp-read "Bookmark: "
+                      (loop for i in bookmark-alist
+                         when (bmkext-w3m-bookmark-p i)
+                         collect (cons (car i) (bookmark-prop-get i 'filename)))
+                      :fc-transformer 'anything-c-highlight-uzbl-bookmarks
+                      :volatile nil))
+
+#+END_SRC
+
+** Start uzbl-browser and enjoy
+   Start uzbl and hit EB in command mode to bookmark current page to
+   emacs bookmarks.You will have a zenity popup and a y-or-n-p that
+   popup.
+
+   Hit ES to switch to your emacs-bookmarks with anything interface.
