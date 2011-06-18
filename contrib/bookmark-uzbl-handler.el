@@ -46,6 +46,7 @@
                       (bmkext-bookmark-uzbl-page bmkext-uzbl-info))
                 (bmkext-maybe-save-bookmark)
                 (call-interactively #'bookmark-bmenu-list)
+                (sit-for 2)
                 (bmkext-bmenu-goto-bookmark title))
               (message "Bookmark (%s) already exists." title)))
         (message "Abort Uzbl bookmarking"))))

@@ -66,25 +66,27 @@
 (require 'url)
 (autoload 'url-unhex-string "url")
 
-(defvar bmkext-firefox-info nil)
+;(defvar bmk nil)
 (defun bmkext-get-firefox-bmk (bmk)
   "Bookmark a Firefox page in Standards Emacs bookmarks.
 BMK is the value returned by the bookmarklet."
   (interactive)
   (let* ((split (split-string bmk "::emacsbookmark::"))
          (url   (replace-regexp-in-string "emacsbookmark://" "" (car split)))
-         (title (cadr split)))
+         (title (cadr split))
+         fbmk)
     (setq url (url-unhex-string url t))
     (setq title (url-unhex-string title t))
-    (setq bmkext-firefox-info (cons title url))
+    (setq fbmk (cons title url))
     (if (and title url (y-or-n-p (format "Bookmark (%s) from Firefox? " title)))
         (progn
           (if (not (member title (bookmark-all-names)))
               (progn
                 (setq bookmark-alist
-                      (bmkext-bookmark-firefox-page bmkext-firefox-info))
+                      (bmkext-bookmark-firefox-page fbmk))
                 (bmkext-maybe-save-bookmark)
                 (call-interactively #'bookmark-bmenu-list)
+                (sit-for 2)
                 (bmkext-bmenu-goto-bookmark title))
               (message "Bookmark (%s) already exists." title)))
         (message "Abort Firefox bookmarking"))))
@@ -93,7 +95,7 @@ BMK is the value returned by the bookmarklet."
 (defun bmkext-bookmark-firefox-page (bmk)
   "Return `bookmark-alist' with the firefox bookmark BMK appended to it."
   (append
-   (list (bmkext-format-html-bmk bmkext-firefox-info "firefox-record"))
+   (list (bmkext-format-html-bmk bmk "firefox-record"))
    bookmark-alist))
 
 ;; Jump in w3m from firefox
