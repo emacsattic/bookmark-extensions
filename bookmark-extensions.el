@@ -2265,6 +2265,11 @@ Otherwise, return nil."
 ;; Add compatibility with emacs-w3m handlers
 (defalias 'bookmark-w3m-bookmark-jump 'bmkext-jump-w3m)
 
+(defcustom bmkext-jump-w3m-defaut-method 'external
+  "Default method to browse url."
+  :group 'bmkext
+  :type 'symbol)
+
 (defun bmkext-make-w3m-record ()
   "Make a special entry for w3m buffers."
   (require 'w3m)                        ; For `w3m-current-url'.
@@ -2308,7 +2313,8 @@ BOOKMARK is a bookmark name or a bookmark record.
 Use multi-tabs in W3m if `bmkext-w3m-allow-multi-tabs' is non-nil.
 If a prefix arg is given, open an external navigator defined in
 `bmkext-external-browse-url-function'."
-  (if (and current-prefix-arg bmkext-external-browse-url-function)
+  (if (or (and current-prefix-arg bmkext-external-browse-url-function)
+          (eq bmkext-jump-w3m-defaut-method 'external)) 
       (bmkext-jump-url-external bookmark)
       (if bmkext-w3m-allow-multi-tabs
           (bmkext-jump-w3m-new-session bookmark)
