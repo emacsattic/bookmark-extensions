@@ -36,9 +36,9 @@
   "Bookmark a Uzbl page in Standards Emacs bookmarks."
   (interactive)
   (setq url (url-unhex-string url t))
-  (setq title (url-unhex-string title t))
+  (setq title (read-string "Set Bookmark: " (url-unhex-string title t)))
   (let ((bmkext-uzbl-info (cons title url)))
-    (if (and title url (y-or-n-p (format "Bookmark (%s) from uzbl? " title)))
+    (if (and title url)
         (progn
           (if (not (member title (bookmark-all-names)))
               (progn
