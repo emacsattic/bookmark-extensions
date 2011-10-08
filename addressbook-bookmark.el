@@ -269,7 +269,7 @@ Special commands:
                (string= (assoc-default 'type old-entry) "addressbook"))
           (let* ((old-mail-ls (split-string (assoc-default 'email old-entry) ", "))
                  (new-mail-ls (if (member mail old-mail-ls)
-                                  (append (list mail old-mail-ls))
+                                  (append (list mail) old-mail-ls)
                                   (list mail)))
                  (mail-str (mapconcat 'identity new-mail-ls ", ")))
             (setq new-entry (addressbook-bookmark-make-entry
