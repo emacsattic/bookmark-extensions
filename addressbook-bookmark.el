@@ -145,7 +145,6 @@ Special commands:
 
 ;;; Completion in message buffer with TAB. (dependency: anything)
 (when addressbook-enable-mail-completion
-  (require 'anything-config)
   (bookmark-maybe-load-default-file)
   (setq message-tab-body-function nil)
   (setq message-completion-alist
@@ -162,20 +161,22 @@ Special commands:
   (defun addressbook-message-complete ()
     "Provide addressbook completion for `message-mode'."
     (let* ((ls        (bmkext-addressbook-alist-only))
-           (comp-ls   (loop for l in ls
-                         collect (cons (car l) (assoc-default 'email l))))
-           (cand      (completing-read "Name: " comp-ls nil t
+           (names     (loop for l in ls collect (car l)))
+           (alist     (loop for m in ls collect
+                            (cons (car m) (assoc-default 'email m))))
+           (cand      (completing-read "Name: " names nil t
                                        (thing-at-point 'symbol)))
-           (cand-list (split-string cand ", ")))
+           (mail-list (split-string (assoc-default cand alist) ", ")))
       (end-of-line)
       (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
-      (insert (if (> (length cand-list) 1)
-                  (completing-read "Name: " cand-list nil t)
-                  (car cand-list)))
+      (insert (if (> (length mail-list) 1) ; Contact have more than one address.
+                  (completing-read "Address: " mail-list nil t)
+                  (car mail-list)))
       (goto-char (point-min)) (search-forward "Subject: " nil t))))
 
 (defun addressbook-bookmark-make-entry (name email phone
-                                        web street zipcode city image-path &optional nvisit)
+                                        web street zipcode city image-path
+                                        &optional nvisit)
   "Build an addressbook bookmark entry."
   `(,name
     ,@(bookmark-make-record-default 'no-file 'no-context 0 nvisit)
