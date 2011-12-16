@@ -108,9 +108,7 @@ Special commands:
     (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
            (pop-to-buffer
             (if (and mail-bufs (> (length mail-bufs) 1))
-                (if (fboundp 'anything-comp-read)
-                    (anything-comp-read "MailBuffer: " mail-bufs :must-match t)
-                    (completing-read "MailBuffer: " mail-bufs nil t))
+                (completing-read "MailBuffer: " mail-bufs nil t)
                 (car mail-bufs))))
           ((or cc append)                 ; No mail buffer found create one.
            (compose-mail nil nil nil nil 'switch-to-buffer-other-window))
@@ -124,10 +122,7 @@ Special commands:
               (search-forward "Newsgroups: " nil t)))
       (end-of-line)
       (let ((email (if (> (length mail-list) 1)
-                       (if (fboundp 'anything-comp-read)
-                           (anything-comp-read
-                            "Choose mail: " mail-list :must-match t)
-                           (completing-read "Choose mail: " mail-list nil t))
+                       (completing-read "Choose mail: " mail-list nil t)
                        (car mail-list))))
         (if append
             (progn
@@ -169,19 +164,13 @@ Special commands:
     (let* ((ls        (bmkext-addressbook-alist-only))
            (comp-ls   (loop for l in ls
                          collect (cons (car l) (assoc-default 'email l))))
-           (cand      (if (fboundp 'anything-comp-read)
-                          (anything-comp-read
-                           "Name: " comp-ls
-                           :must-match t
-                           :initial-input (thing-at-point 'symbol))
-                          (completing-read "Name: " comp-ls nil t (thing-at-point 'symbol))))
+           (cand      (completing-read "Name: " comp-ls nil t
+                                       (thing-at-point 'symbol)))
            (cand-list (split-string cand ", ")))
       (end-of-line)
       (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
       (insert (if (> (length cand-list) 1)
-                  (if (fboundp 'anything-comp-read)
-                      (anything-comp-read "WhichMail: " cand-list :must-match t)
-                      (completing-read "Name: " cand-list nil t))
+                  (completing-read "Name: " cand-list nil t)
                   (car cand-list)))
       (goto-char (point-min)) (search-forward "Subject: " nil t))))
 
