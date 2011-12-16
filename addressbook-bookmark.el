@@ -28,14 +28,19 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
 ;; Floor, Boston, MA 02110-1301, USA.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Dependencies: bookmark-extensions.el
 
-;;; Commentary:
-;;
-;; This is a work in progress, you can use it but it's not finished,
-;; so you may find things incoherents or disfunctioning.
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Commentary: This is an addressbook for Emacs based on
+;;              standard Emacs bookmarks.
+;;              It provide completion on contacts in `message-mode' buffers,
+;;              a special mode to display contacts with address, phone etc...
+;;              If you have installed google-maps
+;;              <http://julien.danjou.info/google-maps-el.html>
+;;              you can switch to google map based on address of your contact.
+;;              It is fully compatible with anything
+;;              <http://repo.or.cz/w/anything-config.git>
+;;              If you use anything see `anything-bookmark-ext' and turn on `ac-mode'
+;;              to have anything completion in message buffers.
 
 ;;; Code:
 (eval-when-compile (require 'cl))
@@ -143,7 +148,7 @@ Special commands:
   (interactive "P")
   (addressbook-set-mail-buffer1 nil append 'cc))
 
-;;; Completion in message buffer with TAB. (dependency: anything)
+;;; Completion in message buffer with TAB.
 (when addressbook-enable-mail-completion
   (bookmark-maybe-load-default-file)
   (setq message-tab-body-function nil)
