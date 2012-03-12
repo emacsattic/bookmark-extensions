@@ -414,8 +414,6 @@
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "\M-r" 'bookmark-bmenu-relocate) ; Was `R' in vanilla.
 ;;;###autoload
-(define-key bookmark-bmenu-mode-map (kbd "M-g") 'bmkext-bmenu-search)
-;;;###autoload
 (define-key bookmark-bmenu-mode-map (kbd "C-k") 'bmkext-bmenu-delete-bookmark)
 ;;;###autoload
 (define-key bookmark-bmenu-mode-map "W" 'bmkext-bmenu-list-only-w3m-bookmarks)
@@ -459,7 +457,6 @@ bookmarks (`C-u' for local only)
 \\[bmkext-bmenu-hide-marked]\t- Hide marked bookmarks
 \\[bmkext-bmenu-hide-unmarked]\t- Hide unmarked bookmarks
 \\[bmkext-bmenu-mark-all-bookmarks]\t- Mark all bookmarks
-\\[bmkext-bmenu-search]\t- Incremental search in bookmarks
 \\[bmkext-bmenu-unmark-all]\t- Unmark all bookmarks (`C-u' for interactive use)
 \\[bmkext-bmenu-unmark-all-non-deletion-flags]\t- Unmark all bookmarks with flag >
 \\[bmkext-bmenu-unmark-all-deletion-flags]\t- Unmark all bookmarks with flag D
@@ -553,14 +550,6 @@ Possible values are:
 `bmkext-alpha-more-p' - sort alphabetically."
   :type '(choice (const :tag "None" nil) function) :group 'bmkext)
 
-(defcustom bmkext-search-prompt "Pattern: "
-  "*Prompt used for `bmkext-bmenu-search'."
-  :type 'string :group 'bmkext)
-
-(defcustom bmkext-search-delay 0.6
-  "*Display when searching bookmarks is updated all `bmkext-search-delay' seconds."
-  :type 'integer :group 'bmkext)
-
 (defcustom bmkext-local-man-name-regexp "^NOM$"
   "*The translation of the uppercase word NAME in your language.
 Used in `bookmark-set' to get the default bookmark name."
@@ -619,16 +608,6 @@ You should add this directory to `org-agenda-files' list."
 
 (defvar bmkext-bmenu-reverse-sort-p nil
   "Reverse order of sorting.")
-
-(defvar bmkext-search-pattern ""
-  "Store keyboard input for incremental search.")
-
-(defvar bmkext-search-timer nil
-  "Timer used for searching")
-
-(defvar bmkext-quit-flag nil
-  "Non nil make `bmkext-bmenu-search' quit immediately.
-See (info \"(elisp)quittinq\")")
 
 ;; Preserve compatibility with bookmark+.el in .emacs.bmk.
 (defalias 'bookmarkp-jump-gnus 'bmkext-jump-gnus)
@@ -1477,35 +1456,6 @@ Try to follow position of last bookmark in menu-list."
   (let ((bmkext-bmenu-reverse-sort-p reversep))
     (bmkext-bmenu-sort-1 'bmkext-alpha-more-p)))
 
-(defun bmkext-read-char-or-event (prompt)
-  "Use `read-char' when possible otherwise `read-event' using PROMPT."
-  (let* ((chr (condition-case nil (read-char prompt) (error nil)))
-         (evt (unless chr (read-event prompt))))
-    (or chr evt)))
-
-;;; Searching in bookmarks
-;;
-;;  Narrow down `bookmark-alist' with only bookmarks matching regexp.
-;;  Display is updated at each time a character is entered in minibuffer.
-;;
-(defun bmkext-read-search-input ()
-  "Read each keyboard input and add it to `bmkext-search-pattern'."
-  (setq bmkext-search-pattern "")    ; Always reset pattern to empty string
-  (let ((tmp-list     ())
-        (prompt       (propertize bmkext-search-prompt 'face 'minibuffer-prompt))
-        (inhibit-quit t))
-    (while (let ((char (bmkext-read-char-or-event (concat prompt bmkext-search-pattern))))
-             (case char
-               ((or ?\e ?\r) nil) ; RET or ESC break search loop and lead to [1].
-               (?\d (pop tmp-list) ; Delete last char of `bmkext-search-pattern' with DEL
-                    (setq bmkext-search-pattern
-                          (mapconcat 'identity (reverse tmp-list) "")) t)
-               (?\C-g (setq bmkext-quit-flag t) nil)
-               (t
-                (push (text-char-description char) tmp-list)
-                (setq bmkext-search-pattern
-                      (mapconcat 'identity (reverse tmp-list) "")) t))))))
-
 (defun bmkext-filtered-alist-by-regexp-only (regexp alist)
   "Return a filtered ALIST with (only) bookmarks matching REGEXP."
   (bmkext-remove-if-not #'(lambda (x) (string-match regexp (car x))) alist))
@@ -1516,45 +1466,6 @@ Try to follow position of last bookmark in menu-list."
         (bmkext-bmenu-called-from-inside-flag t)) ; Dont remove marks if some.
     (setq bmkext-latest-bookmark-alist bookmark-alist)
     (bookmark-bmenu-list title 'filteredp)))
-
-;;;###autoload
-(defun bmkext-bmenu-search (&optional all)
-  "Incremental search of bookmarks matching `bmkext-search-pattern'.
-We make search in the current list displayed i.e `bmkext-latest-bookmark-alist'.
-If a prefix arg is given search in the whole `bookmark-alist'."
-  (interactive "P")
-  (when (string= (buffer-name (current-buffer)) "*Bookmark List*")
-    (lexical-let* ((ctitle   (save-excursion (goto-char (point-min))
-                                             (buffer-substring (point-at-bol) (point-at-eol))))
-                   (bmk      (bookmark-bmenu-bookmark))
-                   (ntitle   "% Bookmark Filtered by regexp")
-                   (bmk-list (if all    ; Prefix arg
-                                 (prog1 bookmark-alist (setq ntitle "% Bookmark"
-                                                             ctitle "% Bookmark"))
-                                 bmkext-latest-bookmark-alist)))
-      (unwind-protect
-           (progn
-             (setq bmkext-search-timer
-                   (run-with-idle-timer
-                    bmkext-search-delay 'repeat
-                    #'(lambda ()
-                        (bmkext-bmenu-filter-alist-by-regexp bmkext-search-pattern bmk-list ntitle))))
-             (bmkext-read-search-input))
-        (progn  ; [1] Stop timer.
-          (bmkext-bmenu-cancel-search)
-          (if bmkext-quit-flag        ; C-g hit, rebuild menu list as before.
-              (let ((bookmark-alist                       bmk-list)
-                    (bmkext-bmenu-called-from-inside-flag t))
-                (bookmark-bmenu-list ctitle) (bmkext-bmenu-goto-bookmark bmk))
-              ;; Else show the narrowed alist only.
-              (message "%d bookmarks found matching `%s'"
-                       (length bmkext-latest-bookmark-alist) bmkext-search-pattern))
-          (setq bmkext-quit-flag nil))))))
-
-(defun bmkext-bmenu-cancel-search ()
-  "Cancel timer used for searching in bookmarks."
-  (cancel-timer bmkext-search-timer)
-  (setq bmkext-search-timer nil))
 
 ;;;###autoload
 (defun bmkext-bmenu-edit-bookmark1 ()
@@ -2245,6 +2156,76 @@ A new list is returned (no side effects)."
           (when (bmkext-bookmark-marked-p i)
             (throw 'break t)))))))
 
+;;; Searching
+;;
+;;
+;; Store keyboard input for incremental search.
+(defvar bookmark-search-pattern)
+
+(defface bookmark-cursor
+  '((t (:foreground "green")))
+  "Face for cursor color in `bookmark-bmenu-search' prompt."
+  :group 'bookmark)
+
+(defun bookmark-set-cursor-in-prompt (str pos lst)
+  "Add a cursor in string STR at index position POS."
+  (declare (special index))
+  (setq pos (min index (1- (length lst))))
+  (when (not (string= str ""))
+    (let* ((real-index (- (1- (length lst)) pos))
+           (cur-str (substring str real-index (1+ real-index))))
+      (concat (substring str 0 real-index)
+              (propertize cur-str 'display
+                          (if (= index (length lst))
+                              (concat
+                               (propertize "|" 'face 'bookmark-cursor)
+                               cur-str)
+                            (concat
+                             cur-str
+                             (propertize "|" 'face 'bookmark-cursor))))
+              (substring str (1+ real-index))))))
+
+(defun bookmark-read-search-input ()
+  "Read each keyboard input and add it to `bookmark-search-pattern'."
+  (let ((prompt       (propertize "Pattern: " 'face 'minibuffer-prompt))
+        (tmp-list     ())
+        (index        0))
+    (while
+        (let ((char (read-key (concat prompt (bookmark-set-cursor-in-prompt
+                                              bookmark-search-pattern
+                                              index tmp-list)))))
+          (case char
+            ((?\e ?\r) nil) ; RET or ESC break the search loop.
+            (?\C-g (setq bookmark-quit-flag t) nil)
+            (?\d (with-no-warnings ; Delete last char of pattern with DEL.
+                   (pop (nthcdr index tmp-list))) t)
+            ;; Movements in minibuffer.
+            (?\C-b                         ; backward-char.
+             (setq index (min (1+ index) (length tmp-list))) t)
+            (?\C-f                         ; forward-char.
+             (setq index (max (1- index) 0)) t)
+            (?\C-a                         ; move bol.
+             (setq index (length tmp-list)) t)
+            (?\C-e                         ; move eol.
+             (setq index 0) t)
+            (?\C-k
+             (kill-new (substring bookmark-search-pattern
+                                  (- (length tmp-list) index)))
+             (setq tmp-list (nthcdr index tmp-list)) (setq index 0) t)
+            (?\C-y
+             (let ((str (car kill-ring)))
+               (loop for char across str
+                     do (push char (nthcdr index tmp-list)))) t)
+            (t
+             (if (characterp char)
+                 (push char (nthcdr index tmp-list))
+               (setq unread-command-events
+                     (nconc (mapcar 'identity
+                                    (this-single-command-raw-keys))
+                            unread-command-events))
+               nil))))
+      (setq bookmark-search-pattern
+            (apply 'string (reverse tmp-list))))))
 
 ;; Other Functions ---------------------------------------------------
 
