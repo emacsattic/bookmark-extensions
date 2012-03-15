@@ -37,10 +37,10 @@
 ;;              If you have installed google-maps
 ;;              <http://julien.danjou.info/google-maps-el.html>
 ;;              you can switch to google map based on address of your contact.
-;;              It is fully compatible with anything
-;;              <http://repo.or.cz/w/anything-config.git>
-;;              If you use anything see `anything-bookmark-ext' and turn on `ac-mode'
-;;              to have anything completion in message buffers.
+;;              It is fully compatible with helm
+;;              <http://repo.or.cz/w/helm-config.git>
+;;              If you use helm see `helm-bookmark-ext' and turn on `ac-mode'
+;;              to have helm completion in message buffers.
 
 ;;; Code:
 (eval-when-compile (require 'cl))

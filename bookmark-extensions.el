@@ -41,7 +41,7 @@
 ;; Features that might be required by this library:
 
 ;;   `bookmark', `emacs-w3m', `gnus', `firefox', `bookmark-firefox-handler'
-;;   `firefox-handler', `anything-delicious', `addressbook-bookmark'.
+;;   `firefox-handler', `helm-delicious', `addressbook-bookmark'.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -286,7 +286,7 @@
 ;;
 ;;    - You can have your firefox bookmarks.
 ;;
-;;    - Full integration of Delicious bookmarks using library `anything-delicious.el'.
+;;    - Full integration of Delicious bookmarks using library `helm-delicious.el'.
 ;;
 ;;    - You can bookmark FROM firefox (See |bookmark-firefox-handler.el
 ;;                                         |firefox-protocol.el
@@ -1501,7 +1501,7 @@ Try to follow position of last bookmark in menu-list."
           (pos (point)))
       (if (y-or-n-p "Delete this bookmark? ")
           (cond ((assoc bmk bmkext-delicious-cache)
-                 (anything-c-delicious-delete-bookmark
+                 (helm-c-delicious-delete-bookmark
                   bmk
                   'bmkext-delicious-get-url-value
                   'bmkext-delicious-delete-sentinel))
@@ -2426,15 +2426,15 @@ ORIGIN mention where come from this bookmark."
    bmkext-w3m-bookmark-url-regexp))
 
 ;;; Delicious bookmarks importation
-;; Dependency needed: http://mercurial.intuxication.org/hg/anything-delicious
+;; Dependency needed: http://mercurial.intuxication.org/hg/helm-delicious
 
 (defvar bmkext-delicious-cache nil)
 (defun bmkext-create-alist-from-delicious ()
-  "Create a bmkext alist from XML file `anything-c-delicious-cache-file'."
-  (require 'anything-delicious nil t)
-  (if (fboundp 'anything-set-up-delicious-bookmarks-alist)
+  "Create a bmkext alist from XML file `helm-c-delicious-cache-file'."
+  (require 'helm-delicious nil t)
+  (if (fboundp 'helm-set-up-delicious-bookmarks-alist)
       (loop
-         with delicious-bmks = (anything-set-up-delicious-bookmarks-alist)
+         with delicious-bmks = (helm-set-up-delicious-bookmarks-alist)
          with new-list
          for i in delicious-bmks
          for fm-bmk = (bmkext-format-html-bmk i "delicious-imported")
@@ -2442,7 +2442,7 @@ ORIGIN mention where come from this bookmark."
          unless doublon-p
          collect fm-bmk into new-list
          finally return new-list)
-      (error "anything-delicious library not found, please install it.")))
+      (error "helm-delicious library not found, please install it.")))
 
 (defun bmkext-bmenu-list-only-delicious-bookmarks (&optional rebuild-cache)
   "Display (only) the Delicious bookmarks."
@@ -2462,24 +2462,24 @@ ORIGIN mention where come from this bookmark."
 
 (defun bmkext-delicious-delete-sentinel (process event)
   "Sentinel used for asynchronous delicious bookmark deletion."
-  (anything-delicious-delete-sentinel process event)
+  (helm-delicious-delete-sentinel process event)
   (bmkext-bmenu-list-only-delicious-bookmarks 'rebuild-cache))
 
 ;;;###autoload
 (defun bmkext-bmenu-refresh-delicious ()
   (interactive)
-  (if (fboundp 'anything-wget-retrieve-delicious)
+  (if (fboundp 'helm-wget-retrieve-delicious)
       (progn
         (message "Synchronising with Delicious...")
-        (anything-wget-retrieve-delicious 'bmkext-delicious-refresh-sentinel))
-      (error "anything-delicious library not found, please install it.")))
+        (helm-wget-retrieve-delicious 'bmkext-delicious-refresh-sentinel))
+      (error "helm-delicious library not found, please install it.")))
 
 
 (defun bmkext-delicious-refresh-sentinel (process event)
   (if (string= event "finished\n")
       (message "Syncing with Delicious...Done.")
       (message "Failed to synchronize with Delicious."))
-  (setq anything-c-delicious-cache nil
+  (setq helm-c-delicious-cache nil
         bmkext-delicious-cache nil)
   (bmkext-bmenu-list-only-delicious-bookmarks))
 
