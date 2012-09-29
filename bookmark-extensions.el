@@ -908,6 +908,38 @@ the list of bookmarks.)"
     (setq bookmark-yank-point nil)
     (setq bookmark-current-buffer nil)))
 
+;; REPLACES ORIGINAL in `bookmark.el'.
+;;
+;; Handle backup properly
+;;
+(defun bookmark-write-file (file)
+  "Write `bookmark-alist' to FILE."
+  (bookmark-maybe-message "Saving bookmarks to file %s..." file)
+  (with-current-buffer (find-file-noselect file)
+    (goto-char (point-min))
+    (delete-region (point-min) (point-max))
+    (let ((print-length nil)
+          (print-level nil))
+      (bookmark-insert-file-format-version-stamp)
+      (insert "(")
+      ;; Rather than a single call to `pp' we make one per bookmark.
+      ;; Apparently `pp' has a poor algorithmic complexity, so this
+      ;; scales a lot better.  bug#4485.
+      (dolist (i bookmark-alist) (pp i (current-buffer)))
+      (insert ")")
+      (let ((version-control
+             (cond
+              ((null bookmark-version-control) nil)
+              ((eq 'never bookmark-version-control) 'never)
+              ((eq 'nospecial bookmark-version-control) version-control)
+              (t t))))
+        (condition-case nil
+            (save-buffer)
+          (file-error (message "Can't write %s" file)))
+        (kill-buffer (current-buffer))
+        (bookmark-maybe-message
+         "Saving bookmarks to file %s...done" file)))))
+
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
 ;;
