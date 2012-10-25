@@ -106,10 +106,10 @@ Special commands:
           (if (eq major-mode 'addressbook-mode)
                 (split-string
                  (assoc-default
-                  'email (addressbook-get-contact-data)) ", ")
+                  'email (addressbook-get-contact-data)) " ?, ?")
               (split-string
                (assoc-default
-                'email (assoc bookmark-name bookmark-alist)) ", ")))
+                'email (assoc bookmark-name bookmark-alist)) " ?, ?")))
     (cond ((and (or cc append) mail-bufs) ; A mail buffer exists, use it.
            (pop-to-buffer
             (if (and mail-bufs (> (length mail-bufs) 1))
@@ -171,7 +171,7 @@ Special commands:
                             (cons (car m) (assoc-default 'email m))))
            (cand      (completing-read "Name: " names nil t
                                        (thing-at-point 'symbol)))
-           (mail-list (split-string (assoc-default cand alist) ", ")))
+           (mail-list (split-string (assoc-default cand alist) " ?, ?")))
       (end-of-line)
       (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
       (insert (if (> (length mail-list) 1) ; Contact have more than one address.
@@ -262,7 +262,7 @@ Special commands:
     (when data
       (if (and old-entry
                (string= (assoc-default 'type old-entry) "addressbook"))
-          (let* ((old-mail-ls (split-string (assoc-default 'email old-entry) ", "))
+          (let* ((old-mail-ls (split-string (assoc-default 'email old-entry) " ?, ?"))
                  (new-mail-ls (if (member mail old-mail-ls)
                                   (append (list mail) old-mail-ls)
                                   (list mail)))
