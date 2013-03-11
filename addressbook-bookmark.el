@@ -54,10 +54,6 @@
   :group 'bmkext)
 
 ;;; User variables.
-(defcustom addressbook-enable-mail-completion t
-  "*Use addressbook completion in Mail/News buffers."
-  :group 'addressbook-bookmark
-  :type 'boolean)
 
 (defcustom addressbook-separator
   (propertize (make-string 45 ?-) 'face 'abook-separator)
@@ -149,35 +145,35 @@ Special commands:
   (addressbook-set-mail-buffer1 nil append 'cc))
 
 ;;; Completion in message buffer with TAB.
-(when addressbook-enable-mail-completion
+(defun addressbook-turn-on-mail-completion ()
   (bookmark-maybe-load-default-file)
   (setq message-tab-body-function nil)
   (setq message-completion-alist
         (list (cons message-newgroups-header-regexp 'message-expand-group)
               '("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
-               . addressbook-message-complete)
+                . addressbook-message-complete)
               '("^\\(Resent-\\)?\\(To\\|B?Cc\\):"
-               . addressbook-message-complete)
+                . addressbook-message-complete)
               '("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
-               . addressbook-message-complete)
+                . addressbook-message-complete)
               '("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
-               . addressbook-message-complete)))
+                . addressbook-message-complete))))
 
-  (defun addressbook-message-complete ()
-    "Provide addressbook completion for `message-mode'."
-    (let* ((ls        (bmkext-addressbook-alist-only))
-           (names     (loop for l in ls collect (car l)))
-           (alist     (loop for m in ls collect
-                            (cons (car m) (assoc-default 'email m))))
-           (cand      (completing-read "Name: " names nil t
-                                       (thing-at-point 'symbol)))
-           (mail-list (split-string (assoc-default cand alist) " ?, ?")))
-      (end-of-line)
-      (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
-      (insert (if (> (length mail-list) 1) ; Contact have more than one address.
-                  (completing-read "Address: " mail-list nil t)
-                  (car mail-list)))
-      (goto-char (point-min)) (search-forward "Subject: " nil t))))
+(defun addressbook-message-complete ()
+  "Provide addressbook completion for `message-mode'."
+  (let* ((ls        (bmkext-addressbook-alist-only))
+         (names     (loop for l in ls collect (car l)))
+         (alist     (loop for m in ls collect
+                          (cons (car m) (assoc-default 'email m))))
+         (cand      (completing-read "Name: " names nil t
+                                     (thing-at-point 'symbol)))
+         (mail-list (split-string (assoc-default cand alist) " ?, ?")))
+    (end-of-line)
+    (while (not (looking-back ": \\|," (point-at-bol))) (delete-char -1))
+    (insert (if (> (length mail-list) 1) ; Contact have more than one address.
+                (completing-read "Address: " mail-list nil t)
+                (car mail-list)))
+    (goto-char (point-min)) (search-forward "Subject: " nil t)))
 
 (defun addressbook-bookmark-make-entry (name email phone
                                         web street zipcode city image-path
