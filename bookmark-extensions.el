@@ -1124,6 +1124,16 @@ from there)."
           (bookmark-bmenu-surreptitiously-rebuild-list))
         (bmkext-maybe-save-bookmark))))
 
+;; REPLACES ORIGINAL in `bookmark.el'.
+;; Don't check `bookmark-alist', because when
+;; all bookmarks are deleted, the empty `bookmark-alist'
+;; will never be saved to disk.
+(defun bookmark-exit-hook-internal ()
+  "Save bookmark state, if necessary, at Emacs exit time.
+This also runs `bookmark-exit-hook'."
+  (run-hooks 'bookmark-exit-hook)
+  (and (bookmark-time-to-save-p t)
+       (bookmark-save)))
 
 ;;; Menu List Replacements (`bookmark-bmenu-*') ----------------------
 
@@ -1206,7 +1216,9 @@ Non-nil FILTEREDP indicates that `bookmark-alist' has been filtered
     (goto-char (point-min))
     (forward-line 2)
     (bookmark-bmenu-mode)
-    (when bookmark-bmenu-toggle-filenames (bookmark-bmenu-toggle-filenames t))))
+    (when (and bookmark-alist
+               bookmark-bmenu-toggle-filenames)
+      (bookmark-bmenu-toggle-filenames t))))
 
 
 ;; REPLACES ORIGINAL in `bookmark.el'.
@@ -1287,7 +1299,8 @@ The current window remains selected."
         (message "Deleting bookmarks...")
         (goto-char (point-min))
         (forward-line 2)
-        (while (re-search-forward which-mark (point-max) t)
+        (while (and bookmark-alist
+                    (re-search-forward which-mark (point-max) t))
           (let ((bmk (bookmark-bmenu-bookmark))) 
             (bookmark-delete bmk 'batch) ; pass BATCH arg
             (setq bmkext-latest-bookmark-alist
