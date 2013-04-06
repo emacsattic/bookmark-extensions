@@ -80,18 +80,32 @@
     map))
 
 (define-derived-mode addressbook-mode
-    text-mode "addressbook"
+    special-mode "addressbook"
     "Interface for addressbook.
 
 Special commands:
-\\{addressbook-mode-map}")
+\\{addressbook-mode-map}"
+    (set (make-local-variable 'revert-buffer-function)
+         #'addressbook-mode-revert))
+
+(defun addressbook-mode-revert (&optional revert-auto no-confirm)
+  (interactive)
+  (let ((inhibit-read-only t)
+        (cur-name (car (addressbook-get-contact-data)))
+        (name-list (save-excursion
+                     (goto-char (point-min))
+                     (loop while (re-search-forward "^Name: *\\(.*\\)" nil t)
+                           collect (match-string 1)))))
+    (erase-buffer)
+    (loop for name in name-list
+          do (save-excursion (addressbook-pp-info name t)))
+    (search-forward cur-name nil t) (forward-line 0)))
 
 (defun addressbook-quit ()
   "Quit addressbook buffer."
   (interactive)
   (with-current-buffer "*addressbook*"
     (quit-window)))
-
 
 (defun addressbook-set-mail-buffer1 (&optional bookmark-name append cc)
   "Setup a mail buffer with BOOKMARK-NAME email using `message-mode'."
@@ -292,8 +306,8 @@ Special commands:
          (city           (read-string "City: " old-city))
          (image-path     (read-string "Image path: " old-image-path))
          (new-entry      (addressbook-bookmark-make-entry
-                       name mail phone web street
-                       zipcode city image-path old-visit)))
+                          name mail phone web street
+                          zipcode city image-path old-visit)))
     (when (y-or-n-p "Save changes? ")
       (setcar bookmark name)
       (setcdr bookmark (cdr new-entry))
@@ -304,7 +318,8 @@ Special commands:
   "Edit contact from addressbook buffer."
   (interactive)
   (let ((bmk (addressbook-get-contact-data)))
-    (addressbook-bookmark-edit bmk)))
+    (addressbook-bookmark-edit bmk)
+    (revert-buffer)))
 
 (defun addressbook-bmenu-edit ()
   "Edit an addresbook bookmark entry from bmenu list."
