@@ -47,6 +47,7 @@
 (require 'derived)
 (require 'bookmark-extensions)
 (require 'message)
+(eval-when-compile (require 'gnus-sum))
 
 (defgroup addressbook-bookmark nil
   "An addressbook linked to bookmarks."
@@ -431,5 +432,11 @@ http://julien.danjou.info/google-maps-el.html."
 
 
 (provide 'addressbook-bookmark)
+
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions obsolete)
+;; coding: utf-8
+;; indent-tabs-mode: nil
+;; End:
 
 ;;; addressbook-bookmark.el ends here
