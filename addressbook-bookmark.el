@@ -95,8 +95,8 @@ Special commands:
         (cur-name (car (addressbook-get-contact-data)))
         (name-list (save-excursion
                      (goto-char (point-min))
-                     (loop while (re-search-forward "^Name: *\\(.*\\)" nil t)
-                           collect (match-string 1)))))
+                     (loop while (re-search-forward "^Name:" nil t)
+                           collect (car (addressbook-get-contact-data))))))
     (erase-buffer)
     (loop for name in name-list
           do (save-excursion (addressbook-pp-info name t)))
