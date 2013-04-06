@@ -99,6 +99,7 @@ Special commands:
     (erase-buffer)
     (loop for name in name-list
           do (save-excursion (addressbook-pp-info name t)))
+    (goto-char (point-min))
     (search-forward cur-name nil t) (forward-line 0)))
 
 (defun addressbook-quit ()
