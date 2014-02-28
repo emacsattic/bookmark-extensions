@@ -110,7 +110,7 @@ Special commands:
   (with-current-buffer "*addressbook*"
     (quit-window)))
 
-(defun addressbook-set-mail-buffer1 (&optional bookmark-name append cc)
+(defun addressbook-set-mail-buffer-1 (&optional bookmark-name append cc)
   "Setup a mail buffer with BOOKMARK-NAME email using `message-mode'."
   (bookmark-maybe-load-default-file)
   (let ((mail-list ())
@@ -154,12 +154,12 @@ Special commands:
 (defun addressbook-set-mail-buffer (append)
   "Prepare email buffer with `message-mode' from addressbook buffer."
   (interactive "P")
-  (addressbook-set-mail-buffer1 nil append))
+  (addressbook-set-mail-buffer-1 nil append))
 
 (defun addressbook-set-mail-buffer-and-cc (append)
   "Add a cc field to a mail buffer for this bookmark."
   (interactive "P")
-  (addressbook-set-mail-buffer1 nil append 'cc))
+  (addressbook-set-mail-buffer-1 nil append 'cc))
 
 ;;; Completion in message buffer with TAB.
 (defun addressbook-turn-on-mail-completion ()
