@@ -35,24 +35,24 @@
 ;;              It provide completion on contacts in `message-mode' buffers,
 ;;              a special mode to display contacts with address, phone etc...
 ;;              If you have installed google-maps
-;;              <http://julien.danjou.info/google-maps-el.html>
+;;              http://julien.danjou.info/google-maps-el.html
 ;;              you can switch to google map based on address of your contact.
 ;;              It is fully compatible with helm
-;;              <http://repo.or.cz/w/helm-config.git>
-;;              If you use helm see `helm-bookmark-ext' and turn on `ac-mode'
+;;              https://github.com/emacs-helm/helm
+;;              If you use helm see `helm-bookmark-ext' and turn on `helm-mode'
 ;;              to have helm completion in message buffers.
 
 ;;; Code:
 (eval-when-compile (require 'cl))
 (require 'derived)
-(require 'bookmark-extensions)
+(require 'bookmark)
 (require 'message)
 (eval-when-compile (require 'gnus-sum))
 
 (defgroup addressbook-bookmark nil
   "An addressbook linked to bookmarks."
   :prefix "addressbook-"
-  :group 'bmkext)
+  :group 'bookmark)
 
 ;;; User variables.
 
@@ -165,19 +165,30 @@ Special commands:
   (bookmark-maybe-load-default-file)
   (setq message-tab-body-function nil)
   (setq message-completion-alist
-        (list (cons message-newgroups-header-regexp 'message-expand-group)
-              '("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
-                . addressbook-message-complete)
-              '("^\\(Resent-\\)?\\(To\\|B?Cc\\):"
-                . addressbook-message-complete)
-              '("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
-                . addressbook-message-complete)
-              '("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
-                . addressbook-message-complete))))
+        `((,message-newgroups-header-regexp . message-expand-group)
+          ("^\\(Newsgroups\\|Followup-To\\|Posted-To\\|Gcc\\):"
+           . addressbook-message-complete)
+          ("^\\(Resent-\\)?\\(To\\|B?Cc\\):"
+           . addressbook-message-complete)
+          ("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
+           . addressbook-message-complete)
+          ("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
+           . addressbook-message-complete))))
+
+(defun addressbook-bookmark-addressbook-p (bookmark)
+  (if (listp bookmark)
+      (string= (assoc-default 'type bookmark) "addressbook")
+      (string= (assoc-default
+                'type (assoc bookmark bookmark-alist)) "addressbook")))
+
+(defun addressbook-alist-only ()
+  (loop for b in bookmark-alist
+        when (addressbook-bookmark-addressbook-p b)
+        collect b))
 
 (defun addressbook-message-complete ()
   "Provide addressbook completion for `message-mode'."
-  (let* ((ls        (bmkext-addressbook-alist-only))
+  (let* ((ls        (addressbook-alist-only))
          (names     (loop for l in ls collect (car l)))
          (alist     (loop for m in ls collect
                           (cons (car m) (assoc-default 'email m))))
@@ -247,12 +258,17 @@ Special commands:
                                name email phone web street zipcode city image-path)))
                    (push new-entry bookmark-alist)))
              (bookmark-bmenu-surreptitiously-rebuild-list)
-             (bmkext-maybe-save-bookmark)
+             (addressbook-maybe-save-bookmark)
              (incf count)
              (if (y-or-n-p (format "`%s' Recorded. Add a new contact? " name))
                  (record)
                  (message "%d Contact(s) added." count)))))
       (record))))
+
+(defun addressbook-maybe-save-bookmark ()
+  "Increment save counter and maybe save `bookmark-alist'."
+  (setq bookmark-alist-modification-count (1+ bookmark-alist-modification-count))
+  (when (bookmark-time-to-save-p) (bookmark-save)))
 
 (defun addressbook-gnus-sum-bookmark ()
   "Record an addressbook bookmark from a gnus summary buffer."
@@ -286,7 +302,7 @@ Special commands:
           (push new-entry bookmark-alist))
       (message "`%s' bookmarked" name)
       (bookmark-bmenu-surreptitiously-rebuild-list)
-      (bmkext-maybe-save-bookmark))))
+      (addressbook-maybe-save-bookmark))))
       
 (defun addressbook-bookmark-edit (bookmark)
   "Edit an addressbook bookmark entry."
@@ -313,7 +329,7 @@ Special commands:
     (when (y-or-n-p "Save changes? ")
       (setcar bookmark name)
       (setcdr bookmark (cdr new-entry))
-      (bmkext-maybe-save-bookmark)
+      (addressbook-maybe-save-bookmark)
       new-entry)))
 
 (defun addressbook-edit ()
