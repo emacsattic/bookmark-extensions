@@ -43,7 +43,8 @@
 ;;              to have helm completion in message buffers.
 
 ;;; Code:
-(eval-when-compile (require 'cl))
+
+(require 'cl-lib)
 (require 'derived)
 (require 'bookmark)
 (require 'message)
@@ -95,11 +96,11 @@ Special commands:
         (cur-name (car (addressbook-get-contact-data)))
         (name-list (save-excursion
                      (goto-char (point-min))
-                     (loop while (re-search-forward "^Name:" nil t)
-                           collect (car (addressbook-get-contact-data))))))
+                     (cl-loop while (re-search-forward "^Name:" nil t)
+                              collect (car (addressbook-get-contact-data))))))
     (erase-buffer)
-    (loop for name in name-list
-          do (save-excursion (addressbook-pp-info name t)))
+    (cl-loop for name in name-list
+             do (save-excursion (addressbook-pp-info name t)))
     (goto-char (point-min))
     (search-forward cur-name nil t) (forward-line 0)))
 
@@ -182,15 +183,15 @@ Special commands:
                 'type (assoc bookmark bookmark-alist)) "addressbook")))
 
 (defun addressbook-alist-only ()
-  (loop for b in bookmark-alist
-        when (addressbook-bookmark-addressbook-p b)
-        collect b))
+  (cl-loop for b in bookmark-alist
+           when (addressbook-bookmark-addressbook-p b)
+           collect b))
 
 (defun addressbook-message-complete ()
   "Provide addressbook completion for `message-mode'."
   (let* ((ls        (addressbook-alist-only))
-         (names     (loop for l in ls collect (car l)))
-         (alist     (loop for m in ls collect
+         (names     (cl-loop for l in ls collect (car l)))
+         (alist     (cl-loop for m in ls collect
                           (cons (car m) (assoc-default 'email m))))
          (cand      (completing-read "Name: " names nil t
                                      (thing-at-point 'symbol)))
@@ -222,13 +223,13 @@ Special commands:
 (defun addressbook-read-name (prompt)
   "Prompt as many time PROMPT is not empty."
   (let ((var ()))
-    (labels ((multiread ()
-               (let ((str (read-string prompt))
-                     (sep (if (> (length var) 1) ", " "")))
-                 (if (string= str "")
-                     (mapconcat 'identity (nreverse var) sep)
-                     (push str var)
-                     (multiread)))))
+    (cl-labels ((multiread ()
+                  (let ((str (read-string prompt))
+                        (sep (if (> (length var) 1) ", " "")))
+                    (if (string= str "")
+                        (mapconcat 'identity (nreverse var) sep)
+                        (push str var)
+                        (multiread)))))
       (multiread))))
 
 
@@ -236,7 +237,7 @@ Special commands:
   "Record addressbook bookmark entries interactively."
   (interactive)
   (let ((count 0))
-    (labels
+    (cl-labels
         ((record ()
            (let ((name       (read-string "Name: "))
                  (email      (addressbook-read-name "Mail: "))
