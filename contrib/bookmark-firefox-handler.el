@@ -71,12 +71,12 @@
   "Bookmark a Firefox page in Standards Emacs bookmarks.
 BMK is the value returned by the bookmarklet."
   (interactive)
-  (let* ((split (split-string bmk "::emacsbookmark::"))
+  (let* ((split (split-string (cl-loop for c across (url-unhex-string bmk)
+                                    concat (string c))
+                              "::emacsbookmark::"))
          (url   (replace-regexp-in-string "emacsbookmark://" "" (car split)))
          (title (cadr split))
          fbmk)
-    (setq url (url-unhex-string url t))
-    (setq title (url-unhex-string title t))
     (setq fbmk (cons title url))
     (if (and title url (y-or-n-p (format "Bookmark (%s) from Firefox? " title)))
         (progn
