@@ -1,4 +1,4 @@
-;;; bookmark-extensions.el - Extensions to standard library `bookmark.el'.
+;;; bookmark-extensions.el --- Extensions to standard library `bookmark.el'
 
 ;; Filename: bookmark-extensions.el
 
